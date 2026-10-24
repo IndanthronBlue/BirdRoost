@@ -1,0 +1,2229 @@
+area_code,area_name,sub_area_name,are_name_cn
+WORLD,World,,全球（不过滤）
+AF,Afghanistan,,阿富汗
+AFbd,Afghanistan,Badakhshan,巴达赫尚
+AFbg,Afghanistan,Badghis,巴德吉斯
+AFbk,Afghanistan,Balkh,巴尔赫
+AFbl,Afghanistan,Baghlan,巴格兰
+AFbm,Afghanistan,Bamian,巴米扬
+AFfb,Afghanistan,Faryab,法利亚布
+AFfh,Afghanistan,Farah,法拉
+AFgr,Afghanistan,Ghowr,古尔
+AFgz,Afghanistan,Ghazni,加兹尼
+AFhm,Afghanistan,Helmand,赫尔曼德
+AFhr,Afghanistan,Herat,赫拉特
+AFjw,Afghanistan,Jowzjan,朱兹詹
+AFkb,Afghanistan,Kabul,喀布尔
+AFkd,Afghanistan,Kandahar,坎大哈
+AFko,Afghanistan,Konar,库纳尔
+AFkp,Afghanistan,Kapisa,卡比萨
+AFkt,Afghanistan,Khowst,霍斯特
+AFkz,Afghanistan,Kondoz,昆都士
+AFlm,Afghanistan,Laghman,拉格曼
+AFlw,Afghanistan,Lowgar,洛加尔
+AFng,Afghanistan,Nangarhar,楠格哈尔
+AFnm,Afghanistan,Nimruz,尼姆鲁兹
+AFnr,Afghanistan,Nurestan,努尔斯坦
+AFozoz,Afghanistan,Oruzgan,乌鲁兹甘
+AFozdk,Afghanistan,Daikondi,戴孔迪省
+AFpa,Afghanistan,Paktia,帕克蒂亚
+AFpk,Afghanistan,Paktika,帕克蒂卡
+AFpvpv,Afghanistan,Parvan,帕尔旺
+AFpvpj,Afghanistan,Panjshir,潘杰希尔省
+AFsm,Afghanistan,Samangan,萨曼甘
+AFsp,Afghanistan,Sar-e Pol,萨尔普勒
+AFtk,Afghanistan,Takhar,塔哈尔
+AFvr,Afghanistan,Vardak,瓦尔达克
+AFzb,Afghanistan,Zabol,扎布尔
+AL,Albania,,阿尔巴尼亚
+DZ,Algeria,,阿尔及利亚
+DZad,Algeria,Aïn Defla,艾因迪夫拉省
+DZal,Algeria,Alger,阿尔及尔
+DZan,Algeria,Annaba,安纳巴
+DZar,Algeria,Adrar,阿德拉尔
+DZat,Algeria,Aïn Témouchent,艾因泰穆尚特省
+DZbb,Algeria,Bordj Bou Arréridj,布阿拉里季堡
+DZbc,Algeria,Béchar,贝沙尔
+DZbj,Algeria,Béjaïa,贝贾亚
+DZbl,Algeria,Blida,卜利达
+DZbm,Algeria,Boumerdès,布米尔达斯省
+DZbs,Algeria,Biskra,比斯克拉
+DZbt,Algeria,Batna,巴特纳
+DZbu,Algeria,Bouira,布维拉
+DZch,Algeria,Chlef,谢里夫
+DZco,Algeria,Constantine,君士坦丁
+DZeb,Algeria,El Bayadh,巴亚兹省
+DZeo,Algeria,El Oued,瓦德
+DZet,Algeria,El Tarf,泰赖夫省
+DZgl,Algeria,Guelma,盖尔马
+DZgr,Algeria,Ghardaïa,盖尔达耶
+DZil,Algeria,Illizi,伊利济省
+DZjj,Algeria,Jijel,吉杰勒省
+DZkh,Algeria,Khenchela,汉舍莱省
+DZlg,Algeria,Laghouat,艾格瓦特
+DZmc,Algeria,Mascara,穆阿斯凯尔省
+DZmd,Algeria,Médéa,麦迪亚
+DZmg,Algeria,Mostaganem,穆斯塔加奈姆省
+DZml,Algeria,Mila,米拉省
+DZms,Algeria,Msila,姆西拉
+DZna,Algeria,Naama,纳马
+DZob,Algeria,Oum el Bouaghi,乌姆布瓦吉省
+DZog,Algeria,Ouargla,瓦尔格拉
+DZre,Algeria,Relizane,埃利赞省
+DZsa,Algeria,Souk Ahras,苏格艾赫拉斯省
+DZsb,Algeria,Sidi Bel Abbès,西迪贝勒阿巴斯
+DZsd,Algeria,Saïda,赛伊达
+DZsf,Algeria,Sétif,塞提夫
+DZsk,Algeria,Skikda,斯基克达
+DZtb,Algeria,Tébessa,泰贝萨
+DZtl,Algeria,Tlemcen,特莱姆森
+DZtm,Algeria,Tamanghasset,塔曼拉塞特
+DZtn,Algeria,Tindouf,廷杜夫
+DZto,Algeria,Tizi Ouzou,提济乌祖
+DZtp,Algeria,Tipaza,提帕萨省
+DZtr,Algeria,Tiaret,提亚雷特
+DZts,Algeria,Tissemsilt,提塞姆西勒特省
+AS,American Samoa,,美属萨摩亚
+AD,Andorra,,安道尔
+AO,Angola,,安哥拉
+AObg,Angola,Benguela,本格拉
+AObi,Angola,Bié,比耶
+AObo,Angola,Bengo,本戈
+AOcb,Angola,Cabinda,卡宾达
+AOcc,Angola,Cuando Cubango,宽多库邦戈
+AOcn,Angola,Cuanza Norte,北宽扎
+AOcs,Angola,Cuanza Sul,南宽扎
+AOcu,Angola,Cunene,库内内
+AOhl,Angola,Huíla,威拉
+AOhm,Angola,Huambo,万博
+AOln,Angola,Lunda Norte,北隆达
+AOls,Angola,Lunda Sul,南隆达
+AOlu,Angola,Luanda,罗安达
+AOml,Angola,Malanje,马兰热
+AOmx,Angola,Moxico,莫希科
+AOna,Angola,Namibe,纳米贝
+AOui,Angola,Uíge,威热
+AOza,Angola,Zaire,扎伊尔
+AI,Anguilla,,安圭拉
+AQ,Antarctica,,南极
+AG,Antigua and Barbuda,,安提瓜和巴布达
+AR,Argentina,,阿根廷
+ARjj,Argentina,Jujuy,胡胡伊
+ARsa,Argentina,Salta,萨尔塔
+ARfo,Argentina,Formosa,福莫萨
+ARca,Argentina,Catamarca,卡塔马卡
+ARtu,Argentina,Tucumán,图库曼
+ARse,Argentina,Santiago del Estero,圣地亚哥-德尔埃斯特罗
+ARch,Argentina,Chaco,查科
+ARsf,Argentina,Santa Fé,圣菲
+ARmi,Argentina,Misiones,米西奥斯内斯
+ARco,Argentina,Corrientes,科连特斯
+ARer,Argentina,Entre Ríos,恩特雷里奥斯
+ARra,Argentina,La Rioja,拉里奥哈
+ARsj,Argentina,San Juan,圣胡安
+ARcd,Argentina,Cordoba,科尔多瓦
+ARme,Argentina,Mendoza,门多萨
+ARsl,Argentina,San Luis,圣路易斯
+ARpa,Argentina,La Pampa,拉潘帕
+ARba,Argentina,Buenos Aires,布宜诺斯艾利斯
+ARne,Argentina,Neuquen,内乌肯
+ARrn,Argentina,Río Negro,里奥内格罗
+ARcb,Argentina,Chubut,丘布特
+ARsc,Argentina,Santa Cruz,圣克鲁斯
+ARtf,Argentina,Tierra del Fuego,火地岛
+AM,Armenia,,亚美尼亚
+AW,Aruba,,阿鲁巴
+AU,Australia,,澳大利亚
+AUcs,Australia,Coral Sea Islands,珊瑚海群岛
+AUni|NF,Australia,Norfolk Island,诺福克岛
+AUns,Australia,New South Wales,新南威尔士州
+AUca,Australia,Australian Capital Territory,首都区
+AUno,Australia,Northern Territory,北领地
+AUql,Australia,Queensland,昆士兰州
+AUsa,Australia,South Australia,南澳大利亚州
+AUta,Australia,Tasmania,塔斯马尼亚州
+AUvi,Australia,Victoria,维多利亚州
+AUwa,Australia,Western Australia,西澳大利亚州
+AT,Austria,,奥地利
+AZ,Azerbaijan,,阿塞拜疆
+BS,Bahamas,,巴哈马
+BSgbwe,Bahamas,West Grand Bahama,西大巴哈马区
+BSgbea,Bahamas,East Grand Bahama,东大巴哈马区
+BSgbfp,Bahamas,City of Freeport,自由港市
+BSabno,Bahamas,North Abaco,北阿巴科区
+BSabso,Bahamas,South Abaco,南阿巴科区
+BSabco,Bahamas,Central Abaco,中阿巴科区
+BSabgc,Bahamas,Grand Cay,格兰德群岛
+BSabht,Bahamas,Hope Town,霍普顿区
+BSabmi,Bahamas,Moore's Island,莫斯岛
+BSbe,Bahamas,Berry Islands,贝里群岛
+BSbi,Bahamas,Bimini,比米尼群岛
+BSna,Bahamas,Nassau/Paradise Islands,天堂岛
+BSanna,Bahamas,North Andros,北安德罗斯区
+BSansa,Bahamas,South Andros,南安德罗斯区
+BSanca,Bahamas,Central Andros,中安德罗斯区
+BSanmc,Bahamas,Mangrove Cay,曼格罗夫岛区
+BSelhi,Bahamas,Harbour Island,哈伯岛
+BSelne,Bahamas,North Eleuthera,北伊柳塞拉区
+BSelce,Bahamas,Central Eleuthera,中伊柳塞拉区
+BSelse,Bahamas,South Eleuthera,南伊柳塞拉区
+BSelsw,Bahamas,Spanish Wells,西班牙韦尔斯
+BSca,Bahamas,Cat Island,卡特岛
+BSexbp,Bahamas,Black Point,黑点区
+BSexem,Bahamas,Exuma,埃克苏马
+BSssss,Bahamas,San Salvador,圣萨尔瓦多
+BSssrc,Bahamas,Rum Cay,朗姆屿
+BSacac,Bahamas,Acklins,阿克林岛
+BSaccr,Bahamas,Crooked Island,克鲁克德岛
+BSri,Bahamas,Ragged Island,拉吉德岛
+BH,Bahrain,,巴林
+BD,Bangladesh,,孟加拉国
+BDba,Bangladesh,Barisal,巴里萨尔专区
+BDcg,Bangladesh,Chittagong,吉大港专区
+BDda,Bangladesh,Dhaka,达卡专区
+BDkh,Bangladesh,Khulna,库尔纳专区
+BDrj,Bangladesh,Rajshahi,拉杰沙希专区
+BDrp,Bangladesh,Rangpur,朗布尔专区
+BDsy,Bangladesh,Sylhet,锡尔赫特专区
+BB,Barbados,,巴巴多斯
+BY,Belarus,,白俄罗斯
+BYbr,Belarus,Brest,布列斯特
+BYho,Belarus,Homyel',戈梅利
+BYhr,Belarus,Hrodna,格罗德诺
+BYma,Belarus,Mahilyow,莫吉廖夫
+BYmi,Belarus,Minsk,明斯克
+BYvi,Belarus,Vitsyebsk,维捷布斯克
+BE,Belgium,,比利时
+BZ,Belize,,伯利兹
+BZbz,Belize,Belize,伯利兹区
+BZcy,Belize,Cayo,卡约区
+BZcz,Belize,Corozal,科罗萨尔区
+BZow,Belize,Orange Walk,橘园区
+BZsc,Belize,Stann Creek,斯坦港区
+BZto,Belize,Toledo,托莱多区
+BJ,Benin,,贝宁
+BM,Bermuda,,百慕大
+BT,Bhutan,,不丹
+BO,Bolivia,,玻利维亚
+BOcb,Bolivia,Cochabamba,科恰班巴省
+BOcq,Bolivia,Chuquisaca,丘基萨卡省
+BOeb,Bolivia,El Beni,贝尼省
+BOlp,Bolivia,La Paz,拉巴斯省
+BOor,Bolivia,Oruro,奥鲁罗省
+BOpa,Bolivia,Pando,潘多省
+BOpo,Bolivia,Potosí,波多西省
+BOsc,Bolivia,Santa Cruz,圣克鲁斯省
+BOtr,Bolivia,Tarija,塔里哈省
+BQ,Bonaire Saint Eustatius and Saba,,荷兰加勒比区
+BA,Bosnia and Herzegovina,,波斯尼亚和黑塞哥维那
+BW,Botswana,,博茨瓦纳
+BWce,Botswana,Central,中部区
+BWgh,Botswana,Ghanzi,杭济
+BWkg,Botswana,Kgalagadi,卡拉哈迪区
+BWkl,Botswana,Kgatleng,卡特伦区
+BWkw,Botswana,Kweneng,奎嫩区
+BWne,Botswana,North-East,东北区
+BWnwnw,Botswana,North-West,西北区
+BWnwch,Botswana,Chobe,乔贝区
+BWse,Botswana,South-East,东南区
+BWso,Botswana,Southern,南部区
+BV,Bouvet Island,,布韦岛
+BR,Brazil,,巴西
+BRac,Brazil,Acre,阿克里
+BRal,Brazil,Alagoas,阿拉戈斯
+BRam,Brazil,Amapá,阿马帕
+BRaz,Brazil,Amazonas,亚马孙
+BRba,Brazil,Bahia,巴伊亚
+BRce,Brazil,Ceará,塞阿拉
+BRfd,Brazil,Federal District,联邦区
+BRes,Brazil,Espírito Santo,圣埃斯皮里图
+BRgo,Brazil,Goiás,戈亚斯
+BRma,Brazil,Maranhão,马拉尼昂
+BRmg,Brazil,Mato Grosso,马托格罗索
+BRms,Brazil,Mato Grosso do Sul,南马托格罗索
+BRmi,Brazil,Minas Gerais,米纳斯吉拉斯
+BRpa,Brazil,Pará,帕拉
+BRpb,Brazil,Paraíba,帕拉伊巴
+BRpn,Brazil,Paraná,巴拉那
+BRpe,Brazil,Pernambuco,伯南布哥
+BRpi,Brazil,Piauí,皮奥伊
+BRrj,Brazil,Rio de Janeiro,里约热内卢
+BRrn,Brazil,Rio Grande do Norte,北里奥格兰德
+BRrs,Brazil,Rio Grande do Sul,南里奥格兰德
+BRrd,Brazil,Rondônia,朗多尼亚
+BRrr,Brazil,Roraima,罗赖马
+BRsc,Brazil,Santa Catarina,圣卡塔琳娜
+BRsa,Brazil,São Paulo,圣保罗
+BRse,Brazil,Sergipe,塞尔希培
+BRto,Brazil,Tocantins,托坎廷斯
+IO,British Indian Ocean Territory,,英属印度洋领地
+VG,British Virgin Islands,,英属维尔京群岛
+BN,Brunei,,文莱
+BNbe,Brunei,Belait,马来弈县
+BNbm,Brunei,Brunei and Muara,摩拉县
+BNte,Brunei,Temburong,淡布隆县
+BNtu,Brunei,Tutong,都东县
+BG,Bulgaria,,保加利亚
+BF,Burkina Faso,,布基纳法索
+BI,Burundi,,布隆迪
+KH,Cambodia,,柬埔寨
+CM,Cameroon,,喀麦隆
+CMad,Cameroon,Adamaoua,阿达马瓦
+CMce,Cameroon,Centre,中央
+CMen,Cameroon,Extrême-Nord,北端
+CMes,Cameroon,Est,东部
+CMlt,Cameroon,Littoral,滨海
+CMno,Cameroon,Nord,北部
+CMnw,Cameroon,Nord-Ouest,西北部
+CMou,Cameroon,Ouest,西部
+CMsu,Cameroon,Sud,南部
+CMsw,Cameroon,Sud-Ouest,西南部
+CA,Canada,,加拿大
+CAab,Canada,Alberta,艾伯塔省
+CAbc,Canada,British Columbia,英属哥伦比亚省
+CAmb,Canada,Manitoba,曼尼托巴省
+CAnb,Canada,New Brunswick,纽宾士域省
+CAnl,Canada,Newfoundland and Labrador,纽芬兰与拉布拉多省
+CAns,Canada,Nova Scotia,新斯科舍省
+CAnt,Canada,Northwest Territories,西北地区
+CAnu,Canada,Nunavut,努纳维特地区
+CAon,Canada,Ontario,安大略省
+CApe,Canada,Prince Edward Island,爱德华王子岛省
+CAqc,Canada,Québec,魁北克省
+CAsk,Canada,Saskatchewan,萨斯喀彻温省
+CAyk,Canada,Yukon,育空地区
+CV,Cape Verde,,佛得角
+KY,Cayman Islands,,开曼群岛
+CF,Central African Republic,,中非共和国
+CFac,Central African Republic,Ouham,瓦姆省
+CFbb,Central African Republic,Bamingui-Bangoran,巴明吉-班戈兰省
+CFbg,Central African Republic,Bangui,班吉
+CFbk,Central African Republic,Basse-Kotto,下科托省
+CFhk,Central African Republic,Haute-Kotto,上科托省
+CFhm,Central African Republic,Haut-Mbomou,上姆博穆省
+CFhs,Central African Republic,Mambéré-Kadéï,曼贝雷-卡代省
+CFkb,Central African Republic,Nana-Grébizi,纳纳-格里比齐省
+CFkg,Central African Republic,Kémo,凯莫省
+CFlb,Central African Republic,Lobaye,洛巴耶省
+CFmb,Central African Republic,Mbomou,姆博穆省
+CFmp,Central African Republic,Ombella-M'Poko,翁贝拉-姆波科省
+CFnm,Central African Republic,Nana-Mambéré,Nana-Mambéré
+CFop,Central African Republic,Ouham-Pendé,瓦姆-彭代省
+CFse,Central African Republic,Sangha-Mbaéré,桑加-姆巴埃雷省
+CFuk,Central African Republic,Ouaka,瓦卡省
+CFvk,Central African Republic,Vakaga,瓦卡加省
+TD,Chad,,乍得
+TDba,Chad,Batha,巴塔区
+TDbi,Chad,Wadi Fira,瓦迪菲拉区
+TDen,Chad,Ennedi,恩内迪省
+TDenee,Chad,Ennedi Est,东恩内迪省
+TDeneo,Chad,Ennedi Ouest,西恩内迪省
+TDti,Chad,Tibesti,提贝斯提
+TDbo,Chad,Borkou,博尔库区
+TDcg,Chad,Chari-Baguirmi,沙里-巴吉尔米区
+TDhd,Chad,Hadjer-Lamis,哈吉尔拉密区
+TDnj,Chad,Ville de N'Djamena,恩贾梅纳
+TDgr,Chad,Guéra,盖拉
+TDka,Chad,Kanem,加奈姆区
+TDbg,Chad,Bahr el Gazel,加扎勒河区
+TDlc,Chad,Lac,湖区
+TDlo,Chad,Logone Occidental,西洛贡区
+TDlr,Chad,Logone Oriental,东洛贡区
+TDmk,Chad,Mayo-Kebbi,凯比河区
+TDme,Chad,Mayo-Kebbi Est,东凯比河区
+TDmw,Chad,Mayo-Kebbi Ouest,西凯比河区
+TDmo,Chad,Moyen-Chari,中沙里区
+TDma,Chad,Mandoul,芒杜尔区
+TDou,Chad,Ouaddaï,瓦达伊区
+TDsi,Chad,Sila,色拉
+TDsa,Chad,Salamat,萨拉马特
+TDta,Chad,Tandjilé,坦吉莱区
+UKci,Channel Islands,,盎格鲁诺曼底群岛
+CL,Chile,,智利
+CLai,Chile,Aisén del General Carlos Ibáñez del Campo,第十一大区-伊瓦涅斯将军的艾森大区
+CLan,Chile,Antofagasta,第二大区-安托法加斯塔大区
+CLar,Chile,Araucanía,第九大区-阿劳卡尼亚大区
+CLat,Chile,Atacama,第三大区-阿塔卡马大区
+CLbibi,Chile,Bío-Bío,第八大区-比奥比奥大区
+CLbinu,Chile,Ñuble,第十六大区-纽夫莱大区
+CLco,Chile,Coquimbo,第四大区-科金博大区
+CLli,Chile,Libertador General Bernardo O'Higgins,奥伊金斯将军解放者大区
+CLllll,Chile,Los Lagos,第十大区-湖大区
+CLlllr,Chile,Los Ríos,第十四大区-河流大区
+CLma,Chile,Magallanes y Antártica Chilena,麦哲伦-智利南极大区
+CLml,Chile,Maule,第七大区-马乌莱大区
+CLrm,Chile,Región Metropolitana de Santiago,圣地亚哥首都大区
+CLta,Chile,Tarapacá & Arica y Parinacota,阿里卡和帕里纳科塔大区
+CLtata,Chile,Tarapacá,第一大区-塔拉帕卡大区
+CLtaap,Chile,Arica y Parinacota,第十五大区-阿里卡和帕里纳科塔大区
+CLvs,Chile,Valparaíso,瓦尔帕莱索
+CN,China,,中国
+CNan,China,Anhui,安徽
+CNbj,China,Beijing,北京
+CNcg,China,Chongqing,重庆
+CNfu,China,Fujian,福建
+CNga,China,Gansu,甘肃
+CNgd,China,Guangdong,广东
+CNgz,China,Guangxi,广西
+CNgu,China,Guizhou,贵州
+CNhi,China,Hainan,海南
+CNhe,China,Hebei,河北
+CNhg,China,Heilongjiang,黑龙江
+CNha,China,Henan,河南
+CNhb,China,Hubei,湖北
+CNhu,China,Hunan,湖南
+CNjs,China,Jiangsu,江苏
+CNjx,China,Jiangxi,江西
+CNji,China,Jilin,吉林
+CNli,China,Liaoning,辽宁
+CNin,China,Nei Mongol,内蒙古
+CNni,China,Ningxia,宁夏
+CNqi,China,Qinghai,青海
+CNsh,China,Shaanxi,陕西
+CNsg,China,Shandong,山东
+CNsn,China,Shanghai,上海
+CNsx,China,Shanxi,山西
+CNsi,China,Sichuan,四川
+CNtj,China,Tianjin,天津
+CNxi,China,Xinjiang,新疆
+CNti,China,Xizang,西藏
+CNyu,China,Yunnan,云南
+CNzh,China,Zhejiang,浙江
+AUcx|CX,Christmas Island,,圣诞岛
+AUcc|CC,Cocos (Keeling) Islands,,科科斯（基林）群岛
+CO,Colombia,,哥伦比亚
+COdc,Colombia,Distrito Capital,波哥大
+COat,Colombia,Atlántico,大西洋
+CObl,Colombia,Bolívar,博利瓦尔
+COce,Colombia,Cesar,塞萨尔
+COco,Colombia,Córdoba,科尔多巴
+COlg,Colombia,La Guajira,瓜希拉
+COma,Colombia,Magdalena,马格达雷那
+COsa,Colombia,San Andrés y Providencia,圣安德烈斯-普罗维登西亚
+COsu,Colombia,Sucre,苏克雷
+COca,Colombia,Cauca,考卡
+COch,Colombia,Chocó,乔科
+COna,Colombia,Nariño,纳里尼奥
+COvc,Colombia,Valle del Cauca,考卡山谷
+COam,Colombia,Amazonas,亚马孙
+COcq,Colombia,Caquetá,卡克塔
+COgn,Colombia,Guainía,瓜伊尼亚
+COgv,Colombia,Guaviare,瓜维亚雷
+COpu,Colombia,Putumayo,普图马约
+COvp,Colombia,Vaupés,沃佩斯
+COan,Colombia,Antioquia,安提奥基亚
+COns,Colombia,Norte de Santander,北桑坦德
+COst,Colombia,Santander,桑坦德
+COby,Colombia,Boyacá,博亚卡
+COcl,Colombia,Caldas,卡尔达斯
+COcu,Colombia,Cundinamarca,昆迪纳马卡
+COhu,Colombia,Huila,乌伊拉
+COqd,Colombia,Quindío,金迪奥
+COri,Colombia,Risaralda,利萨拉尔达
+COto,Colombia,Tolima,托利马
+COar,Colombia,Arauca,阿劳卡
+COcs,Colombia,Casanare,卡萨纳雷
+COme,Colombia,Meta,梅塔
+COvd,Colombia,Vichada,维查达
+KM,Comoros,,科摩罗
+CG,Congo,,刚果
+CGbo,Congo,Bouenza,布恩扎省
+CGbr,Congo,Brazzaville,布拉柴维尔省
+CGco,Congo,Cuvette-Ouest,西盆地省
+CGcu,Congo,Cuvette,盆地省
+CGko,Congo,Kouilou,奎卢省
+CGle,Congo,Lékoumou,莱库穆省
+CGli,Congo,Likouala,利夸拉省
+CGni,Congo,Niari,尼阿里省
+CGpl,Congo,Plateaux,高原省
+CGpo,Congo,Pool,普尔省
+CGsa,Congo,Sangha,桑加省
+CK,Cook Islands,,库克群岛
+CR,Costa Rica,,哥斯达黎加
+CRal,Costa Rica,Alajuela,阿拉胡埃拉省
+CRca,Costa Rica,Cartago,卡塔戈省
+CRgu,Costa Rica,Guanacaste,瓜纳卡斯特省
+CRhe,Costa Rica,Heredia,埃雷迪亚省
+CRli,Costa Rica,Limón,利蒙省
+CRpu,Costa Rica,Puntarenas,蓬塔雷纳斯省
+CRsj,Costa Rica,San José,圣何塞省
+CI,Cote d'Ivoire,,科特迪瓦
+HR,Croatia,,克罗地亚
+CU,Cuba,,古巴
+CUca,Cuba,Ciego de Ávila,谢戈德阿维拉省
+CUcf,Cuba,Cienfuegos,西恩富戈斯省
+CUar,Cuba,Artemisa,阿尔特米萨省
+CUmy,Cuba,Mayabeque,玛雅贝克省
+CUcm,Cuba,Camagüey,卡马圭省
+CUgr,Cuba,Granma,格拉玛省
+CUgu,Cuba,Guantánamo,关塔那摩省
+CUho,Cuba,Holguín,奥尔金省
+CUij,Cuba,Isla de la Juventud,青年岛特区
+CUlh,Cuba,La Habana,哈瓦那省
+CUlt,Cuba,Las Tunas,拉斯图纳斯省
+CUma,Cuba,Matanzas,马坦萨斯省
+CUpr,Cuba,Pinar del Río,比那尔德里奥省
+CUsc,Cuba,Santiago de Cuba,圣地亚哥省
+CUss,Cuba,Sancti Spíritus,圣斯皮里图斯省
+CUvc,Cuba,Villa Clara,比亚克拉拉省
+CW,Curaçao,,库拉索
+CY,Cyprus,,塞浦路斯
+CZ,Czech Republic,,捷克共和国
+CD,Democratic Republic of the Congo,,刚果民主共和国
+CDbc,Democratic Republic of the Congo,Kongo Central,中刚果省
+CDbnkg,Democratic Republic of the Congo,Kwango,宽果省
+CDbnku,Democratic Republic of the Congo,Kwilu,奎卢省
+CDbnma,Democratic Republic of the Congo,Mai-Ndombe,马伊恩东贝省
+CDeqet,Democratic Republic of the Congo,Équateur,赤道省
+CDeqtp,Democratic Republic of the Congo,Tshuapa,楚阿帕省
+CDeqmo,Democratic Republic of the Congo,Mongala,蒙加拉省
+CDeqnu,Democratic Republic of the Congo,Nord-Ubangi,北乌班吉省
+CDeqsu,Democratic Republic of the Congo,Sud-Ubangi,南乌班吉省
+CDhcbu,Democratic Republic of the Congo,Bas-Uele,下韦莱省
+CDhchu,Democratic Republic of the Congo,Haut-Uele,上韦莱省
+CDhcit,Democratic Republic of the Congo,Ituri,伊图利省
+CDhcto,Democratic Republic of the Congo,Tshopo,乔波省
+CDkcll,Democratic Republic of the Congo,Kasaï-Central,卢卢阿省
+CDkcks,Democratic Republic of the Congo,Kasaï,开赛省
+CDkn,Democratic Republic of the Congo,Kinshasa City,金沙萨
+CDkrlm,Democratic Republic of the Congo,Lomami,洛马米省
+CDkrsn,Democratic Republic of the Congo,Sankuru,桑库鲁省
+CDkrko,Democratic Republic of the Congo,Kasaï-Oriental,东开赛省
+CDkttg,Democratic Republic of the Congo,Tanganyika,坦噶尼喀省
+CDkthl,Democratic Republic of the Congo,Haut-Lomami,上洛马米省
+CDktlb,Democratic Republic of the Congo,Lualaba,卢阿拉巴省
+CDkthk,Democratic Republic of the Congo,Haut-Katanga,上加丹加省
+CDmn,Democratic Republic of the Congo,Maniema,马涅马省
+CDnk,Democratic Republic of the Congo,Nord-Kivu,北基伍省
+CDsk,Democratic Republic of the Congo,Sud-Kivu,南基伍省
+DK,Denmark,,丹麦
+DJ,Djibouti,,吉布提
+DM,Dominica,,多米尼克
+DO,Dominican Republic,,多米尼加共和国
+EC,Ecuador,,厄瓜多尔
+ECeo,Ecuador,El Oro,埃尔奥罗
+ECes,Ecuador,Esmeraldas,埃斯梅拉尔达斯
+ECgugu,Ecuador,Guayas,瓜亚斯
+ECguse,Ecuador,Santa Elena,圣埃伦娜省
+EClr,Ecuador,Los Ríos,洛斯里奥斯
+ECmn,Ecuador,Manabí,马纳比
+ECga,Ecuador,Galápagos,加拉帕戈斯
+ECms,Ecuador,Morona-Santiago,莫罗纳-圣地亚哥省
+ECna,Ecuador,Napo,纳波
+ECor,Ecuador,Orellana,奥雷利亚纳
+ECpa,Ecuador,Pastaza,帕斯塔萨
+ECsu,Ecuador,Sucumbíos,苏昆毕奥斯
+ECzc,Ecuador,Zamora-Chinchipe,萨莫拉-钦奇佩省
+ECaz,Ecuador,Azuay,阿苏艾
+ECbo,Ecuador,Bolívar,玻利瓦尔
+ECcb,Ecuador,Chimborazo,钦博拉索
+ECcn,Ecuador,Cañar,卡尼亚尔
+ECcr,Ecuador,Carchi,卡尔奇
+ECct,Ecuador,Cotopaxi,科托帕希
+ECim,Ecuador,Imbabura,因巴布拉
+EClj,Ecuador,Loja,洛哈
+ECpipi,Ecuador,Pichincha,皮钦查
+ECpisd,Ecuador,Santo Domingo de los Tsáchilas,圣多明各省
+ECtu,Ecuador,Tungurahua,通古拉瓦
+EG,Egypt,,埃及
+EGan,Egypt,Aswan,阿斯旺
+EGat,Egypt,Asyut,艾斯尤特省
+EGba,Egypt,Red Sea,红海
+EGbh,Egypt,Beheira,布海拉省
+EGbn,Egypt,Beni Suef,贝尼苏韦夫省
+EGbs,Egypt,Port Said,塞得港省
+EGdq,Egypt,Dakahlia,代盖赫利耶省
+EGdt,Egypt,Damietta,杜姆亚特省
+EGfy,Egypt,Faiyum,法尤姆省
+EGgh,Egypt,Gharbia,西部省
+EGik,Egypt,Alexandria,亚历山大省
+EGis,Egypt,Ismailia,伊斯梅利亚省
+EGjs,Egypt,South Sinai,南西奈省
+EGjz,Egypt,Giza,吉萨省
+EGks,Egypt,Kafr El Sheikh,谢赫村省
+EGmf,Egypt,Monufia,米努夫省
+EGmn,Egypt,Minya,明亚省
+EGmt,Egypt,Matruh,马特鲁省
+EGqh,Egypt,Cairo,开罗
+EGhu,Egypt,Helwan,赫勒万省
+EGql,Egypt,Qalyubia,盖卢比尤省
+EGqn,Egypt,Qena,基纳省
+EGsj,Egypt,Sohag,索哈杰省
+EGsq,Egypt,Sharqia,东部省
+EGss,Egypt,North Sinai,北西奈省
+EGsw,Egypt,Suez,苏伊士省
+EGuq,Egypt,Luxor,卢克索省
+EGwj,Egypt,New Valley,新河谷省
+SV,El Salvador,,萨尔瓦多
+GQ,Equatorial Guinea,,赤道几内亚
+GQcs,Equatorial Guinea,Centro Sur,中南省
+GQkn,Equatorial Guinea,Kié-Ntem,基埃-恩特姆省
+GQli,Equatorial Guinea,Litoral,滨海省
+GQwn,Equatorial Guinea,Wele-Nzás,韦莱-恩萨斯省
+GQbn,Equatorial Guinea,Bioko Norte,北比奥科省
+GQbs,Equatorial Guinea,Bioko Sur,南比奥科省
+GQan,Equatorial Guinea,Annobon,安诺本省
+ER,Eritrea,,厄立特里亚
+EE,Estonia,,爱沙尼亚
+ET,Ethiopia,,埃塞俄比亚
+ETaa,Ethiopia,Addis Ababa,亚的斯亚贝巴
+ETaf,Ethiopia,Afar,阿法尔州
+ETam,Ethiopia,Amhara,阿姆哈拉州
+ETbe,Ethiopia,Benshangul-Gumaz,本尚古勒-古马兹州
+ETdd,Ethiopia,Dire Dawa,德雷达瓦市
+ETga,Ethiopia,Gambela Peoples,甘贝拉州
+ETha,Ethiopia,Harari People,哈勒尔州
+ETor,Ethiopia,Oromia,奥罗米亚州
+ETsn,Ethiopia,Southern Nations，Nationalities and Peoples,南方民族部落和人民州
+ETso,Ethiopia,Somali,索马里州
+ETti,Ethiopia,Tigray,提格雷州
+FK,Falkland Islands (Malvinas),,马尔维纳斯群岛
+FO,Faroe Islands,,法罗群岛
+FJ,Fiji,,斐济
+FI,Finland,,芬兰
+FR,France,,法国
+FRge,France,Grand Est,大东大区
+FRbf,France,Bourgogne-Franche-Comté,勃艮第- 弗朗什孔泰大区
+FRbr,France,Bretagne,布列塔尼大区
+FRce,France,Centre-Val de Loire,中央-卢瓦尔谷大区
+FRco,France,Corse,科西嘉大区
+FRif,France,Île-de-france,法兰西岛大区
+FRoc,France,Occitanie,奥克西塔尼大区
+FRnm,France,Normandie,诺曼底大区
+FRhf,France,Hauts-de-France,上法兰西大区
+FRpl,France,Pays de la Loire,卢瓦尔河地区大区
+FRna,France,Nouvelle-Aquitaine,新阿基坦大区
+FRar,France,Auvergne-Rhône-Alpes,奥弗涅-罗讷-阿尔卑斯大区
+FRpr,France,Provence-Alpes-Côte d'Azur,普罗旺斯-阿尔卑斯-蓝色海岸大区
+GF,French Guiana,,法属圭亚那
+PF,French Polynesia,,法属波利尼西亚
+TF,French Southern Territory,,法属南部领地
+GA,Gabon,,加蓬
+GAes,Gabon,Estuaire,河口
+GAho,Gabon,Haut-Ogooué,上奥果韦
+GAmo,Gabon,Moyen-Ogooué,中奥果韦
+GAng,Gabon,Ngounié,恩古涅
+GAny,Gabon,Nyanga,尼扬加
+GAoi,Gabon,Ogooué-Ivindo,奥果韦-伊温多
+GAol,Gabon,Ogooué-Lolo,奥果韦-洛洛
+GAom,Gabon,Ogooué-Maritime,滨海奥果韦
+GAwn,Gabon,Woleu-Ntem,沃勒-恩特姆
+GM,Gambia,,冈比亚
+GE,Georgia,,格鲁吉亚
+DE,Germany,,德国
+DEbb,Germany,Brandenburg,勃兰登堡
+DEbe,Germany,Berlin,柏林
+DEbw,Germany,Baden-Wurttemberg,巴登-符腾堡
+DEby,Germany,Bavaria,巴伐利亚
+DEhb,Germany,Bremen,不来梅
+DEhe,Germany,Hesse,黑森
+DEhh,Germany,Hamburg,汉堡
+DEmv,Germany,Mecklenburg-West Pomerania,梅克伦堡-前波美拉尼亚
+DEni,Germany,Lower Saxony,下萨克森
+DEnw,Germany,North Rhine-Westphalia,北莱茵-威斯特法伦
+DErp,Germany,Rhineland-Palatinate,莱茵兰-普法尔茨
+DEsh,Germany,Schleswig-Holstein,石勒苏益格-荷尔斯泰因
+DEsl,Germany,Saarland,萨尔
+DEsn,Germany,Saxony,萨克森自由州
+DEst,Germany,Saxony-Anhalt,萨克森-安哈尔特
+DEth,Germany,Thuringia,图林根
+GH,Ghana,,加纳
+GI,Gibraltar,,直布罗陀
+GR,Greece,,希腊
+GL,Greenland,,格陵兰
+GLku,Greenland,Kujalleq,库雅雷克
+GLuo,Greenland,Northeast Greenland National Park,东北格陵兰国家公园
+GLqs,Greenland,Qaasuitsup,卡苏伊特萨普
+GLqt,Greenland,Qeqqata,凯克卡塔
+GLse,Greenland,Sermersooq,瑟莫苏克
+GD,Grenada,,格林纳达
+GP,Guadeloupe,,瓜德罗普
+GU,Guam,,关岛
+GT,Guatemala,,危地马拉
+GTav,Guatemala,Alta Verapaz,上韦拉帕斯省
+GTbv,Guatemala,Baja Verapaz,下韦拉帕斯省
+GTcm,Guatemala,Chimaltenango,奇马尔特南戈省
+GTcq,Guatemala,Chiquimula,奇基穆拉省
+GTes,Guatemala,Escuintla,埃斯昆特拉省
+GTgu,Guatemala,Guatemala,危地马拉省
+GThu,Guatemala,Huehuetenango,韦韦特南戈省
+GTiz,Guatemala,Izabal,伊萨瓦尔省
+GTja,Guatemala,Jalapa,哈拉帕省
+GTju,Guatemala,Jutiapa,胡蒂亚帕省
+GTpe,Guatemala,Petén,佩滕省
+GTpr,Guatemala,El Progreso,埃尔普罗格雷索省
+GTqc,Guatemala,Quiché,基切省
+GTqz,Guatemala,Quetzaltenango,克萨尔特南戈省
+GTre,Guatemala,Retalhuleu,雷塔卢莱乌省
+GTsa,Guatemala,Sacatepéquez,萨卡特佩克斯省
+GTsm,Guatemala,San Marcos,圣马科斯省
+GTso,Guatemala,Sololá,索洛拉省
+GTsr,Guatemala,Santa Rosa,圣罗莎省
+GTsu,Guatemala,Suchitepéquez,苏奇特佩克斯省
+GTto,Guatemala,Totonicapán,托托尼卡潘省
+GTza,Guatemala,Zacapa,萨卡帕省
+UKgugg|GG,Guernsey,,根西
+GN,Guinea,,几内亚
+GW,Guinea-Bissau,,几内亚比绍
+GY,Guyana,,圭亚那
+GYba,Guyana,Barima-Waini,巴里马-瓦伊尼
+GYcu,Guyana,Cuyuni-Mazaruni,库尤尼-马扎鲁尼
+GYde,Guyana,Demerara-Mahaica,德梅拉拉-马海卡
+GYeb,Guyana,East Berbice-Corentyne,东伯比斯-科兰太因
+GYes,Guyana,Essequibo Islands-West Demerara,埃塞奎博群岛-西德梅拉拉
+GYma,Guyana,Mahaica-Berbice,马海卡-伯比斯
+GYpm,Guyana,Pomeroon-Supenaam,波默伦-苏佩纳姆
+GYpt,Guyana,Potaro-Siparuni,波塔罗-锡帕鲁尼
+GYud,Guyana,Upper Demerara-Berbice,上德梅拉拉-伯比斯
+GYut,Guyana,Upper Takutu-Upper Essequibo,上塔库图-上埃塞奎博
+HT,Haiti,,海地
+HM,Heard Island and McDonald Islands,,赫德岛和麦当劳群岛
+HN,Honduras,,洪都拉斯
+HNat,Honduras,Atlántida,阿特兰蒂达省
+HNch,Honduras,Choluteca,乔卢特卡省
+HNcl,Honduras,Colón,科隆省
+HNcm,Honduras,Comayagua,科马亚瓜省
+HNcp,Honduras,Copán,科潘省
+HNcr,Honduras,Cortés,科尔特斯省
+HNep,Honduras,El Paraíso,埃尔帕拉伊索省
+HNfm,Honduras,Francisco Morazán,弗朗西斯科-莫拉桑省
+HNgd,Honduras,Gracias a Dios,格拉西亚斯-阿迪奥斯省
+HNib,Honduras,Islas de la Bahía,海湾群岛省
+HNin,Honduras,Intibucá,因蒂布卡省
+HNle,Honduras,Lempira,伦皮拉省
+HNlp,Honduras,La Paz,拉巴斯省
+HNoc,Honduras,Ocotepeque,奥科特佩克省
+HNol,Honduras,Olancho,奥兰乔省
+HNsb,Honduras,Santa Bárbara,圣巴巴拉省
+HNva,Honduras,Valle,山谷省
+HNyo,Honduras,Yoro,约罗省
+HK,China,,香港
+HK,Hong Kong,,中国香港
+HU,Hungary,,匈牙利
+IS,Iceland,,冰岛
+IN,India,,印度
+INan,India,Andaman and Nicobar,安达曼-尼科巴群岛
+INehar,India,Arunachal Pradesh,阿鲁那恰尔邦
+INehsk,India,Sikkim,锡金邦
+INggbr,India,Bihar,比哈尔邦
+INggjh,India,Jharkhand,贾坎德邦
+INggup,India,Uttar Pradesh,北方邦
+INggwb,India,West Bengal,西孟加拉邦
+INhict,India,Chhattisgarh,恰蒂斯加尔邦
+INhimp,India,Madhya Pradesh,中央邦
+INhior,India,Orissa,奥里萨邦
+INld,India,Lakshadweep,拉克沙群岛
+INneas,India,Assam,阿萨姆邦
+INneml,India,Meghalaya,梅加拉亚邦
+INnemn,India,Manipur,曼尼普尔邦
+INnemz,India,Mizoram,米佐拉姆邦
+INnenl,India,Nagaland,那加兰邦
+INnetr,India,Tripura,特里普拉邦
+INnwdl,India,Delhi,德里
+INnwgj,India,Gujarat,古吉拉特邦
+INnwhr,India,Haryana,哈里亚纳邦
+INnwpb,India,Punjab,旁遮普邦
+INnwrj,India,Rajasthan,拉贾斯坦邦
+INseap,India,Andhra Pradesh,安得拉邦
+INsete,India,Telangana,特伦甘纳邦
+INsepy,India,Pondicherry,本地治里
+INsetn,India,Tamil Nadu,泰米尔纳德邦
+INnwdd,India,Daman and Diu,达曼-第乌
+INnwdn,India,Dadra and Nagar Haveli,达德拉-纳加尔哈维利
+INswga,India,Goa,果阿邦
+INswka,India,Karnataka,卡纳塔克邦
+INswkl,India,Kerala,喀拉拉邦
+INswmh,India,Maharashtra,马哈拉施特拉邦
+INwhch,India,Chandigarh,昌迪加尔
+INwhhp,India,Himachal Pradesh,喜马偕尔邦
+INwhjk,India,Jammu and Kashmir,查谟和克什米尔
+INwhuk,India,Uttarakhand,北阿肯德邦
+ID,Indonesia,,印度尼西亚
+IDstac,Indonesia,Aceh Province,亚齐特区
+IDstba,Indonesia,Sumatera Barat Province,西苏门答腊省
+IDstbb,Indonesia,Bangka-Belitung Province,邦加-勿里洞省
+IDstbk,Indonesia,Bengkulu Province,明古鲁省
+IDstja,Indonesia,Jambi Province,占碑省
+IDstkr,Indonesia,Kepulauan Riau Province,廖内群岛省
+IDstlm,Indonesia,Lampung Province,楠榜省
+IDstri,Indonesia,Riau Province,廖内省
+IDstse,Indonesia,Sumatera Selatan Province,南苏门答腊省
+IDstut,Indonesia,Sumatera Utara Province,北苏门答腊省
+IDkaba,Indonesia,Kalimantan Barat Province,西加里曼丹省
+IDkatiti,Indonesia,Kalimantan Timur Province,东加里曼丹省
+IDkatiut,Indonesia,Kalimantan Utara Province,北加里曼丹省
+IDkase,Indonesia,Kalimantan Selatan Province,南加里曼丹省
+IDkate,Indonesia,Kalimantan Tengah Province,中加里曼丹省
+IDjaba,Indonesia,Jawa Barat Province,西爪哇省
+IDjabn,Indonesia,Banten Province,万丹省
+IDjara,Indonesia,Jakarta Raya Province,雅加达
+IDjate,Indonesia,Jawa Tengah Province,中爪哇省
+IDjati,Indonesia,Jawa Timur Province,东爪哇省
+IDjayo,Indonesia,Yogyakarta Province,日惹
+IDslbr,Indonesia,Sulawesi Barat Province,西苏拉威西省
+IDslgo,Indonesia,Gorontalo Province,哥伦打洛省
+IDslse,Indonesia,Sulawesi Selatan Province,南苏拉威西省
+IDslte,Indonesia,Sulawesi Tenggara Province,东南苏拉威西省
+IDslth,Indonesia,Sulawesi Tengah Province,中苏拉威西省
+IDslut,Indonesia,Sulawesi Utara Province,北苏拉威西省
+IDlsba,Indonesia,Bali Province,巴厘省
+IDlstb,Indonesia,Nusa Tenggara Barat Province,西努沙登加拉省
+IDlstm,Indonesia,Nusa Tenggara Timur Province,东努沙登加拉省
+IDmama,Indonesia,Maluku Province,马鲁古
+IDmaut,Indonesia,Maluku Utara Province,北马鲁古省
+IDijij,Indonesia,West Papua Province,西巴布亚省
+IDijpa,Indonesia,Papua Province,巴布亚
+IR,Iran,,伊朗
+IRar,Iran,Ardebil,阿尔达比勒
+IRbk,Iran,Kermanshah,克尔曼沙汗
+IRbs,Iran,Bushehr,布什尔
+IRcm,Iran,Chahar Mahall and Bakhtiari,恰哈马哈勒-巴赫蒂亚里
+IRea,Iran,East Azarbaijan,东阿塞拜疆
+IRes,Iran,Esfahan,伊斯法罕
+IRfa,Iran,Fars,法尔斯
+IRgi,Iran,Gilan,吉兰
+IRgo,Iran,Golestan,戈勒斯坦
+IRhd,Iran,Hamadan,哈马丹
+IRhg,Iran,Hormozgan,霍尔木兹甘
+IRil,Iran,Ilam,伊拉姆
+IRkb,Iran,Kohgiluyeh and Buyer Ahmad,博韦艾哈迈德-科吉卢耶
+IRkd,Iran,Kordestan,库尔德斯坦
+IRke,Iran,Kerman,克尔曼
+IRkj,Iran,South Khorasan,南呼罗珊
+IRks,Iran,North Khorasan,北呼罗珊
+IRkv,Iran,Razavi Khorasan,呼罗珊
+IRkz,Iran,Khuzestan,胡齐斯坦
+IRlo,Iran,Lorestan,洛雷斯坦
+IRmk,Iran,Markazi,中央
+IRmn,Iran,Mazandaran,马赞德兰
+IRqm,Iran,Qom,库姆
+IRqz,Iran,Qazvin,加兹温
+IRsb,Iran,Sistan and Baluchestan,锡斯坦-俾路支斯坦
+IRsm,Iran,Semnan,塞姆南
+IRth,Iran,Tehran,德黑兰
+IRal,Iran,Alborz,厄尔布尔士省
+IRwa,Iran,West Azarbaijan,西阿塞拜疆
+IRya,Iran,Yazd,亚兹德
+IRza,Iran,Zanjan,赞詹
+IQ,Iraq,,伊拉克
+IQan,Iraq,Al-Anbar,安巴尔
+IQar,Iraq,Arbil,埃尔比勒
+IQba,Iraq,Al-Basrah,巴士拉
+IQbb,Iraq,Babil,巴比伦
+IQbg,Iraq,Baghdad,巴格达
+IQda,Iraq,Dahuk,杜胡克
+IQdi,Iraq,Diyala,迪亚拉
+IQdq,Iraq,Dhi Qar,济加尔
+IQka,Iraq,Karbala',卡尔巴拉
+IQma,Iraq,Maysan,米桑
+IQmu,Iraq,Al-Muthanna,穆萨纳
+IQna,Iraq,An-Najaf,纳杰夫
+IQni,Iraq,Ninawa,尼尼微省
+IQqa,Iraq,Al-Qadisiyah,卡迪西亚
+IQsd,Iraq,Salah ad-Din,萨拉赫丁
+IQsu,Iraq,As-Sulaymaniyah,苏莱曼尼亚
+IQts,Iraq,At-Ta'mim,基尔库克省
+IQwa,Iraq,Wasit,瓦西特
+IE,Ireland,,爱尔兰
+IE01,Ireland,Connaught,康诺特省
+IE02,Ireland,Leinster,伦斯特省
+IE03,Ireland,Munster,穆斯特省
+IE04,Ireland,Ulster,阿尔斯特省
+UKim|IM,Isle of Man,,马恩岛
+IL,Israel,,以色列
+IT,Italy,,意大利
+ITva,Italy,Val d'Aosta,瓦莱·达奥斯塔
+ITpi,Italy,Piemonte,皮埃蒙特
+ITli,Italy,Liguria,利古里亚
+ITlo,Italy,Lombardia,伦巴第
+ITtr,Italy,Trentino Alto Adige,特伦蒂诺-上阿迪杰
+ITve,Italy,Veneto,威尼托
+ITfr,Italy,Friuli Venezia Giulia,弗留利-威尼斯·朱利亚
+ITer,Italy,Emilia Romagna,艾米利亚-罗马涅
+ITto,Italy,Toscana,托斯卡纳
+ITma,Italy,Marche,马尔凯
+ITum,Italy,Umbria,翁布里亚
+ITla,Italy,Lazio,拉齐奥
+ITab,Italy,Abruzzo,阿布鲁佐
+ITmo,Italy,Molise,莫利塞
+ITca,Italy,Campania,坎帕尼亚
+ITpu,Italy,Puglia,普利亚
+ITba,Italy,Basilicata,巴西利卡塔
+ITcb,Italy,Calabria,卡拉布里亚
+ITsi,Italy,Sicilia,西西里
+ITsa,Italy,Sardegna,撒丁
+JM,Jamaica,,牙买加
+JP,Japan,,日本
+JPhk,Japan,Hokkaido,北海道
+JPhoai,Japan,Aichi,爱知县
+JPhofi,Japan,Fukui,福井县
+JPhogf,Japan,Gifu,岐阜县
+JPhois,Japan,Ishikawa,石川县
+JPhoni,Japan,Niigata,新潟县
+JPhonn,Japan,Nagano,长野县
+JPhosz,Japan,Shizuoka,静冈县
+JPhoty,Japan,Toyama,富山县
+JPhoyn,Japan,Yamanashi,山梨县
+JPhoch,Japan,Chiba,o�叶县
+JPhogm,Japan,Gunma,群马县
+JPhoib,Japan,Ibaraki,茨城县
+JPhokn,Japan,Kanagawa,神奈川县
+JPhost,Japan,Saitama,埼玉县
+JPhotc,Japan,Tochigi,栃木县
+JPhotk,Japan,Tokyo,东京都
+JPhoak,Japan,Akita,秋田县
+JPhoao,Japan,Aomori,青森县
+JPhofs,Japan,Fukushima,福岛县
+JPhoiw,Japan,Iwate,岩手县
+JPhomg,Japan,Miyagi,宫城县
+JPhoyt,Japan,Yamagata,山形县
+JPhohg,Japan,Hyogo,兵库县
+JPhoky,Japan,Kyoto,京都府
+JPhome,Japan,Mie,三重县
+JPhonr,Japan,Nara,奈良县
+JPhoos,Japan,Osaka,大阪府
+JPhosh,Japan,Shiga,滋贺县
+JPhowk,Japan,Wakayama,和歌山县
+JPhohs,Japan,Hiroshima,广岛县
+JPhooy,Japan,Okayama,冈山县
+JPhosm,Japan,Shimane,岛根县
+JPhott,Japan,Tottori,鸟取县
+JPhoyc,Japan,Yamaguchi,山口县
+JPkyfo,Japan,Fukuoka,福冈县
+JPkykm,Japan,Kumamoto,熊本县
+JPkyks,Japan,Kagoshima,鹿儿岛县
+JPkymz,Japan,Miyazaki,宫崎县
+JPkyns,Japan,Nagasaki,长崎县
+JPkyot,Japan,Oita,大分县
+JPkysg,Japan,Saga,佐贺县
+JPsheh,Japan,Ehime,爱媛县
+JPshkc,Japan,Kochi,高知县
+JPshkg,Japan,Kagawa,香川县
+JPshts,Japan,Tokushima,德岛县
+JPon,Japan,Okinawa,冲绳县
+UKje|JE,Jersey,,泽西
+JO,Jordan,,约旦
+KZ,Kazakhstan,,哈萨克斯坦
+KZam,Kazakhstan,Aqmola,阿克莫拉
+KZat,Kazakhstan,Aqtöbe,阿克托别
+KZar,Kazakhstan,Atyrau,阿特劳
+KZek,Kazakhstan,East Kazakhstan,东哈萨克斯坦
+KZmg,Kazakhstan,Mangghystau,曼格斯套州
+KZnk,Kazakhstan,North Kazakhstan,北哈萨克斯坦
+KZpa,Kazakhstan,Pavlodar,巴甫洛达尔
+KZqg,Kazakhstan,Qaraghandy,卡拉干达
+KZqs,Kazakhstan,Qostanay,科斯塔奈
+KZqo,Kazakhstan,Qyzylorda,克孜勒奥尔达州
+KZsk,Kazakhstan,South Kazakhstan,南哈萨克斯坦
+KZwk,Kazakhstan,West Kazakhstan,西哈萨克斯坦
+KZzm,Kazakhstan,Zhambyl,江布尔州
+KE,Kenya,,肯尼亚
+KEcekb,Kenya,Kiambu,基安布
+KEceky,Kenya,Kirinyaga,基里尼亚加
+KEcemu,Kenya,Murang'a,穆兰卡
+KEcenn,Kenya,Nyandarua,年达鲁阿
+KEceny,Kenya,Nyeri,涅里
+KEcokf,Kenya,Kilifi,基里菲
+KEcokw,Kenya,Kwale,夸勒
+KEcolm,Kenya,Lamu,拉穆
+KEcomm,Kenya,Mombasa,蒙巴萨
+KEcott,Kenya,Taita-Taveta,泰塔塔维塔
+KEcotr,Kenya,Tana River,塔纳河
+KEeaeb,Kenya,Embu,恩布
+KEeais,Kenya,Isiolo,伊希约洛
+KEeakt,Kenya,Kitui,基图伊
+KEeamc,Kenya,Machakos,马查科斯
+KEeamk,Kenya,Makueni,马瓜尼
+KEeamb,Kenya,Marsabit,马萨布布
+KEeame,Kenya,Meru,梅鲁
+KEeant,Kenya,Tharaka-Nithi,尼蒂
+KEna,Kenya,Nairobi Area,内罗毕地区
+KEnega,Kenya,Garissa,加里萨
+KEnemd,Kenya,Mandera,曼德拉
+KEnewj,Kenya,Wajir,瓦吉尔
+KEnyhb,Kenya,Homa Bay,霍马湾
+KEnyki,Kenya,Kisii,基西
+KEnyku,Kenya,Kisumu,基苏木
+KEnymg,Kenya,Migori,米戈利
+KEnynm,Kenya,Nyamira,尼亚米拉
+KEnysi,Kenya,Siaya,夏亚
+KErvba,Kenya,Baringo,巴林戈
+KErvbo,Kenya,Bomet,博美特
+KErvem,Kenya,Elgeyo-Marakwet,埃尔格约-马拉奎特
+KErvkj,Kenya,Kajiado,卡耶亚多
+KErvkr,Kenya,Kericho,凯里乔
+KErvlk,Kenya,Laikipia,莱基皮亚
+KErvnk,Kenya,Nakuru,纳库鲁
+KErvna,Kenya,Nandi,南迪
+KErvnr,Kenya,Narok,纳罗克
+KErvsa,Kenya,Samburu,桑布卢
+KErvtn,Kenya,Trans Nzoia,特兰斯-恩佐亚
+KErvtu,Kenya,Turkana,图尔卡纳
+KErvug,Kenya,Uasin Gishu,瓦辛基苏
+KErvwp,Kenya,West Pokot,西波克特
+KEwebn,Kenya,Bungoma,邦戈马
+KEwebs,Kenya,Busia,布希亚
+KEwekk,Kenya,Kakamega,卡卡梅加
+KEwevi,Kenya,Vihiga,韦希加
+KI,Kiribati,,基里巴斯
+KW,Kuwait,,科威特
+KG,Kyrgyzstan,,吉尔吉斯斯坦
+LA,Laos,,老挝
+LV,Latvia,,拉托维亚
+LB,Lebanon,,黎巴嫩
+LS,Lesotho,,莱索托
+LR,Liberia,,利比里亚
+LY,Libya,,利比亚
+LYaw,Libya,Al Wahat,瓦哈特
+LYxxba,Libya,Benghazi,班加西
+LYxxdr,Libya,Darnah,德尔纳
+LYxxju,Libya,Al Jufrah,朱夫拉
+LYjg,Libya,Al Jabal al Gharbi,西山省
+LYxxja,Libya,Al Jabal al Akhdar,绿山
+LYxxji,Libya,Al Jifarah,吉法拉省
+LYxxkf,Libya,Al Kufrah,库夫拉
+LYxxmj,Libya,Al Marj,迈尔季
+LYxxmb,Libya,Al Marqab,迈尔盖卜省
+LYxxmi,Libya,Misratah,米苏拉塔
+LYxxnq,Libya,An Nuqat al Khams,尼盖特胡姆斯
+LYxxsb,Libya,Sabha,塞卜哈
+LYxxsr,Libya,Surt,苏尔特
+LYxxwd,Libya,Wadi al Hayat,瓦迪哈耶特省
+LYws,Libya,Wadi ash Shati',沙提省
+LYxxaj,Libya,Ajdabiya,艾季达比耶
+LYxxbu,Libya,Al Butnan,布特南省
+LYxxbw,Libya,Bani Walid,拜尼沃利德
+LYxxgd,Libya,Ghadamis,加达米斯
+LYxxgr,Libya,Gharyan,盖尔扬
+LYxxhz,Libya,Al Hizam al Akhdar,绿带省
+LYxxsh,Libya,Ash Shati',沙提
+LYxxtb,Libya,Tarabulus,的黎波里
+LYxxwa,Libya,Al Wahah,绿洲省
+LYxxyj,Libya,Yafran-Jadu,耶夫兰省
+LYxxza,Libya,Az Zawiyah,扎维耶
+LI,Liechtenstein,,列支敦士登
+LT,Lithuania,,立陶宛
+LU,Luxembourg,,卢森堡
+MO,China,,澳门
+MO,Macao,,中国澳门
+MG,Madagascar,,马达加斯加
+MGas,Madagascar,Antsiranana,安齐拉纳纳
+MGav,Madagascar,Antananarivo,塔那那利佛
+MGfi,Madagascar,Fianarantsoa,菲亚纳兰楚阿
+MGma,Madagascar,Mahajanga,马哈赞加
+MGtl,Madagascar,Toliara,图利亚拉
+MGtm,Madagascar,Toamasina,图阿马西拉
+MW,Malawi,,马拉维
+MY,Malaysia,,马来西亚
+MYsa,Malaysia,Sarawak,砂捞越
+MYsb,Malaysia,Sabah,沙巴
+MYbola,Malaysia,Labuan,纳闽直辖区
+MYmajh,Malaysia,Johor,柔佛州
+MYmakh,Malaysia,Kedah,吉打州
+MYmakl,Malaysia,Kuala Lumpur,吉隆坡直辖区
+MYmakn,Malaysia,Kelantan,吉兰丹州
+MYmame,Malaysia,Melaka,马六甲州
+MYmans,Malaysia,Negeri Sembilan,森美兰
+MYmapg,Malaysia,Pulau Pinang,槟榔屿州
+MYmaph,Malaysia,Pahang,彭亨州
+MYmapj,Malaysia,Putrajaya,布城直辖区
+MYmapk,Malaysia,Perak,霹雳州
+MYmapl,Malaysia,Perlis,玻璃市州
+MYmasl,Malaysia,Selangor,雪兰莪州
+MYmate,Malaysia,Terengganu,登嘉楼州
+MV,Maldives,,马尔代夫
+ML,Mali,,马里
+MLba,Mali,Bamako,巴马科
+MLga,Mali,Gao,加奥
+MLkd,Mali,Kidal,基达尔
+MLkk,Mali,Koulikoro,库利科罗
+MLky,Mali,Kayes,卡伊
+MLmo,Mali,Mopti,莫普提
+MLsg,Mali,Ségou,塞古
+MLsk,Mali,Sikasso,锡卡索
+MLtb,Mali,Timbuktu,通布图
+MT,Malta,,马耳他
+MH,Marshall Islands,,马绍尔群岛
+MQ,Martinique,,马提尼克
+MR,Mauritania,,毛里塔尼亚
+MRad,Mauritania,Adrar,阿德拉尔大区
+MRas,Mauritania,Assaba,阿萨巴省
+MRbr,Mauritania,Brakna,卜拉克纳大区
+MRdn,Mauritania,Dakhlet Nouadhibou,努瓦迪布湾大区
+MRgd,Mauritania,Guidimaka,吉迪马卡大区
+MRgo,Mauritania,Gorgol,戈尔戈勒大区
+MRhc,Mauritania,Hodh ech Chargui,西胡德大区
+MRhg,Mauritania,Hodh el Gharbi,东胡德大区
+MRin,Mauritania,Inchiri,因希里大区
+MRno,Mauritania,Nouakchott,努瓦克肖特
+MRtg,Mauritania,Tagant,塔甘特大区
+MRtr,Mauritania,Trarza,特拉扎大区
+MRtz,Mauritania,Tiris Zemmour,提里斯-宰穆尔大区
+MU,Mauritius,,毛里求斯
+YT,Mayotte,,马约特
+MX,Mexico,,墨西哥
+MXbn,Mexico,Baja California,下加里福尼亚
+MXbs,Mexico,Baja California Sur,南下加里福尼亚
+MXso,Mexico,Sonora,索诺拉
+MXch,Mexico,Chihuahua,奇瓦瓦
+MXco,Mexico,Coahuila,科阿韦拉
+MXnu,Mexico,Nuevo León,新莱昂
+MXta,Mexico,Tamaulipas,塔毛利帕斯
+MXsi,Mexico,Sinaloa,锡那罗亚
+MXdu,Mexico,Durango,杜兰戈
+MXza,Mexico,Zacatecas,萨卡特卡斯
+MXsl,Mexico,San Luis Potosí,圣路易斯波托亚
+MXna,Mexico,Nayarit,纳亚里特
+MXja,Mexico,Jalisco,哈利斯科
+MXag,Mexico,Aguascalientes,阿瓜斯卡连特斯
+MXgt,Mexico,Guanajuato,瓜纳华托
+MXqu,Mexico,Querétaro,克雷塔罗
+MXhi,Mexico,Hidalgo,伊达尔戈
+MXcl,Mexico,Colima,科利马
+MXmi,Mexico,Michoacán,米却肯
+MXme,Mexico,México,墨西哥
+MXtl,Mexico,Tlaxcala,特拉斯卡拉
+MXpu,Mexico,Puebla,普埃布拉
+MXfe,Mexico,Distrito Federal,联邦区
+MXmo,Mexico,Morelos,莫雷洛斯
+MXgr,Mexico,Guerrero,格雷罗
+MXve,Mexico,Veracruz,韦拉克鲁斯
+MXoa,Mexico,Oaxaca,瓦哈卡
+MXtb,Mexico,Tabasco,塔瓦斯科
+MXcs,Mexico,Chiapas,恰帕斯
+MXca,Mexico,Campeche,坎佩切
+MXyp,Mexico,Yucatán,尤卡坦
+MXqn,Mexico,Quintana Roo,金塔纳罗奥
+FM,Micronesia,,密克罗尼西亚
+FMya,Micronesia,Yap,雅浦州
+FMch,Micronesia,Chuuk,丘克州
+FMko,Micronesia,Kosrae,科斯雷州
+FMpo,Micronesia,Pohnpei,波纳佩州
+MD,Moldova,,摩尔多瓦
+MC,Monaco,,摩纳哥
+MN,Mongolia,,蒙古
+MNar,Mongolia,Arhangay,后杭爱省
+MNbh,Mongolia,Bayanhongor,巴彦洪戈尔省
+MNbo,Mongolia,Bayan-Ölgiy,巴彦乌列盖省
+MNbu,Mongolia,Bulgan,布尔干省
+MNda,Mongolia,Darhan-Uul,达尔汗乌拉省
+MNdd,Mongolia,Dornod,东方省
+MNdg,Mongolia,Dornogovi,东戈壁省
+MNdu,Mongolia,Dundgovi,中戈壁省
+MNdz,Mongolia,Dzavhan,扎布汗省
+MNer,Mongolia,Orhon,鄂尔浑省
+MNga,Mongolia,Govi-Altay,戈壁阿尔泰省
+MNgs,Mongolia,Govisumber,戈壁阿尔泰省
+MNhd,Mongolia,Hovd,科布多省
+MNhg,Mongolia,Hövsgöl,库苏古尔湖
+MNhn,Mongolia,Hentiy,肯特省
+MNog,Mongolia,Ömnögovi,南戈壁省
+MNoh,Mongolia,Övörhangay,前杭爱省
+MNsb,Mongolia,Sühbaatar,苏赫巴托尔省
+MNsl,Mongolia,Selenge,色楞格省
+MNto,Mongolia,Töv,中央省
+MNub,Mongolia,Ulaanbaatar,乌兰巴托
+MNuv,Mongolia,Uvs,乌布苏省
+ME,Montenegro,,黑山
+MS,Montserrat,,蒙特塞拉特
+MA,Morocco,,摩洛哥
+MZ,Mozambique,,莫桑比克
+MZcd,Mozambique,Cabo Delgado,德尔加杜角
+MZga,Mozambique,Gaza,加扎
+MZin,Mozambique,Inhambane,伊尼扬巴内
+MZmn,Mozambique,Manica,马尼卡
+MZmp,Mozambique,Maputo,马普托
+MZnm,Mozambique,Nampula,楠普拉
+MZns,Mozambique,Niassa,尼亚萨
+MZso,Mozambique,Sofala,索法拉
+MZte,Mozambique,Tete,太特
+MZza,Mozambique,Zambezia,赞比西亚
+MM,Myanmar,,缅甸
+MMay,Myanmar,Ayeyarwady,伊洛瓦底省
+MMba,Myanmar,Bago,勃固
+MMch,Myanmar,Chin,钦邦
+MMkc,Myanmar,Kachin,克钦邦
+MMkh,Myanmar,Kayah,克耶邦
+MMkn,Myanmar,Kayin,克伦邦
+MMmdmd,Myanmar,Mandalay,曼德勒
+MMmdny,Myanmar,Naypyitaw,内比都
+MMmg,Myanmar,Magway,马圭
+MMmo,Myanmar,Mon,孟邦
+MMra,Myanmar,Rakhine,若开邦
+MMsa,Myanmar,Sagaing,实皆省
+MMsh,Myanmar,Shan,掸邦
+MMtn,Myanmar,Tanintharyi,德林达依省
+MMya,Myanmar,Yangon,仰光
+NA,Namibia,,纳米比亚
+NAca,Namibia,Caprivi,卡普里维
+NAer,Namibia,Erongo,埃龙戈
+NAha,Namibia,Hardap,哈达普
+NAka,Namibia,Karas,卡拉斯
+NAkh,Namibia,Khomas,霍马斯
+NAku,Namibia,Kunene,库内内
+NAod,Namibia,Otjozondjupa,奥乔宗蒂约巴
+NAoh,Namibia,Omaheke,奥马赫科
+NAok,Namibia,Okavango,奥卡万戈
+NAke,Namibia,Kavango East,奥卡万戈东
+NAkw,Namibia,Kavango West,奥卡万戈西
+NAon,Namibia,Oshana,奥沙纳
+NAos,Namibia,Omusati,奥姆沙蒂
+NAot,Namibia,Oshikoto,奥希科托
+NAow,Namibia,Ohangwena,奥汉圭纳
+NR,Nauru,,瑙鲁
+NP,Nepal,,尼泊尔
+NAN,Netherlands Antilles,,荷属安的列斯
+NL,Netherlands,,荷兰
+NC,New Caledonia,,新喀里多尼亚
+NZ,New Zealand,,新西兰
+NZsica,New Zealand,Canterbury,坎特伯雷
+NZsiot,New Zealand,Otago,奥塔戈
+NZsiso,New Zealand,Southland,南地
+NZsiwc,New Zealand,West Coast,西岸
+NZsima,New Zealand,Marlborough District,马尔堡
+NZsine,New Zealand,Nelson City,尼尔逊
+NZsits,New Zealand,Tasman District,塔斯曼
+NZniau,New Zealand,Auckland,奥克兰
+NZnibp,New Zealand,Bay of Plenty,普伦蒂湾
+NZnihb,New Zealand,Hawke's Bay,霍克湾
+NZnimw,New Zealand,Manawatu-Wanganui,玛纳瓦图/旺格努伊
+NZnino,New Zealand,Northland,北地
+NZnitk,New Zealand,Taranaki,塔拉那基
+NZniwk,New Zealand,Waikato,怀卡托
+NZniwg,New Zealand,Wellington,惠灵顿
+NZnigi,New Zealand,Gisborne District,吉斯伯恩
+NZch,New Zealand,Chatham Islands,查塔姆群岛
+NI,Nicaragua,,尼加拉瓜
+NIze,Nicaragua,Zelaya (former department),塞拉亚省
+NIan,Nicaragua,Región Autónoma del Atlántico Norte,北加勒比海岸自治区
+NIas,Nicaragua,Región Autónoma del Atlántico Sur,南加勒比海岸自治区
+NIbo,Nicaragua,Boaco,博阿科省
+NIca,Nicaragua,Carazo,卡拉索省
+NIci,Nicaragua,Chinandega,奇南德加省
+NIco,Nicaragua,Chontales,琼塔莱斯省
+NIes,Nicaragua,Estelí,埃斯特利省
+NIgr,Nicaragua,Granada,格拉纳达省
+NIji,Nicaragua,Jinotega,希诺特加省
+NIle,Nicaragua,León,莱昂省
+NImd,Nicaragua,Madriz,马德里斯省
+NImn,Nicaragua,Managua,马那瓜省
+NIms,Nicaragua,Masaya,马萨亚省
+NImt,Nicaragua,Matagalpa,马塔加尔帕省
+NIns,Nicaragua,Nueva Segovia,新塞哥维亚省
+NIri,Nicaragua,Rivas,里瓦斯省
+NIsj,Nicaragua,Río San Juan,圣胡安河省
+NE,Niger,,尼日尔
+NEag,Niger,Agadez,阿加德兹
+NEdf,Niger,Diffa,迪法
+NEds,Niger,Dosso,多索
+NEma,Niger,Maradi,马拉迪
+NEni,Niger,Niamey,尼亚美
+NEth,Niger,Tahoua,塔瓦
+NEtl,Niger,Tillabéry,蒂拉贝里大区
+NEzi,Niger,Zinder,津德尔
+NG,Nigeria,,尼日利亚
+NGab,Nigeria,Abia,阿比亚
+NGad,Nigeria,Adamawa,阿达玛瓦
+NGak,Nigeria,Akwa Ibom,阿夸伊博姆
+NGan,Nigeria,Anambra,阿南布拉
+NGba,Nigeria,Bauchi,包奇
+NGbe,Nigeria,Benue,贝努埃
+NGbo,Nigeria,Borno,博尔诺
+NGby,Nigeria,Bayelsa,巴耶尔萨
+NGcr,Nigeria,Cross River,十字河流
+NGde,Nigeria,Delta,三角州
+NGeb,Nigeria,Ebonyi,埃邦伊
+NGed,Nigeria,Edo,埃多
+NGek,Nigeria,Ekiti,埃基蒂
+NGen,Nigeria,Enugu,埃努古
+NGfc,Nigeria,Federal Capital Territory,联邦首都特区
+NGgo,Nigeria,Gombe,贡贝
+NGim,Nigeria,Imo,伊莫
+NGji,Nigeria,Jigawa,吉加瓦
+NGkd,Nigeria,Kaduna,卡杜纳
+NGke,Nigeria,Kebbi,凯比
+NGkn,Nigeria,Kano,卡诺
+NGko,Nigeria,Kogi,科吉
+NGkt,Nigeria,Katsina,卡齐纳
+NGkw,Nigeria,Kwara,夸拉
+NGla,Nigeria,Lagos,拉各斯
+NGna,Nigeria,Nassarawa,纳萨拉瓦
+NGni,Nigeria,Niger,尼日尔
+NGog,Nigeria,Ogun,奥贡
+NGon,Nigeria,Ondo,翁多
+NGos,Nigeria,Osun,奥逊
+NGoy,Nigeria,Oyo,奥约
+NGpl,Nigeria,Plateau,高原
+NGri,Nigeria,Rivers,河流
+NGso,Nigeria,Sokoto,索科托
+NGta,Nigeria,Taraba,塔拉巴
+NGyo,Nigeria,Yobe,约比
+NGza,Nigeria,Zamfara,赞法拉
+NU,Niue,,纽埃
+KP,North Korea,,朝鲜
+KPch,North Korea,Chagang-do,慈江道
+KPhg,North Korea,Hamgyong-bukto,咸镜北道
+KPhn,North Korea,Hamgyong-namdo,咸镜南道
+KPks,North Korea,Kaesong-si,开城特别市
+KPkw,North Korea,Kangwon-do,江原道
+KPnj,North Korea,Najin Sonbong-si,先锋郡
+KPpb,North Korea,P'yongan-bukto,平安北道
+KPpn,North Korea,P'yongan-namdo,平安南道
+KPpy,North Korea,P'yongyang-si,平壤
+KPwb,North Korea,Hwanghae-bukto,黄海北道
+KPwn,North Korea,Hwanghae-namdo,黄海南道
+KPyg,North Korea,Yanggang-do,两江道
+MP,Northern Mariana Islands,,北马里亚纳群岛
+NO,Norway,,挪威
+OM,Oman,,阿曼
+PK,Pakistan,,巴基斯坦
+PKba,Pakistan,Balochistan,俾路支省
+PKis,Pakistan,Islamabad,伊斯兰堡
+PKjk,Pakistan,Azad Kashmir,阿扎德克什米尔
+PKna,Pakistan,Gilgit-Baltistan,吉尔吉特-巴尔蒂斯坦
+PKnw,Pakistan,Khyber Pakhtunkhwa,开伯尔-普赫图赫瓦省
+PKpb,Pakistan,Punjab,旁遮普省
+PKsd,Pakistan,Sindh,信德省
+PKta,Pakistan,Federally Administered Tribal Areas,联邦直辖部落地区
+PW,Palau,,帕劳
+PS,Palestine,,巴勒斯坦
+PSgzda,Palestine,Deir Al-Balah,代尔拜莱赫
+PSgzga,Palestine,Gaza,加沙
+PSgzgs,Palestine,Gaza ash Shamaliyah,北加沙
+PSgzky,Palestine,Khan Yunis,汉尤尼斯
+PSgzra,Palestine,Rafah,拉法
+PSwbbe,Palestine,Bethlehem,伯利恒
+PSwbhe,Palestine,Hebron,希伯伦
+PSwbjn,Palestine,Jenin,杰宁
+PSwbje,Palestine,Jericho,杰里科
+PSwbjs,Palestine,Jerusalem,耶路撒冷
+PSwbna,Palestine,Nablus,纳布卢斯
+PSwbqa,Palestine,Qalqilya,盖勒吉利耶
+PSwbrb,Palestine,Ramallah and Al-Bireh,拉马拉和比雷赫省
+PSwbsa,Palestine,Salfit,萨尔费特
+PSwbtm,Palestine,Tulkarm,图勒凯尔姆
+PSwbtu,Palestine,Tubas,图巴斯
+PA,Panama,,巴拿马
+PG,Papua New Guinea,,巴布亚新几内亚
+PG01ch,Papua New Guinea,Chimbu,钦布省
+PG01eg,Papua New Guinea,Enga,恩加省
+PG01eh,Papua New Guinea,Eastern Highlands,东部高地省
+PG01shsh,Papua New Guinea,Southern Highlands,南部高地省
+PG01shhe,Papua New Guinea,Hela,赫拉省
+PG01whwh,Papua New Guinea,Western Highlands,西部高地省
+PG01whji,Papua New Guinea,Jiwika,吉瓦卡省
+PG02mn,Papua New Guinea,Manus,马努斯省
+PG03es,Papua New Guinea,East Sepik,东塞皮克省
+PG03md,Papua New Guinea,Madang,马当省
+PG03mr,Papua New Guinea,Morobe,莫罗贝省
+PG03sa,Papua New Guinea,Sandaun,桑道恩省
+PG04ce,Papua New Guinea,Central,中央省
+PG04gu,Papua New Guinea,Gulf,海湾省
+PG04nc,Papua New Guinea,National Capital District,国家首都区
+PG04no,Papua New Guinea,Northern,北部
+PG04we,Papua New Guinea,Western,西部
+PG04mb,Papua New Guinea,Milne Bay,米尔恩湾省
+PGni,Papua New Guinea,New Ireland Archipelago,新爱尔兰省
+PGnben,Papua New Guinea,East New Britain,东新不列颠省
+PGnbwn,Papua New Guinea,West New Britain,西新不列颠省
+PGbo,Papua New Guinea,Bougainville,布干维尔自治区
+PY,Paraguay,,巴拉圭
+PYaa,Paraguay,Alto Paraná,上巴拉那
+PYag,Paraguay,Alto Paraguay,上巴拉圭
+PYam,Paraguay,Amambay,阿曼拜
+PYas,Paraguay,Asunción,亚松森首都区
+PYbq,Paraguay,Boquerón,博克龙
+PYce,Paraguay,Central,中央
+PYcg,Paraguay,Caaguazú,卡瓜苏
+PYcn,Paraguay,Concepción,康塞普西翁
+PYcr,Paraguay,Cordillera,科迪勒拉
+PYcy,Paraguay,Canindeyú,卡嫩迪尤
+PYcz,Paraguay,Caazapá,卡萨帕
+PYgu,Paraguay,Guairá,瓜伊拉
+PYit,Paraguay,Itapúa,伊塔普亚
+PYmi,Paraguay,Misiones,米西奥内斯
+PYne,Paraguay,Ñeembucú,涅恩布库
+PYpg,Paraguay,Paraguarí,巴拉瓜里
+PYph,Paraguay,Presidente Hayes,阿耶斯总统省
+PYsp,Paraguay,San Pedro,圣佩德罗
+PE,Peru,,秘鲁
+PEhc,Peru,Huánuco,瓦努科
+PEju,Peru,Junín,胡宁
+PEpa,Peru,Pasco,帕斯科
+PElo,Peru,Loreto,洛雷托
+PEar,Peru,Arequipa,阿雷基帕
+PEan,Peru,Ancash,安卡什
+PEpi,Peru,Piura,皮乌拉
+PEtu,Peru,Tumbes,通贝斯
+PEap,Peru,Apurímac,阿普里马克
+PEcs,Peru,Cusco,库斯科
+PEmd,Peru,Madre de Dios,马德雷德迪奥斯
+PEmq,Peru,Moquegua,莫克瓜
+PEpu,Peru,Puno,普诺
+PEta,Peru,Tacna,塔克纳
+PEcl,Peru,Callao,卡亚俄
+PElr,Peru,Lima,利马
+PEay,Peru,Ayacucho,阿亚库乔
+PEhv,Peru,Huancavelica,万卡维利卡
+PEic,Peru,Ica,伊卡
+PEam,Peru,Amazonas,亚马孙
+PEcj,Peru,Cajamarca,卡哈马卡
+PElb,Peru,Lambayeque,兰巴耶克
+PEll,Peru,La Libertad,拉利伯塔德
+PEsm,Peru,San Martín,圣马丁
+PEuc,Peru,Ucayali,乌卡亚利
+PH,Philippines,,菲律宾
+PHlu,Philippines,Luzon,吕宋
+PHpn,Philippines,Panay,班乃岛
+PHne,Philippines,Negros,内格罗斯岛
+PHle,Philippines,Leyte (Island Group),莱特群岛
+PHleis,Philippines,Leyte (Island),莱特岛
+PHsa,Philippines,Samar,萨马岛
+PHmn,Philippines,Mindanao,棉兰老
+PH00,Philippines,National Capital Region,马尼拉大都会
+PH01,Philippines,Ilocos,伊罗戈区
+PH02,Philippines,Cagayan Valley,卡加延河谷
+PH03,Philippines,Central Luzon,中央吕宋
+PH05,Philippines,Bicol,比科尔区
+PH15,Philippines,Cordillera Administrative Region,科迪勒拉行政区
+PH40,Philippines,Calabarzon,卡拉巴松
+PH41,Philippines,Mimaropa,民马罗巴
+PH06,Philippines,Western Visayas,西米沙鄢
+PH07,Philippines,Central Visayas,中米沙鄢
+PH08,Philippines,Eastern Visayas,东米沙鄢
+PH09,Philippines,Zamboanga Peninsula,三宝颜半岛
+PH10,Philippines,Northern Mindanao,北棉兰老
+PH11,Philippines,Davao,达沃
+PH12,Philippines,Soccsksargen,南哥苏库萨将大区
+PH13,Philippines,Caraga,卡拉加
+PH14,Philippines,Autonomous Region in Muslim Mindanao,棉兰老穆斯林自治区
+PN,Pitcairn,,皮特凯恩
+PL,Poland,,波兰
+PLds,Poland,Dolnośląskie,下西里西亚省
+PLkp,Poland,Kujawsko-pomorskie,库亚瓦滨海
+PLlb,Poland,Lubuskie,鲁布斯卡
+PLld,Poland,Łódzkie,罗兹省
+PLlu,Poland,Lubelskie,卢布林
+PLma,Poland,Małopolskie,小波兰省
+PLmz,Poland,Mazowieckie,马佐夫舍
+PLop,Poland,Opolskie,奥波莱
+PLpd,Poland,Podlaskie,波德拉斯
+PLpk,Poland,Podkarpackie,喀尔巴阡山
+PLpm,Poland,Pomorskie,滨海
+PLsk,Poland,Świętokrzyskie,圣十字省
+PLsl,Poland,Śląskie,西里西亚省
+PLwn,Poland,Warmińsko-mazurskie,瓦尔米亚马祖尔
+PLwp,Poland,Wielkopolskie,大波兰
+PLzp,Poland,Zachodniopomorskie,西滨海
+PT,Portugal,,葡萄牙
+PTac,Portugal,Acores,亚速尔自治区
+PTbe,Portugal,Beja,贝雅区
+PTev,Portugal,Évora,埃武拉区
+PTpa,Portugal,Portalegre,波塔莱格里区
+PTfa,Portugal,Faro,法鲁区
+PTav,Portugal,Aveiro,阿威罗区
+PTcb,Portugal,Castelo Branco,布朗库堡区
+PTco,Portugal,Coimbra,科英布拉区
+PTgu,Portugal,Guarda,瓜达区
+PTle,Portugal,Leiria,莱里亚区
+PTvi,Portugal,Viseu,维塞乌区
+PTli,Portugal,Lisboa,里斯本区
+PTsa,Portugal,Santarém,圣塔伦区
+PTse,Portugal,Setúbal,塞图巴尔区
+PTma,Portugal,Madeira,马德拉自治区
+PTba,Portugal,Bragança,布拉干萨区
+PTbr,Portugal,Braga,布拉加区
+PTpo,Portugal,Porto,波尔图区
+PTvc,Portugal,Viana do Castelo,维亚纳堡区
+PTvr,Portugal,Vila Real,雷阿尔城区
+PR,Puerto Rico,,波多黎各
+QA,Qatar,,卡塔尔
+RO,Romania,,罗马尼亚
+RUas,Russia (Asian),,俄罗斯亚洲区
+RUeu,Russia (European),,俄罗斯欧洲区
+RU,Russia,,俄罗斯
+RUso,Russia,Southern Federal District,南部联邦管区
+RUcr,Russia,Central Federal District,中央联邦管区
+RUnw,Russia,Northwestern Federal District,西北部联邦管区
+RUva,Russia,Volga Federal District,伏尔加联邦管区
+RUur,Russia,Urals Federal District,乌拉尔联邦管区
+RUsb,Russia,Siberia,西伯利亚
+RUcs,Russia,Central Siberia,中西伯利亚
+RUsi,Russia,Siberian Federal District,西伯利亚联邦管区
+RUfe,Russia,Far Eastern Federal District,远东联邦管区
+RUsoac,Russia,Astrakhanskaya oblast,阿斯特拉罕州
+RUsoad,Russia,Adygeya，Republic of,阿迪格共和国
+RUsoca,Russia,Caucasus mountains,高加索山脉
+RUsocn,Russia,Republic of Chechnya,车臣共和国
+RUsoda,Russia,Dagestan，Republic of,达吉斯坦共和国
+RUsoin,Russia,Ingushetia，Republic of,印古什共和国
+RUsokb,Russia,Kabardino-Balkaria，Republic of,卡巴尔达-巴尔卡尔共和国
+RUsokc,Russia,Karachaevo-Cherkessia，Republic,卡拉恰伊-切尔克斯共和国
+RUsokd,Russia,Krasnodarsky krai,克拉斯诺达尔边疆区
+RUsokl,Russia,Kalmykia，Republic of,卡尔梅克共和国
+RUsono,Russia,North Osetia，Republic of,北奥塞梯-阿兰共和国
+RUsoro,Russia,Rostovskaya oblast,罗斯托夫州
+RUsost,Russia,Stavropolsky krai,斯塔夫罗波尔边疆区
+RUsovg,Russia,Volgogradskaya oblast,伏尔加格勒州
+RUcrbl,Russia,Belgorodskaya oblast,别尔哥罗德州
+RUcrbr,Russia,Bryanskaya oblast,布良斯克州
+RUcriv,Russia,Ivanovskaya oblast,伊万诺沃州
+RUcrkg,Russia,Kaluzhskaya oblast,卡卢加州
+RUcrks,Russia,Kurskaya oblast,库尔斯克州
+RUcrkt,Russia,Kostromskaya oblast,科斯特罗马州
+RUcrlp,Russia,Lipetskaya oblast,利佩茨克州
+RUcrmc,Russia,Moscow,莫斯科
+RUcrms,Russia,Moskovskaya oblast,莫斯科州
+RUcrol,Russia,Orlovskaya oblast,奥廖尔州
+RUcrrz,Russia,Ryazanskaya oblast,梁赞州
+RUcrsm,Russia,Smolenskaya oblast,斯摩棱斯克州
+RUcrtb,Russia,Tambovskaya oblast,坦波夫州
+RUcrtl,Russia,Tulskaya oblast,图拉州
+RUcrtv,Russia,Tverskaya oblast,特维尔州
+RUcrvl,Russia,Vladimirskaya oblast,弗拉基米尔州
+RUcrvr,Russia,Voronezhskaya oblast,沃罗涅日州
+RUcrys,Russia,Yaroslavskaya oblast,雅罗斯拉夫尔州
+RUnwar,Russia,Arkhangelskaya oblast,阿尔汉格尔斯克州
+RUnwki,Russia,Karelia，Republic of,卡累利阿共和国
+RUnwkn,Russia,Kaliningradskaya oblast,加里宁格勒州
+RUnwko,Russia,Komi，Republic of,科米共和国
+RUnwln,Russia,Leningradskaya oblast,列宁格勒州
+RUnwmm,Russia,Murmanskaya oblast,摩尔曼斯克州
+RUnwng,Russia,Novgorodskaya oblast,诺夫哥罗德州
+RUnwnn,Russia,Nenetsky Oblast,涅涅茨自治区
+RUnwps,Russia,Pskovskaya oblast,普斯科夫州
+RUnwsp,Russia,Saint-Petersburg,圣彼得堡
+RUnwvo,Russia,Vologodskaya oblast,沃洛格达州
+RUvabk,Russia,Bashkortostan，Republic of,巴什科尔托斯坦共和国
+RUvacv,Russia,Chuvashia，Republic of,楚瓦什共和国
+RUvakp,Russia,Komi-Permyatsky Oblast,科米-彼尔米亚克区
+RUvakv,Russia,Kirovskaya oblast,基洛夫州
+RUvame,Russia,Mari El，Republic of,马里埃尔共和国
+RUvamr,Russia,Mordovia，Republic of,莫尔多瓦共和国
+RUvanz,Russia,Nizhegorodskaya oblast,下诺夫哥罗德州
+RUvaob,Russia,Orenburgskaya oblast,奥伦堡州
+RUvapm,Russia,Permskaya oblast,彼尔姆州
+RUvapz,Russia,Penzenskaya oblast,奔萨州
+RUvasa,Russia,Samarskaya oblast,萨马拉州
+RUvasr,Russia,Saratovskaya oblast,萨拉托夫州
+RUvatt,Russia,Tatarstan，Republic of,鞑靼斯坦共和国
+RUvaud,Russia,Udmurtia，Republic of,乌德穆尔特共和国
+RUvaul,Russia,Ulyanovskaya oblast,乌里扬诺夫斯克州
+RUurcl,Russia,Chelyabinskaya oblast,车里雅宾斯克州
+RUurku,Russia,Kurganskaya oblast,库尔干州
+RUursv,Russia,Sverdlovskaya oblast,斯维尔德洛夫斯克州
+RUurty,Russia,Tumenskaya oblast,秋明州
+RUurkm,Russia,Khanty-Mansiysky Oblast,汉特-曼西自治区
+RUuryn,Russia,Yamalo-Nenetsky Oblast,亚马尔-涅涅茨自治区
+RUsiab,Russia,Aginsky Buryatsky Oblast,阿金布里亚特区
+RUsiza,Russia,Zabaykal'skiy kray,外贝加尔边疆区
+RUsiak,Russia,Altaisky krai,阿尔泰边疆区
+RUsial,Russia,Altay，Republic of,阿尔泰共和国
+RUsibu,Russia,Buryata，Republic of,布里亚特共和国
+RUsiir,Russia,Irkutskaya oblast,伊尔库茨克州
+RUsike,Russia,Kemerovskaya oblast,科麦罗沃州
+RUsikk,Russia,Khakasia，Republic of,哈卡斯共和国
+RUsiky,Russia,Krasnoyarsky krai,克拉斯诺亚尔斯克边疆区
+RUsins,Russia,Novosibirskaya oblast,新西伯利亚州
+RUsiom,Russia,Omskaya oblast,鄂木斯克州
+RUsitm,Russia,Taimyrsky Oblast,泰梅尔(多尔干-涅涅茨)自治区
+RUsito,Russia,Tomskaya oblast,托木斯克州
+RUsitu,Russia,Tyva，Republic of,图瓦共和国
+RUsiub,Russia,Ust-Ordynsky Oblast,乌斯季-奥尔登斯基布里亚特区
+RUfeam,Russia,Amurskaya Oblast,阿穆尔州
+RUfeck,Russia,Chukotka,楚科奇自治区
+RUfejw,Russia,Jewish Oblast,犹太自治州
+RUfeka,Russia,Kamchatka,堪察加边疆区
+RUfekh,Russia,Khabarovsky krai,哈巴罗夫斯克边疆区
+RUfekr,Russia,Koryaksky,科里亚克火山
+RUfemg,Russia,Magadanskaya oblast,马加丹州
+RUfepr,Russia,Primorskiy Kray,滨海边疆区
+RUfesk,Russia,Sakha，Republic of,萨哈(雅库特)共和国
+RUfesl,Russia,Sakhalinskaya oblast,萨哈林州
+RW,Rwanda,,卢旺达
+RE,Réunion,,留尼汪
+WS,Samoa,,萨摩亚
+SM,San Marino,,圣马力诺
+ST,Sao Tome and Principe,,圣多美和普林西比
+UKgusa,Sark,,萨克
+SA,Saudi Arabia,,沙特阿拉伯
+SAas,Saudi Arabia,`Asir,阿西尔省
+SAba,Saudi Arabia,Al Bahah,巴哈省
+SAha,Saudi Arabia,Ḩā'il,哈伊勒省
+SAhs,Saudi Arabia,Al Ḩudūd ash Shamālīyah,北部边疆省
+SAjf,Saudi Arabia,Al Jawf,焦夫省
+SAjz,Saudi Arabia,Jizan,吉赞
+SAmd,Saudi Arabia,Al Madinah,麦地那省
+SAmk,Saudi Arabia,Makkah,麦加
+SAnj,Saudi Arabia,Najran,纳季兰
+SAqs,Saudi Arabia,Al Qaşīm,盖西姆省
+SAri,Saudi Arabia,Ar Riyāḑ,利雅得省
+SAsh,Saudi Arabia,Ash Sharqiyah,东部省
+SAtb,Saudi Arabia,Tabuk,泰布克
+SN,Senegal,,塞内加尔
+RS,Serbia,,塞尔维亚
+SC,Seychelles,,塞舌尔
+SL,Sierra Leone,,塞拉利昂
+SG,Singapore,,新加坡
+SX,Sint Maarten,,荷属圣马丁
+SK,Slovakia,,斯洛伐克
+SI,Slovenia,,斯洛文尼亚
+SB,Solomon Islands,,所罗门群岛
+SBch,Solomon Islands,Choiseul Province,舒瓦瑟尔省
+SBcn,Solomon Islands,Central Province,中部群岛省
+SBgc,Solomon Islands,Guadalcanal Province,瓜达尔卡纳尔省
+SBis,Solomon Islands,Isabel Province,伊萨贝尔省
+SBmk,Solomon Islands,Makira-Ulawa Province,马基拉乌拉瓦省
+SBml,Solomon Islands,Malaita Province,马莱塔省
+SBrb,Solomon Islands,Rennell and Bellona Province,拉纳尔和贝罗纳省
+SBte,Solomon Islands,Temotu Province,泰莫图省
+SBwe,Solomon Islands,Western Province,西部省
+SO,Somalia,,索马里
+SOaw,Somalia,Awdal,奥达勒州
+SObk,Somalia,Bakool,巴科勒州
+SObn,Somalia,Banaadir,巴纳迪尔州
+SObr,Somalia,Bari,巴里州
+SOby,Somalia,Bay,拜州
+SOga,Somalia,Galguduud,加勒古杜德州
+SOge,Somalia,Gedo,盖多州
+SOhi,Somalia,Hiiraan,希兰州
+SOjd,Somalia,Jubbada Dhexe,中朱巴州
+SOjh,Somalia,Jubbada Hoose,下朱巴州
+SOmu,Somalia,Mudug,穆杜格州
+SOnu,Somalia,Nugaal,努加尔州
+SOsa,Somalia,Sanaag,萨纳格州
+SOsd,Somalia,Shabeellaha Dhexe,中谢贝利州
+SOsh,Somalia,Shabeellaha Hoose,下谢贝利州
+SOso,Somalia,Sool,索勒州
+SOto,Somalia,Togdheer,托格代尔州
+SOwo,Somalia,Woqooyi Galbeed,沃戈伊加勒贝德州
+ZA,South Africa,,南非
+ZAwc,South Africa,Western Cape,西开普省
+ZAec,South Africa,Eastern Cape,东开普省
+ZAnc,South Africa,Northern Cape,北开普省
+ZAkn,South Africa,Kwazulu-Natal,夸祖鲁-纳塔尔省
+ZAga,South Africa,Gauteng,豪登省
+ZAlp,South Africa,Limpopo Province,林波波
+ZAnw,South Africa,Northwest Province,西北省
+ZAmp,South Africa,Mpumalanga,普马兰加省
+ZAfs,South Africa,Free State,自由省
+KR,South Korea,,韩国
+KRcb,South Korea,Jeollabuk-do,全罗北道
+KRcj,South Korea,Jeju-do,济州岛
+KRcn,South Korea,Jeollanam-do,全罗南道
+KRgb,South Korea,Chungcheongbuk-do,忠清北道
+KRgn,South Korea,Chungcheongnam-do,忠清南道
+KRin,South Korea,Incheon,仁川广域市
+KRkb,South Korea,Gyeongsangbuk-do,庆尚北道
+KRkg,South Korea,Gyeonggi-do,京畿道
+KRkj,South Korea,Gwangju,光州广域市
+KRkn,South Korea,Gyeongsangnam-do,庆尚南道
+KRkw,South Korea,Gangwon-do,江原道
+KRpu,South Korea,Busan,釜山广域市
+KRso,South Korea,Seoul,首尔
+KRtg,South Korea,Daegu,大邱广域市
+KRtj,South Korea,Daejeon,大田广域市
+KRul,South Korea,Ulsan,蔚山广域市
+KRsj,South Korea,Sejong,世宗特别自治市
+SS,South Sudan,,南苏丹
+SS01nb,South Sudan,North Bahr-al-Ghazal,北加扎勒河州
+SS01wb,South Sudan,West Bahr-al-Ghazal,西加扎勒河州
+SS01eb,South Sudan,Lakes,湖泊州
+SS01wr,South Sudan,Warap,瓦拉布州
+SS02we,South Sudan,West Equatoria,西赤道州
+SS02bg,South Sudan,Bahr-al-Jabal,中赤道州
+SS02ee,South Sudan,East Equatoria,东赤道州
+SS03jg,South Sudan,Jungoli,琼莱州
+SS03wh,South Sudan,Unity,团结州
+SS03un,South Sudan,Upper Nile,上尼罗州
+ES,Spain,,西班牙
+ESan,Spain,Andalucía,安达卢西亚
+ESar,Spain,Aragón,阿拉贡
+ESas,Spain,Asturias,阿斯图利亚斯
+ESba,Spain,Balears,巴利阿里群岛
+EScn,Spain,Cantabria,坎塔布利亚
+EScm,Spain,Castilla-La Mancha,卡斯蒂利亚-拉曼恰
+EScl,Spain,Castilla y León,卡斯蒂利亚-莱昂
+ESca,Spain,Catalonia,加泰罗尼亚
+ESva,Spain,Valencia,巴伦西亚
+ESex,Spain,Extremadura,埃斯特雷马杜拉
+ESga,Spain,Galicia,加利西亚
+ESlr,Spain,La Rioja,拉里奥哈
+ESma,Spain,Madrid,马德里
+ESmu,Spain,Murcia,穆尔西亚
+ESna,Spain,Navarra,纳瓦拉
+ESpv,Spain,País Vasco,巴斯克地区
+ESce,Spain,Ceuta,休达自治市
+ESml,Spain,Melilla,梅利利亚自治市
+LK,Sri Lanka,,斯里兰卡
+SH,St Helena,,圣赫勒拿
+KN,St Kitts and Nevis,,圣基茨和尼维斯
+KNki,St Kitts and Nevis,Saint Kitts,圣基茨
+KNne,St Kitts and Nevis,Nevis,尼维斯
+LC,St Lucia,,圣卢西亚
+MF,St Martin,,法属圣马丁
+PM,St Pierre and Miquelon,,圣皮埃尔和密克隆
+PMml,St Pierre and Miquelon,Miquelon-Langlade,密克隆
+PMsp,St Pierre and Miquelon,Saint-Pierre,圣皮埃尔
+VC,St Vincent and the Grenadines,,圣文森特和格林纳丁斯
+SD,Sudan,,苏丹
+SD01gz,Sudan,Gezira,杰济拉
+SD01bn,Sudan,Blue Nile,青尼罗
+SD01si,Sudan,Sennar,森纳尔
+SD01wn,Sudan,White Nile,白尼罗
+SD02nd,Sudan,North Darfur,北达尔富尔
+SD03ka,Sudan,Kassala,卡萨拉
+SD03gd,Sudan,Gedarif,加达里夫
+SD03rs,Sudan,Red Sea,红海
+SD04kh,Sudan,Khartoum,喀土穆
+SD05nk,Sudan,North Kordufan,北科尔多凡
+SD05sk,Sudan,South Kordufan,南科尔多凡
+SD05wk,Sudan,West Kordufan,西科尔多凡
+SD06no,Sudan,Northern,北部
+SD06rn,Sudan,River Nile,尼罗河
+SR,Suriname,,苏里南
+SRbr,Suriname,Brokopondo,布罗科蓬多
+SRcm,Suriname,Commewijne,科默韦讷
+SRcr,Suriname,Coronie,科罗尼
+SRma,Suriname,Marowijne,马罗韦讷
+SRni,Suriname,Nickerie,尼克里
+SRpm,Suriname,Paramaribo,帕拉马里博
+SRpr,Suriname,Para,帕拉
+SRsa,Suriname,Saramacca,萨拉马卡
+SRsi,Suriname,Sipaliwini,西帕里韦尼
+SRwa,Suriname,Wanica,瓦尼卡
+SZ,Swaziland,,斯威士兰
+SE,Sweden,,瑞典
+SEst,Sweden,Stockholm,斯德哥尔摩
+SEog,Sweden,Östergötland,东约特兰省
+SEor,Sweden,Örebro,厄勒布鲁省
+SEsd,Sweden,Södermanland,南曼兰省
+SEup,Sweden,Uppsala,乌普萨拉省
+SEvm,Sweden,Västmanland,西曼兰省
+SEbl,Sweden,Blekinge,布莱金厄省
+SEsn,Sweden,Skåne,斯堪尼亚省
+SEgv,Sweden,Gävleborg,耶夫勒堡省
+SEko,Sweden,Dalarna,达拉纳省
+SEvr,Sweden,Värmland,韦姆兰省
+SEja,Sweden,Jämtland,耶姆特兰省
+SEvn,Sweden,Västernorrland,西诺尔兰省
+SEnb,Sweden,Norrbotten,北博滕省
+SEvb,Sweden,Västerbotten,西博滕省
+SEgt,Sweden,Gotland,哥得兰
+SEjo,Sweden,Jönköping,延雪平
+SEka,Sweden,Kalmar (incl. Öland Island),卡尔马省(包括厄兰岛)
+SEkr,Sweden,Kronoberg,克鲁努贝里省
+SEha,Sweden,Halland,哈兰省
+SEvg,Sweden,Västra Götaland,西约特兰省
+CH,Switzerland,,瑞士
+SY,Syria,,叙利亚
+TW,China,,台湾
+TW,Taiwan,,台湾地区
+TWtacg,Taiwan,Changhua,彰化县
+TWtacs,Taiwan,Chiayi City,嘉义市
+TWtach,Taiwan,Chiayi,嘉义县
+TWtahh,Taiwan,Hsinchu,新竹县
+TWtahs,Taiwan,Hsinchu City,新竹市
+TWtahl,Taiwan,Hualien,花莲县
+TWtail,Taiwan,Ilan,宜兰县
+TWtacl,Taiwan,Keelung,基隆市
+TWtaml,Taiwan,Miaoli,苗栗县
+TWtant,Taiwan,Nantou,南投县
+TWtaph,Taiwan,Penghu,澎湖县
+TWtapt,Taiwan,Pingtung,屏东县
+TWtayl,Taiwan,Yunlin,云林县
+TWtatt,Taiwan,Taitung,台东县
+TWtg,Taiwan,Taichung,台中市
+TWtn,Taiwan,Tainan,台南市
+TWty,Taiwan,Taoyuan,桃园市
+TWtp,Taiwan,New Taipei,新北市
+TWtc,Taiwan,Taipei City,台北市
+TWkh,Taiwan,Kaohsiung,高雄市
+TWki,Taiwan,Kinmen islands,金门县
+TWma,Taiwan,Matsu islands,马祖列岛
+TJ,Tajikistan,,塔吉克斯坦
+TZ,Tanzania,,坦桑尼亚
+TZas,Tanzania,Arusha,阿鲁沙
+TZdo,Tanzania,Dodoma,多多马
+TZds,Tanzania,Dar es Salaam,达累斯萨拉姆
+TZirir,Tanzania,Iringa,伊林加
+TZirnj,Tanzania,Njombe,恩琼贝区
+TZkl,Tanzania,Kilimanjaro,乞力马扎罗
+TZkm,Tanzania,Kigoma,基戈马
+TZkr,Tanzania,Kagera,卡盖拉
+TZli,Tanzania,Lindi,林迪
+TZma,Tanzania,Mara,马腊
+TZmo,Tanzania,Morogoro,莫洛戈罗
+TZmt,Tanzania,Mtwara,姆特瓦拉
+TZmw,Tanzania,Mwanza,姆万扎
+TZmy,Tanzania,Manyara,曼亚拉
+TZpw,Tanzania,Pwani,滨海
+TZrkrk,Tanzania,Rukwa,鲁夸
+TZrkka,Tanzania,Katavi,卡塔维区
+TZrv,Tanzania,Ruvuma,鲁伍马
+TZsd,Tanzania,Singida,辛吉达
+TZshsh,Tanzania,Shinyanga,欣延加
+TZshsi,Tanzania,Simiyu,锡米尤区
+TZge,Tanzania,Geita,盖塔区
+TZtb,Tanzania,Tabora,塔波拉
+TZtn,Tanzania,Tanga,坦噶
+TZznzn,Tanzania,Zanzibar North,桑给巴尔北区
+TZznzs,Tanzania,Zanzibar South and Central,桑给巴尔中南区
+TZznzw,Tanzania,Zanzibar West,桑给巴尔西区
+TZznpn,Tanzania,Pemba North,北奔巴区
+TZznps,Tanzania,Pemba South,南奔巴区
+TH,Thailand,,泰国
+TH01at,Thailand,Ang Thong,红统府
+TH01bm,Thailand,Bangkok Metropolis,曼谷
+TH01cc,Thailand,Chachoengsao,北柳府(差春骚)
+TH01cn,Thailand,Chai Nat,猜那府
+TH01kn,Thailand,Kanchanaburi,北碧府(干乍那武里)
+TH01lb,Thailand,Lop Buri,华富里府
+TH01nn,Thailand,Nakhon Nayok,那空那育府
+TH01no,Thailand,Nonthaburi,暖武里府
+TH01np,Thailand,Nakhon Pathom,佛统府(那坤巴统)
+TH01pa,Thailand,Phra Nakhon Si Ayutthaya,大城府(阿育他亚)
+TH01pb,Thailand,Prachin Buri,巴真府
+TH01pe,Thailand,Phetchaburi,佛丕府(碧武里)
+TH01pk,Thailand,Prachuap Khiri Khan,巴蜀府
+TH01pt,Thailand,Pathum Thani,巴吞他尼府
+TH01rt,Thailand,Ratchaburi,叻丕府
+TH01sb,Thailand,Sing Buri,信武里府
+TH01sh,Thailand,Suphan Buri,素攀武里府
+TH01sk,Thailand,Sa Kaeo,沙缴府
+TH01sm,Thailand,Samut Songkhram,夜功府(沙没颂堪)
+TH01sp,Thailand,Samut Prakan,北揽府(沙没巴干)
+TH01sr,Thailand,Saraburi,北标府(沙拉武里)
+TH01ss,Thailand,Samut Sakhon,龙仔厝府(沙没沙空)
+TH02cb,Thailand,Chon Buri,春武里府(万佛岁)
+TH02ct,Thailand,Chanthaburi,尖竹汶府(庄他武里)
+TH02ry,Thailand,Rayong,罗勇府
+TH02tt,Thailand,Trat,达叻府
+TH03cm,Thailand,Chiang Mai,清迈府
+TH03cr,Thailand,Chiang Rai,清莱府
+TH03kp,Thailand,Kamphaeng Phet,甘烹碧府
+TH03lg,Thailand,Lampang,南邦府
+TH03ln,Thailand,Lamphun,南奔府
+TH03mh,Thailand,Mae Hong Son,夜丰颂府
+TH03na,Thailand,Nan,难府
+TH03ns,Thailand,Nakhon Sawan,北榄坡府(那空沙旺)
+TH03pc,Thailand,Phichit,披集府
+TH03ph,Thailand,Phetchabun,碧差汶府
+TH03pr,Thailand,Phrae,帕府
+TH03ps,Thailand,Phitsanulok,彭世洛府
+TH03py,Thailand,Phayao,帕尧府
+TH03so,Thailand,Sukhothai,素可泰府
+TH03tk,Thailand,Tak,达府
+TH03ud,Thailand,Uttaradit,程逸府(乌达拉迪)
+TH03ut,Thailand,Uthai Thani,乌泰他尼府(色梗港)
+TH04ac,Thailand,Amnat Charoen,安纳乍能府
+TH04br,Thailand,Buri Ram,武里南府
+TH04cy,Thailand,Chaiyaphum,猜也奔府
+TH04kk,Thailand,Khon Kaen,孔敬府
+TH04kl,Thailand,Kalasin,加拉信府
+TH04le,Thailand,Loei,黎府
+TH04md,Thailand,Mukdahan,莫达汉府
+TH04ms,Thailand,Maha Sarakham,玛哈沙拉堪府
+TH04nb,Thailand,Nong Bua Lam Phu,廊莫那浦府
+TH04nf,Thailand,Nakhon Phanom,那空帕农府
+TH04nknk,Thailand,Nong Khai,廊开府
+TH04nkbk,Thailand,Bueng Kan,汶干府
+TH04nr,Thailand,Nakhon Ratchasima,呵叻府
+TH04re,Thailand,Roi Et,黎逸府
+TH04si,Thailand,Si Sa Ket,四色菊府
+TH04sn,Thailand,Sakon Nakhon,色军府(沙功那空)
+TH04su,Thailand,Surin,素林府
+TH04un,Thailand,Udon Thani,乌隆府乌隆他尼
+TH04ys,Thailand,Yasothon,耶梭通府
+TH05cp,Thailand,Chumphon,春蓬府(尖喷)
+TH05kr,Thailand,Krabi,甲米府
+TH05nt,Thailand,Nakhon Si Thammarat,洛坤府(那空是贪玛叻)
+TH05nw,Thailand,Narathiwat,陶公府(那拉提瓦)
+TH05pg,Thailand,Phangnga,攀牙府
+TH05pi,Thailand,Pattani,北大年府
+TH05pl,Thailand,Phatthalung,博达伦府
+TH05pu,Thailand,Phuket,普吉府
+TH05rn,Thailand,Ranong,拉农府拉廊府
+TH05sa,Thailand,Satun,沙敦府
+TH05sg,Thailand,Songkhla,宋卡府
+TH05st,Thailand,Surat Thani,素叻他尼万伦府
+TH05tg,Thailand,Trang,董里府
+TH05yl,Thailand,Yala,也拉府
+TL,Timor-Leste,,东帝汶
+TG,Togo,,多哥
+TK,Tokelau,,托克劳
+TO,Tonga,,汤加
+TT,Trinidad and Tobago,,特立尼达和多巴哥
+TN,Tunisia,,突尼斯
+TR,Turkey,,土耳其
+TReu,Turkey,Turkey (Europe),土耳其欧洲区
+TRagaf,Turkey,Afyon,阿菲永
+TRagay,Turkey,Aydin,艾登
+TRagdn,Turkey,Denizli,代尼兹利
+TRagiz,Turkey,Izmir,伊兹密尔
+TRagku,Turkey,Kütahya,屈塔希亚
+TRagmg,Turkey,Mugla,穆拉
+TRagmn,Turkey,Manisa,马尼萨
+TRagus,Turkey,Usak,乌萨克
+TRanam,Turkey,Amasya,阿马西亚
+TRanav,Turkey,Artvin,阿尔特温
+TRanbb,Turkey,Bayburt,巴伊布尔特
+TRanbl,Turkey,Bolu,博卢
+TRanbr,Turkey,Bartin,巴尔滕
+TRancm,Turkey,Çorum,乔鲁姆
+TRandu,Turkey,Düzce,迪兹杰
+TRangi,Turkey,Giresun,吉雷松
+TRangu,Turkey,Gümüshane,居米什哈内
+TRankb,Turkey,Karabük,卡拉比克
+TRanks,Turkey,Kastamonu,卡斯塔莫努
+TRanor,Turkey,Ordu,奥尔杜
+TRanri,Turkey,Rize,里泽
+TRansp,Turkey,Sinop,锡诺普
+TRanss,Turkey,Samsun,萨姆松
+TRantb,Turkey,Trabzon,特拉布宗
+TRantt,Turkey,Tokat,托卡特
+TRanzo,Turkey,Zonguldak,宗古尔达克
+TRcaak,Turkey,Aksaray,阿克萨赖
+TRcaan,Turkey,Ankara,安卡拉
+TRcaci,Turkey,Çankiri,昌克勒
+TRcaes,Turkey,Eskisehir,埃斯基谢希尔
+TRcakh,Turkey,Kirsehir,克尔谢希尔
+TRcakk,Turkey,Kirikkale,克勒克卡莱
+TRcako,Turkey,Konya,科尼亚
+TRcakr,Turkey,Karaman,卡拉曼
+TRcaky,Turkey,Kayseri,开塞利
+TRcang,Turkey,Nigde,尼代
+TRcanv,Turkey,Nevsehir,内夫谢希尔
+TRcasv,Turkey,Sivas,锡瓦斯
+TRcayz,Turkey,Yozgat,约兹加特
+TReaag,Turkey,Agri,阿勒
+TReaar,Turkey,Ardahan,阿尔达汉
+TReabg,Turkey,Bingöl,宾格尔
+TReabt,Turkey,Bitlis,比特利斯
+TReaeg,Turkey,Elazig,埃拉泽
+TReaem,Turkey,Erzurum,埃尔祖鲁姆
+TReaen,Turkey,Erzincan,埃尔津詹
+TReahk,Turkey,Hakkari,哈卡里
+TReaig,Turkey,Igdir,厄德尔
+TReaka,Turkey,Kars,卡尔斯
+TReaml,Turkey,Malatya,马拉蒂亚
+TReams,Turkey,Mus,穆什
+TReatc,Turkey,Tunceli,通杰利
+TReava,Turkey,Van,凡
+TRmabc,Turkey,Bilecik,比莱吉克
+TRmabk,Turkey,Balikesir,巴勒克埃西尔
+TRmabu,Turkey,Bursa,布尔萨
+TRmack,Turkey,Çanakkale,恰纳卡莱
+TRmaed,Turkey,Edirne,埃迪尔内
+TRmaib,Turkey,Istanbul,伊斯坦布尔
+TRmakc,Turkey,Kocaeli,科贾埃利
+TRmakl,Turkey,Kirklareli,柯克拉雷利
+TRmask,Turkey,Sakarya,萨卡里亚
+TRmatg,Turkey,Tekirdag,泰基尔达
+TRmayl,Turkey,Yalova,亚洛瓦
+TRmeaa,Turkey,Adana,阿达纳
+TRmeal,Turkey,Antalya,安塔利亚
+TRmebd,Turkey,Burdur,布尔杜尔
+TRmeht,Turkey,Hatay,哈塔伊
+TRmeic,Turkey,Mersin,梅尔辛
+TRmeip,Turkey,Isparta,伊斯帕尔塔
+TRmekm,Turkey,Kahramanmaras,卡赫拉曼马拉什
+TRmeos,Turkey,Osmaniye,奥斯曼尼耶
+TRsaad,Turkey,Adiyaman,阿德亚曼
+TRsabm,Turkey,Batman,巴特曼
+TRsady,Turkey,Diyarbakir,迪亚巴克尔
+TRsaga,Turkey,Gaziantep,加济安泰普
+TRsaki,Turkey,Kilis,基利斯
+TRsamr,Turkey,Mardin,马尔丁
+TRsasi,Turkey,Siirt,锡尔特
+TRsasr,Turkey,Sirnak,舍尔纳克
+TRsasu,Turkey,Sanliurfa,尚勒乌尔法
+TM,Turkmenistan,,土库曼斯坦
+TMah,Turkmenistan,Ashgabat,阿什哈巴德市
+TMal,Turkmenistan,Ahal,阿哈尔州
+TMba,Turkmenistan,Balkan,巴尔坎州
+TMda,Turkmenistan,Dashoguz,达沙古兹州
+TMle,Turkmenistan,Lebap,列巴普州
+TMma,Turkmenistan,Mary,马雷州
+TC,Turks and Caicos Islands,,特克斯和凯科斯群岛
+TV,Tuvalu,,图瓦卢
+US,USA,,美国
+USak,USA,Alaska,阿拉斯加州
+USal,USA,Alabama,亚拉巴马州
+USar,USA,Arkansas,阿肯色州
+USaz,USA,Arizona,亚利桑那州
+USca,USA,California,加利福尼亚州
+USco,USA,Colorado,科罗拉多州
+USct,USA,Connecticut,康涅狄格州
+USdc,USA,District of Columbia,哥伦比亚特区
+USde,USA,Delaware,特拉华州
+USfl,USA,Florida,佛罗里达州
+USga,USA,Georgia,乔治亚州
+UShi,USA,Hawaii,夏威夷州
+USia,USA,Iowa,衣荷华州
+USid,USA,Idaho,爱达荷州
+USil,USA,Illinois,伊利诺斯州
+USin,USA,Indiana,印地安那州
+USks,USA,Kansas,堪萨斯州
+USky,USA,Kentucky,肯塔基州
+USla,USA,Louisiana,路易斯安那州
+USma,USA,Massachusetts,马萨诸塞州
+USmd,USA,Maryland,马里兰州
+USme,USA,Maine,缅因州
+USmi,USA,Michigan,密歇根州
+USmn,USA,Minnesota,明尼苏达州
+USmo,USA,Missouri,密苏里州
+USms,USA,Mississippi,密西西比州
+USmt,USA,Montana,蒙大拿州
+USnc,USA,North Carolina,北卡罗来纳州
+USnd,USA,North Dakota,北达科他州
+USne,USA,Nebraska,内布拉斯加州
+USnh,USA,New Hampshire,新罕布什尔州
+USnj,USA,New Jersey,新泽西州
+USnm,USA,New Mexico,新墨西哥州
+USnv,USA,Nevada,内华达州
+USny,USA,New York,纽约州
+USoh,USA,Ohio,俄亥俄州
+USok,USA,Oklahoma,俄克拉何马州
+USor,USA,Oregon,俄勒冈州
+USpa,USA,Pennsylvania,宾夕法尼亚州
+USri,USA,Rhode Island,罗得岛州
+USsc,USA,South Carolina,南卡罗来纳州
+USsd,USA,South Dakota,南达科他州
+UStn,USA,Tennessee,田纳西州
+UStx,USA,Texas,德克萨斯州
+USut,USA,Utah,犹他州
+USva,USA,Virginia,弗吉尼亚州
+USvt,USA,Vermont,佛蒙特州
+USwa,USA,Washington,华盛顿
+USwi,USA,Wisconsin,威斯康星州
+USwv,USA,West Virginia,西弗吉尼亚
+USwy,USA,Wyoming,怀俄明州
+UG,Uganda,,乌干达
+UG01,Uganda,Central,中央地区
+UG02,Uganda,Eastern,东部地区
+UG03,Uganda,Northern,北部地区
+UG04,Uganda,Western,西部地区
+UA,Ukraine,,乌克兰
+UAch,Ukraine,Chernihiv,切尔尼戈夫
+UAck,Ukraine,Cherkasy,切尔卡瑟
+UAcv,Ukraine,Chernivtsi,切尔诺夫策
+UAdt,Ukraine,Donets'k,顿涅茨克
+UAif,Ukraine,Ivano-Frankivs'k,伊万-弗兰科夫
+UAkh,Ukraine,Kirovohrad,基洛夫格勒
+UAkk,Ukraine,Kharkiv,哈尔科夫
+UAkm,Ukraine,Khmel'nyts'kyy,赫梅利尼茨基
+UAkr,Ukraine,Crimea,克里米亚
+UAks,Ukraine,Kherson,赫尔松
+UAkv,Ukraine,Kiev,基辅
+UAlh,Ukraine,Luhans'k,卢甘斯克
+UAlv,Ukraine,L'viv,利沃夫
+UAmy,Ukraine,Mykolayiv,尼古拉耶夫
+UAod,Ukraine,Odessa,敖德萨
+UApl,Ukraine,Poltava,波尔塔瓦
+UArv,Ukraine,Rivne,罗夫诺
+UAsm,Ukraine,Sumy,苏梅
+UAtp,Ukraine,Ternopil',捷尔诺波尔
+UAvi,Ukraine,Vinnytsya,文尼察
+UAzp,Ukraine,Zaporizhzhya,扎波罗热
+UAzt,Ukraine,Zhytomyr,日托米尔
+AE,United Arab Emirates,,阿拉伯联合酋长国
+UK|GB,United Kingdom,,英国
+UKen01,United Kingdom,North East,东北
+UKen02,United Kingdom,North West,西北
+UKen03,United Kingdom,Yorkshire and the Humber,约克夏和亨伯河流域
+UKen04,United Kingdom,East Midlands,中英格兰东部
+UKen05,United Kingdom,West Midlands,中英格兰西部
+UKen06,United Kingdom,East of England,东英格兰
+UKen07,United Kingdom,Greater London,大伦敦
+UKen08,United Kingdom,South East,东南
+UKen09,United Kingdom,South West,西南
+UM,United States Minor Outlying Islands,,美国本土外小岛屿
+VI,United States Virgin Islands,,美属维尔京群岛
+VIsc,United States Virgin Islands,Saint Croix,圣克罗伊区
+VIsj,United States Virgin Islands,Saint John,圣约翰岛
+VIst,United States Virgin Islands,Saint Thomas,圣托马斯岛
+UY,Uruguay,,乌拉圭
+UYar,Uruguay,Artigas,阿蒂加斯省
+UYca,Uruguay,Canelones,卡内洛内斯省
+UYcl,Uruguay,Cerro Largo,塞罗拉尔戈省
+UYco,Uruguay,Colonia,科洛尼亚省
+UYdu,Uruguay,Durazno,杜拉斯诺省
+UYfd,Uruguay,Florida,佛罗里达省
+UYfs,Uruguay,Flores,弗洛雷斯省
+UYla,Uruguay,Lavalleja,拉瓦耶哈省
+UYma,Uruguay,Maldonado,马尔多纳多省
+UYmo,Uruguay,Montevideo,蒙得维的亚省
+UYpa,Uruguay,Paysandú,派桑杜省
+UYrn,Uruguay,Río Negro,内格罗河省
+UYro,Uruguay,Rocha,罗恰省
+UYrv,Uruguay,Rivera,里韦拉省
+UYsa,Uruguay,Salto,萨尔托省
+UYsj,Uruguay,San José,圣何塞省
+UYso,Uruguay,Soriano,索里亚诺省
+UYta,Uruguay,Tacuarembó,塔夸伦博省
+UYtt,Uruguay,Treinta y Tres,三十三人省
+UZ,Uzbekistan,,乌兹别克斯坦
+UZan,Uzbekistan,Andijon,安集延
+UZbu,Uzbekistan,Bukhoro,布哈拉
+UZfa,Uzbekistan,Ferghana,费尔干纳
+UZji,Uzbekistan,Jizzakh,吉扎克
+UZkh,Uzbekistan,Khorezm,花剌子模
+UZng,Uzbekistan,Namangan,纳曼干
+UZnw,Uzbekistan,Navoi,纳沃伊
+UZqa,Uzbekistan,Kashkadarya,卡什卡达里亚州
+UZqr,Uzbekistan,Karakalpakstan,卡拉卡尔帕克斯坦共和国
+UZsa,Uzbekistan,Samarkand,撒马尔罕
+UZsi,Uzbekistan,Sirdaryo,锡尔河
+UZsu,Uzbekistan,Surkhandarya,苏尔汉河州
+UZta,Uzbekistan,Tashkent,塔什干
+VU,Vanuatu,,瓦努阿图
+VUto,Vanuatu,Torba Province,托尔巴省
+VUse,Vanuatu,Shéfa Province,谢法省
+VUtf,Vanuatu,Taféa Province,塔菲阿省
+VUsa,Vanuatu,Sanma Province,桑马省
+VUpe,Vanuatu,Pénama Province,彭纳马省
+VUmp,Vanuatu,Malampa Province,马朗帕省
+VE,Venezuela,,委内瑞拉
+VEdf,Venezuela,Distrito Capital,首都区
+VEmi,Venezuela,Miranda,米兰达州
+VEva,Venezuela,Vargas,巴尔加斯州
+VEar,Venezuela,Aragua,阿拉瓜州
+VEca,Venezuela,Carabobo,卡拉沃沃州
+VEco,Venezuela,Cojedes,科赫德斯
+VEap,Venezuela,Apure,阿普雷
+VEgu,Venezuela,Guárico,瓜里科州
+VEfa,Venezuela,Falcón,法尔孔州
+VEla,Venezuela,Lara,拉腊州
+VEpo,Venezuela,Portuguesa,波图格萨
+VEya,Venezuela,Yaracuy,亚拉奎州
+VEzu,Venezuela,Zulia,苏利亚州
+VEba,Venezuela,Barinas,巴里纳斯
+VEme,Venezuela,Mérida,梅里达州
+VEta,Venezuela,Táchira,塔奇拉
+VEtr,Venezuela,Trujillo,特鲁希略州
+VEan,Venezuela,Anzoátegui,安索阿特吉州
+VEmo,Venezuela,Monagas,莫纳加斯州
+VEsu,Venezuela,Sucre,苏克雷州
+VEdp,Venezuela,Dependencias Federales,联邦属地
+VEne,Venezuela,Nueva Esparta,新埃斯帕塔州
+VEam,Venezuela,Amazonas,亚马孙州
+VEbo,Venezuela,Bolívar,玻利瓦尔州
+VEda,Venezuela,Delta Amacuro,阿马库罗三角洲州
+VN,Vietnam,,越南
+VN01bg,Vietnam,Bac Giang,北江省
+VN01bk,Vietnam,Bac Can,北𣴓省
+VN01cb,Vietnam,Cao Bang,高平省
+VN01hg,Vietnam,Ha Giang,河江省
+VN01lo,Vietnam,Lao Cai,老街省
+VN01ls,Vietnam,Lang Son,谅山省
+VN01pt,Vietnam,Phu Tho,富寿省
+VN01qn,Vietnam,Quang Ninh,广宁省
+VN01tq,Vietnam,Tuyen Quang,宣光省
+VN01ty,Vietnam,Thai Nguyen,太原省
+VN01yb,Vietnam,Yen Bai,安沛省
+VN02bn,Vietnam,Bac Ninh,北宁省
+VN02ha,Vietnam,Ha Tay,河西省
+VN02hd,Vietnam,Hai Duong,海阳省
+VN02hm,Vietnam,Ha Nam,河南省
+VN02hn,Vietnam,Hanoi,河内市
+VN02hp,Vietnam,Haiphong,海防市
+VN02hy,Vietnam,Hung Yen,兴安省
+VN02nb,Vietnam,Ninh Binh,宁平省
+VN02nd,Vietnam,Nam Dinh,南定省
+VN02tb,Vietnam,Thai Binh,太平省
+VN02vc,Vietnam,Vinh Phuc,永福省
+VN03ht,Vietnam,Ha Tinh,河静省
+VN03na,Vietnam,Nghe An,义安省
+VN03qb,Vietnam,Quang Binh,广平省
+VN03qt,Vietnam,Quang Tri,广治省
+VN03th,Vietnam,Thanh Hoa,清化省
+VN03tt,Vietnam,Thua Thien-Hue,承天-顺化省
+VN04bd,Vietnam,Binh Dinh,平定省
+VN04da,Vietnam,Da Nang,岘港市
+VN04kh,Vietnam,Khanh Hoa,庆和省
+VN04py,Vietnam,Phu Yen,富安省
+VN04qg,Vietnam,Quang Ngai,广义省
+VN04qm,Vietnam,Quang Nam,广南省
+VN05dc,Vietnam,Dac Lac,多乐省
+VN05do,Vietnam,Dac Nong,得农省
+VN05gl,Vietnam,Gia Lai,嘉莱省
+VN05kt,Vietnam,Kon Tum,昆嵩省
+VN05ld,Vietnam,Lam Dong,林同省
+VN06bi,Vietnam,Binh Duong,平阳省
+VN06bp,Vietnam,Binh Phuoc,平福省
+VN06bu,Vietnam,Binh Thuan,平顺省
+VN06bv,Vietnam,Ba Ria-Vung Tau,巴地头顿省
+VN06dn,Vietnam,Dong Nai,同奈省
+VN06hc,Vietnam,Ho Chi Minh,胡志明市
+VN06nt,Vietnam,Ninh Thuan,宁顺省
+VN06tn,Vietnam,Tay Ninh,西宁省
+VN07ag,Vietnam,An Giang,安江省
+VN07bl,Vietnam,Bac Lieu,薄辽省
+VN07br,Vietnam,Ben Tre,槟知省
+VN07cm,Vietnam,Ca Mau,金瓯省
+VN07cn,Vietnam,Can Tho,芹苴市
+VN07dt,Vietnam,Dong Thap,同塔省
+VN07hu,Vietnam,Hau Giang,后江省
+VN07kg,Vietnam,Kien Giang,坚江省
+VN07la,Vietnam,Long An,隆安省
+VN07st,Vietnam,Soc Trang,朔庄省
+VN07tg,Vietnam,Tien Giang,前江省
+VN07tv,Vietnam,Tra Vinh,茶荣省
+VN07vl,Vietnam,Vinh Long,永隆省
+VN08db,Vietnam,Dien Bien,奠边省
+VN08ho,Vietnam,Hoa Binh,和平省
+VN08li,Vietnam,Lai Chau,莱州省
+VN08sl,Vietnam,Son La,山罗省
+WF,Wallis and Futuna Islands,,瓦利斯和富图纳群岛
+EH,Western Sahara,,西撒哈拉
+YE,Yemen,,也门
+YEab,Yemen,Abyan,阿比扬省
+YEad,Yemen,`Adan,亚丁省
+YEam,Yemen,Amran,阿姆兰省
+YEba,Yemen,Al Bayda',贝达省
+YEdh,Yemen,Dhamar,扎马尔省
+YEdl,Yemen,Al Dali',达利阿省
+YEhd,Yemen,Hadramawt,哈德拉毛省
+YEhj,Yemen,Hajjah,哈杰省
+YEhu,Yemen,Al Hudaydah,荷台达省
+YEib,Yemen,Ibb,伊卜省
+YEja,Yemen,Al Jawf,焦夫省
+YEla,Yemen,Lahij,拉赫季省
+YEma,Yemen,Ma'rib,马里卜省
+YEmr,Yemen,Al Mahrah,迈赫拉省
+YEmw,Yemen,Al Mahwit,迈赫维特省
+YEsd,Yemen,Sa`dah,萨达省
+YEsh,Yemen,Shabwah,舍卜沃省
+YEsn,Yemen,San`a',萨那直辖市
+YEaa,Yemen,Amanat Al Asimah,萨那市
+YEta,Yemen,Ta`izz,塔伊兹省
+YEra,Yemen,Raymah,赖马省
+ZM,Zambia,,赞比亚
+ZMce,Zambia,Central,中央
+ZMco,Zambia,Copperbelt,铜带
+ZMea,Zambia,Eastern,东方
+ZMlp,Zambia,Luapula,卢阿普拉
+ZMls,Zambia,Lusaka,卢萨卡
+ZMno,Zambia,Northern,北方
+ZMnw,Zambia,North-Western,西北
+ZMso,Zambia,Southern,南方
+ZMwe,Zambia,Western,西方
+ZMmu,Zambia,Muchinga,穆欣加省
+ZW,Zimbabwe,,津巴布韦
+ZWbu,Zimbabwe,Bulawayo,布拉瓦约
+ZWha,Zimbabwe,Harare,哈拉雷
+ZWma,Zimbabwe,Manicaland,马尼卡兰
+ZWmc,Zimbabwe,Mashonaland Central,中马绍纳兰
+ZWme,Zimbabwe,Mashonaland East,东马绍纳兰
+ZWmi,Zimbabwe,Midlands,中部
+ZWmn,Zimbabwe,Matabeleland North,北马塔贝莱兰
+ZWms,Zimbabwe,Matabeleland South,南马塔贝莱兰
+ZWmv,Zimbabwe,Masvingo,马斯温戈
+ZWmw,Zimbabwe,Mashonaland West,西马绍纳兰
+FIax|AX,Åland Islands,,奥兰群岛
+BL,Saint Barthélemy,,圣巴泰勒米
+GS,South Georgia and the South Sandwich Islands,,南乔治亚和南桑威奇群岛
+MK,North Macedonia,,北马其顿
+SJ,Svalbard and Jan Mayen,,斯瓦尔巴和扬马延
+VA,Holy See,,圣座
