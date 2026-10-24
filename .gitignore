@@ -1,0 +1,31 @@
+# Python environments and build artifacts
+.venv*/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.coverage
+
+# Local credentials and user data
+.env
+*.key
+*.log
+.DS_Store
+test-images/
+pic/
+result/
+birdclass_records.csv
+
+# Local development and validation artifacts
+area-code.html
+area-scripts/
+dongniao-api-doc.html
+generate_areas.py
+inspect_areas.py
+live-api-test/
+live_api_batch.py
+live_api_smoke.py
+ui-smoke.png
+validation/
+docs/superpowers/
