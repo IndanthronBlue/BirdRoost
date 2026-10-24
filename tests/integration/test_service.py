@@ -165,6 +165,9 @@ def test_deferred_review_recovers_without_new_upload(tmp_path):
     assert first.deferred == 1
     assert second.completed == 1
     assert api.submit_calls == 1
+    pending = tmp_path / "output" / "待复核" / "bird.jpg"
+    assert pending.is_file()
+    assert len(list(pending.parent.glob("*.jpg"))) == 1
 
 
 def test_defer_skips_only_current_image_and_continues_batch(tmp_path):
@@ -345,6 +348,8 @@ def test_defer_skips_only_current_target_and_resumes_remaining_target(tmp_path):
     assert (tmp_path / "output" / "斑鸠" / "原始地点_原始时间_斑鸠_001.jpg").is_file()
     assert (tmp_path / "output" / "家燕" / "原始地点_原始时间_家燕_001.jpg").is_file()
     assert not (tmp_path / "output" / "麻雀").exists()
+    pending_copy = tmp_path / "output" / "待复核" / "birds.jpg"
+    assert pending_copy.is_file()
     history = CsvHistory(source / "birdclass_records.csv")
     history.load()
     source_image = source / "birds.jpg"
@@ -373,6 +378,31 @@ def test_defer_skips_only_current_target_and_resumes_remaining_target(tmp_path):
         assert len(list(directory.glob("*.jpg"))) == 1
         assert (directory / f"原始地点_原始时间_{species}_001.jpg").is_file()
     assert not list((tmp_path / "output").rglob("新地点*"))
+    assert len(list(pending_copy.parent.glob("*.jpg"))) == 1
+
+
+def test_multiple_deferred_targets_create_only_one_pending_copy(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "birds.jpg")
+    result_payload = multi_species_payload(second_confidence="60")
+    result_payload[0]["list"][0][0] = "55"
+    api = FakeAPI(Quota(0, 10, 10), result_payload)
+    contexts = []
+
+    def defer_every_target(context):
+        contexts.append(context.target_index)
+        return ReviewResult(ReviewAction.DEFER)
+
+    summary = run_service(make_service(api), make_config(tmp_path), defer_every_target)
+
+    assert summary.deferred == 1
+    assert summary.reviewed == 0
+    assert contexts == [0, 1]
+    pending_directory = tmp_path / "output" / "待复核"
+    assert (pending_directory / "birds.jpg").is_file()
+    assert len(list(pending_directory.glob("*.jpg"))) == 1
+    assert not (tmp_path / "output" / "斑鸠").exists()
+    assert not (tmp_path / "output" / "麻雀").exists()
 
 
 def test_partial_multi_copy_failure_resumes_without_upload_or_duplicates(tmp_path, monkeypatch):
