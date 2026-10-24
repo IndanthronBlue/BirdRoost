@@ -272,6 +272,7 @@ class MainWindow(QMainWindow):
             "partially_completed": (
                 f"部分分类：{path} → {destination_text}；待复核目标：{deferred_text}"
             ),
+            "deferred": f"待复核：{path} → {destination_text}",
             "skipped": f"跳过已完成：{path}",
             "failed": f"失败：{path}；{data.get('error', '')}",
         }
