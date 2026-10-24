@@ -112,6 +112,27 @@ class FileArchiver:
         except OSError as exc:
             raise ArchiveError(f"复制多物种图片失败：{exc}") from exc
 
+    def archive_pending(self, item: ImageItem) -> Path:
+        source = item.absolute_path
+        directory = self.output_root / "待复核"
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+            number = 1
+            while True:
+                suffix = "" if number == 1 else f"_{number:03d}"
+                destination = directory / f"{source.stem}{suffix}{source.suffix}"
+                if destination.exists():
+                    if _same_pixels(source, destination):
+                        return destination
+                    number += 1
+                    continue
+                self._copy_atomic(item, destination)
+                return destination
+        except ArchiveError:
+            raise
+        except OSError as exc:
+            raise ArchiveError(f"复制待复核图片失败：{exc}") from exc
+
     def archive(
         self,
         item: ImageItem,

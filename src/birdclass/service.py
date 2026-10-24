@@ -124,8 +124,13 @@ class ClassificationService:
                     summary.stop_reason = "user"
                     return summary
                 if result.action == ReviewAction.DEFER:
+                    pending_destination = archiver.archive_pending(item)
                     summary.deferred += 1
                     summary.stop_reason = summary.stop_reason or "deferred"
+                    self._progress(
+                        progress_callback, "deferred", item,
+                        destination=pending_destination, deferred_targets=[0],
+                    )
                     continue
                 candidate = self._selected_candidate(result, candidates)
                 recognition = Recognition(
@@ -333,6 +338,11 @@ class ClassificationService:
                     item, event, selections, deferred_targets,
                     history, archiver, progress_callback,
                 )
+            pending_destination = archiver.archive_pending(item)
+            self._progress(
+                progress_callback, "deferred", item,
+                destination=pending_destination, deferred_targets=deferred_targets,
+            )
             return
         recognized_event = self._recognized_multi(item, event, selections, archiver)
         history.append(recognized_event)
