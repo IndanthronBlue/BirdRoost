@@ -1,0 +1,152 @@
+from __future__ import annotations
+
+from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
+from PySide6.QtWidgets import (
+    QDialog,
+    QDialogButtonBox,
+    QHBoxLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ..models import ReviewAction, ReviewContext, ReviewResult
+
+
+class DetectionImageLabel(QLabel):
+    resized = Signal()
+
+    def __init__(self, text: str) -> None:
+        super().__init__(text)
+        self.highlight_rect: QRectF | None = None
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self.resized.emit()
+
+    def paintEvent(self, event) -> None:
+        super().paintEvent(event)
+        if self.highlight_rect is None:
+            return
+        painter = QPainter(self)
+        pen = QPen(QColor("#ffb020"), 3)
+        painter.setPen(pen)
+        painter.drawRect(self.highlight_rect)
+        painter.end()
+
+
+class ReviewDialog(QDialog):
+    def __init__(self, context: ReviewContext, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.context = context
+        self.result = ReviewResult(ReviewAction.STOP)
+        self.setWindowTitle("需要人工确认识别结果")
+        self.resize(900, 600)
+
+        layout = QVBoxLayout(self)
+        reason = {
+            "low_confidence": "最高候选置信度较低",
+            "ambiguous": "前两名候选置信度接近",
+            "low_confidence+ambiguous": "最高置信度较低，且前两名候选接近",
+        }.get(context.reason, "请人工确认识别结果")
+        gap = "无" if context.confidence_gap is None else f"{context.confidence_gap:.2f} 个百分点"
+        description = QLabel(
+            f"目标 {context.target_index + 1}/{context.target_count} · {context.relative_path}\n"
+            f"{reason}；当前差值：{gap}。请选择正确鸟种，或稍后处理。"
+        )
+        description.setWordWrap(True)
+        layout.addWidget(description)
+
+        splitter = QSplitter()
+        self.image_label = DetectionImageLabel("无法加载原图预览")
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setMinimumSize(360, 300)
+        self.image_label.setStyleSheet("background: #17211c; color: white;")
+        self._pixmap = QPixmap(str(context.image_path))
+        self.image_label.resized.connect(self._update_image)
+        splitter.addWidget(self.image_label)
+
+        candidate_panel = QWidget()
+        candidate_layout = QVBoxLayout(candidate_panel)
+        candidate_layout.addWidget(QLabel("识别候选（按置信度从高到低）"))
+        self.candidate_list = QListWidget()
+        self.candidate_list.setAlternatingRowColors(True)
+        for candidate in context.candidates:
+            names = " / ".join(filter(None, [candidate.name_en, candidate.name_latin]))
+            text = f"{candidate.name_cn}    {candidate.confidence_percent:.2f}%"
+            if names:
+                text += f"\n{names}"
+            item = QListWidgetItem(text)
+            item.setData(Qt.ItemDataRole.UserRole, candidate.source_order)
+            self.candidate_list.addItem(item)
+        self.candidate_list.setCurrentRow(0)
+        self.candidate_list.itemDoubleClicked.connect(lambda _item: self.confirm())
+        candidate_layout.addWidget(self.candidate_list)
+        splitter.addWidget(candidate_panel)
+        splitter.setSizes([520, 360])
+        layout.addWidget(splitter, 1)
+
+        buttons = QDialogButtonBox()
+        self.confirm_button = QPushButton("确认所选鸟种")
+        self.confirm_button.setDefault(True)
+        self.defer_button = QPushButton("稍后处理（仅当前目标）")
+        self.stop_button = QPushButton("停止本批次")
+        buttons.addButton(self.confirm_button, QDialogButtonBox.ButtonRole.AcceptRole)
+        buttons.addButton(self.defer_button, QDialogButtonBox.ButtonRole.ResetRole)
+        buttons.addButton(self.stop_button, QDialogButtonBox.ButtonRole.RejectRole)
+        self.confirm_button.clicked.connect(self.confirm)
+        self.defer_button.clicked.connect(self.defer)
+        self.stop_button.clicked.connect(self.reject)
+        layout.addWidget(buttons)
+        self._update_image()
+
+    def confirm(self) -> None:
+        row = self.candidate_list.currentRow()
+        if row < 0:
+            return
+        self.result = ReviewResult(ReviewAction.CONFIRM, self.context.candidates[row])
+        self.accept()
+
+    def defer(self) -> None:
+        self.result = ReviewResult(ReviewAction.DEFER)
+        self.accept()
+
+    def reject(self) -> None:
+        self.result = ReviewResult(ReviewAction.STOP)
+        super().reject()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._update_image()
+
+    def _update_image(self) -> None:
+        if self._pixmap.isNull():
+            return
+        scaled = self._pixmap.scaled(
+            self.image_label.size(),
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        self.image_label.setPixmap(scaled)
+        self.image_label.highlight_rect = None
+        if self.context.box is not None:
+            left, top, right, bottom = self.context.box
+            logical_size = scaled.deviceIndependentSize()
+            scaled_width = logical_size.width()
+            scaled_height = logical_size.height()
+            offset_x = (self.image_label.width() - scaled_width) / 2
+            offset_y = (self.image_label.height() - scaled_height) / 2
+            rect_left = offset_x + left * scaled_width
+            rect_top = offset_y + top * scaled_height
+            self.image_label.highlight_rect = QRectF(
+                rect_left,
+                rect_top,
+                (right - left) * scaled_width,
+                (bottom - top) * scaled_height,
+            )
+        self.image_label.update()
