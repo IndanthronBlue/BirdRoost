@@ -95,6 +95,23 @@ def test_partial_completion_log_lists_archived_paths_and_deferred_target(qtbot, 
     assert "待复核目标：2" in message
 
 
+def test_deferred_log_lists_pending_review_copy(qtbot, tmp_path):
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    pending = tmp_path / "output" / "待复核" / "birds.jpg"
+
+    window._on_progress("deferred", {
+        "relative_path": "birds.jpg",
+        "destination": pending,
+        "deferred_targets": [0, 1],
+    })
+
+    message = window.log.toPlainText()
+    assert "待复核：birds.jpg" in message
+    assert "待复核/birds.jpg" in message
+
+
 def test_result_wait_defaults_to_60_and_enters_config(qtbot, tmp_path):
     isolated_settings(tmp_path)
     window = MainWindow()

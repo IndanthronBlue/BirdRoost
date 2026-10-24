@@ -174,3 +174,25 @@ def test_plan_many_uses_observation_for_every_species(tmp_path: Path):
         "短趾雕/云南大理_2026-10-24 1430_短趾雕_001.jpg",
         "麻雀/云南大理_2026-10-24 1430_麻雀_001.jpg",
     ]
+
+
+def test_archive_pending_is_idempotent_and_never_overwrites_name_collision(tmp_path: Path):
+    first_source = tmp_path / "first-source"
+    second_source = tmp_path / "second-source"
+    first_source.mkdir()
+    second_source.mkdir()
+    first_image = first_source / "bird.jpg"
+    second_image = second_source / "bird.jpg"
+    make_image(first_image, "green")
+    make_image(second_image, "red")
+    archiver = FileArchiver(tmp_path / "output")
+
+    first = archiver.archive_pending(item(first_image, first_source))
+    repeated = archiver.archive_pending(item(first_image, first_source))
+    second = archiver.archive_pending(item(second_image, second_source))
+    second_repeated = archiver.archive_pending(item(second_image, second_source))
+
+    assert first == repeated == tmp_path / "output" / "待复核" / "bird.jpg"
+    assert second == second_repeated == tmp_path / "output" / "待复核" / "bird_002.jpg"
+    assert len(list(first.parent.glob("*.jpg"))) == 2
+    assert pixels(first) != pixels(second)
