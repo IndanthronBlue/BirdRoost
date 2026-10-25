@@ -3,8 +3,9 @@ from __future__ import annotations
 from decimal import Decimal
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, Qt
+from PySide6.QtCore import QSettings, Qt, QTimer
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
@@ -23,8 +24,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..library import ArchiveLibrary
 from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
+from .archive_browser import ArchiveBrowserWindow
 from .area_search import configure_area_search, resolve_area_code
 from .review_dialog import ReviewDialog
 from .workers import ClassificationWorker, QuotaWorker
@@ -39,6 +42,7 @@ class MainWindow(QMainWindow):
         self._worker: ClassificationWorker | None = None
         self._quota_worker: QuotaWorker | None = None
         self._closing = False
+        self._archive_windows: list[ArchiveBrowserWindow] = []
         self._build_ui()
         self._restore_settings()
 
@@ -103,6 +107,16 @@ class MainWindow(QMainWindow):
         csv_hint = QLabel("处理记录保存在待分类目录的 birdclass_records.csv；分类会向原图写入鸟种元数据，请先备份重要图库。")
         csv_hint.setWordWrap(True)
         path_form.addRow("", csv_hint)
+        archive_row = QHBoxLayout()
+        self.open_archive_button = QPushButton("浏览归档")
+        self.open_archive_button.clicked.connect(lambda: self.open_archive_browser())
+        self.open_archive_button.setToolTip("打开分类后目录，按分类树浏览和纠错")
+        archive_row.addWidget(self.open_archive_button)
+        self.auto_open_archive = QCheckBox("批次完成后打开结果页")
+        self.auto_open_archive.setChecked(True)
+        archive_row.addWidget(self.auto_open_archive)
+        archive_row.addStretch(1)
+        path_form.addRow("归档", archive_row)
         root.addWidget(path_group, 2, 0)
 
         action_row = QHBoxLayout()
@@ -322,6 +336,37 @@ class MainWindow(QMainWindow):
         else:
             self._append_log(f"保留待复核：{context.relative_path}")
 
+    def open_archive_browser(self, batch_id: str | None = None) -> None:
+        output = self.output_dir.text().strip()
+        if not output:
+            self._show_error("请先选择分类后目录")
+            return
+        window = ArchiveBrowserWindow(Path(output), batch_id=batch_id, parent=self)
+        window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        window.destroyed.connect(
+            lambda _obj=None, browser=window: self._forget_archive_window(browser)
+        )
+        self._archive_windows.append(window)
+        window.show()
+        window.raise_()
+
+    def _forget_archive_window(self, window: ArchiveBrowserWindow) -> None:
+        if window in self._archive_windows:
+            self._archive_windows.remove(window)
+
+    def _latest_batch_id(self) -> str | None:
+        output = self.output_dir.text().strip()
+        if not output:
+            return None
+        batches = ArchiveLibrary(Path(output)).load_batches()
+        if not batches:
+            return None
+        latest = max(
+            batches,
+            key=lambda batch: str(batch.get("finished_at") or batch.get("started_at") or ""),
+        )
+        return str(latest.get("batch_id") or "") or None
+
     def _classification_succeeded(self, summary: BatchSummary) -> None:
         self.counts_label.setText(
             f"共 {summary.total} · 跳过 {summary.skipped} · 完成 {summary.completed} · "
@@ -335,6 +380,10 @@ class MainWindow(QMainWindow):
         }
         self.status_label.setText(reasons.get(summary.stop_reason, "本批次已结束"))
         self._append_log(self.status_label.text())
+        if self.auto_open_archive.isChecked():
+            batch_id = self._latest_batch_id()
+            if batch_id:
+                QTimer.singleShot(0, lambda: self.open_archive_browser(batch_id))
 
     def _classification_failed(self, message: str) -> None:
         self.status_label.setText("分类中断")
@@ -370,6 +419,10 @@ class MainWindow(QMainWindow):
         self.result_wait_seconds.setValue(int(self._settings.value("result_wait_seconds", 60)))
         self.source_dir.setText(str(self._settings.value("source_dir", "")))
         self.output_dir.setText(str(self._settings.value("output_dir", "")))
+        auto_open = self._settings.value("archive_auto_open", True)
+        self.auto_open_archive.setChecked(
+            auto_open if isinstance(auto_open, bool) else str(auto_open).lower() != "false"
+        )
 
     def _save_settings(self) -> None:
         self._settings.setValue("animal_class", self.animal_class.currentData())
@@ -381,6 +434,7 @@ class MainWindow(QMainWindow):
         self._settings.setValue("result_wait_seconds", self.result_wait_seconds.value())
         self._settings.setValue("source_dir", self.source_dir.text().strip())
         self._settings.setValue("output_dir", self.output_dir.text().strip())
+        self._settings.setValue("archive_auto_open", self.auto_open_archive.isChecked())
         self._settings.sync()
 
     def closeEvent(self, event) -> None:

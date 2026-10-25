@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -18,28 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..models import ReviewAction, ReviewContext, ReviewResult
-
-
-class DetectionImageLabel(QLabel):
-    resized = Signal()
-
-    def __init__(self, text: str) -> None:
-        super().__init__(text)
-        self.highlight_rect: QRectF | None = None
-
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        self.resized.emit()
-
-    def paintEvent(self, event) -> None:
-        super().paintEvent(event)
-        if self.highlight_rect is None:
-            return
-        painter = QPainter(self)
-        pen = QPen(QColor("#ffb020"), 3)
-        painter.setPen(pen)
-        painter.drawRect(self.highlight_rect)
-        painter.end()
+from .image_canvas import CanvasBox, ZoomableImageCanvas
 
 
 class ReviewDialog(QDialog):
@@ -65,13 +43,28 @@ class ReviewDialog(QDialog):
         layout.addWidget(description)
 
         splitter = QSplitter()
-        self.image_label = DetectionImageLabel("无法加载原图预览")
-        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_label.setMinimumSize(360, 300)
-        self.image_label.setStyleSheet("background: #17211c; color: white;")
-        self._pixmap = QPixmap(str(context.image_path))
-        self.image_label.resized.connect(self._update_image)
-        splitter.addWidget(self.image_label)
+        image_panel = QWidget()
+        image_layout = QVBoxLayout(image_panel)
+        zoom_row = QHBoxLayout()
+        for text, slot in (
+            ("−", lambda: self.image_canvas.zoom_out()),
+            ("+", lambda: self.image_canvas.zoom_in()),
+            ("适应", lambda: self.image_canvas.fit_to_window()),
+            ("1:1", lambda: self.image_canvas.actual_size()),
+        ):
+            button = QPushButton(text)
+            button.setFixedWidth(48)
+            button.clicked.connect(slot)
+            zoom_row.addWidget(button)
+        zoom_row.addStretch(1)
+        image_layout.addLayout(zoom_row)
+        self.image_canvas = ZoomableImageCanvas()
+        self.image_canvas.setMinimumSize(360, 300)
+        image_layout.addWidget(self.image_canvas, 1)
+        self.preview_label = QLabel()
+        self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        image_layout.addWidget(self.preview_label)
+        splitter.addWidget(image_panel)
 
         candidate_panel = QWidget()
         candidate_layout = QVBoxLayout(candidate_panel)
@@ -127,7 +120,7 @@ class ReviewDialog(QDialog):
         self.defer_button.clicked.connect(self.defer)
         self.stop_button.clicked.connect(self.reject)
         layout.addWidget(buttons)
-        self._update_image()
+        self._load_preview()
 
     def confirm(self) -> None:
         row = self.candidate_list.currentRow()
@@ -159,33 +152,13 @@ class ReviewDialog(QDialog):
         self.result = ReviewResult(ReviewAction.STOP)
         super().reject()
 
+    def _load_preview(self) -> None:
+        boxes = []
+        if self.context.box is not None:
+            boxes.append(CanvasBox(self.context.box, label=str(self.context.target_index + 1), highlighted=True))
+        loaded = self.image_canvas.load_image(self.context.image_path, boxes=boxes)
+        self.image_canvas.set_show_boxes(True)
+        self.preview_label.setText("" if loaded else "无法加载原图预览")
+
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        self._update_image()
-
-    def _update_image(self) -> None:
-        if self._pixmap.isNull():
-            return
-        scaled = self._pixmap.scaled(
-            self.image_label.size(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
-        self.image_label.setPixmap(scaled)
-        self.image_label.highlight_rect = None
-        if self.context.box is not None:
-            left, top, right, bottom = self.context.box
-            logical_size = scaled.deviceIndependentSize()
-            scaled_width = logical_size.width()
-            scaled_height = logical_size.height()
-            offset_x = (self.image_label.width() - scaled_width) / 2
-            offset_y = (self.image_label.height() - scaled_height) / 2
-            rect_left = offset_x + left * scaled_width
-            rect_top = offset_y + top * scaled_height
-            self.image_label.highlight_rect = QRectF(
-                rect_left,
-                rect_top,
-                (right - left) * scaled_width,
-                (bottom - top) * scaled_height,
-            )
-        self.image_label.update()

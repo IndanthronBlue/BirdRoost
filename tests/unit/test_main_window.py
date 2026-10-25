@@ -238,3 +238,56 @@ def test_review_applied_progress_logs_target_count(qtbot, tmp_path):
     })
 
     assert "后面同样应用到 2 个目标" in window.log.toPlainText()
+
+
+def test_archive_browser_controls_and_latest_batch(qtbot, tmp_path):
+    from birdclass.library import ArchiveLibrary, new_batch_id
+
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    fill_required_fields(window, tmp_path)
+    library = ArchiveLibrary(tmp_path / "output")
+    library.ensure()
+    batch_id = new_batch_id()
+    library.write_batch({
+        "schema_version": 1,
+        "batch_id": batch_id,
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "finished_at": "2026-01-01T00:01:00+00:00",
+        "groups": [],
+        "summary": {},
+    })
+
+    assert window.auto_open_archive.isChecked() is True
+    assert window.open_archive_button.isEnabled() is True
+    assert window._latest_batch_id() == batch_id
+
+
+def test_classification_success_can_open_latest_batch(qtbot, tmp_path):
+    from birdclass.library import ArchiveLibrary, new_batch_id
+    from birdclass.models import BatchSummary
+
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    fill_required_fields(window, tmp_path)
+    library = ArchiveLibrary(tmp_path / "output")
+    library.ensure()
+    batch_id = new_batch_id()
+    library.write_batch({
+        "schema_version": 1,
+        "batch_id": batch_id,
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "finished_at": "2026-01-01T00:01:00+00:00",
+        "groups": [],
+        "summary": {"total": 0, "completed": 0, "failed": 0, "deferred": 0},
+    })
+
+    window._classification_succeeded(BatchSummary(total=0))
+    qtbot.wait(20)
+
+    assert len(window._archive_windows) == 1
+    assert window._archive_windows[0].batch_id == batch_id
+    for archive_window in list(window._archive_windows):
+        archive_window.close()

@@ -8,7 +8,7 @@ import tempfile
 from dataclasses import replace
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from .errors import ArchiveError
 from .metadata import write_species_metadata
@@ -258,9 +258,10 @@ def _draw_pending_boxes(
     boxes: tuple[tuple[int, NormalizedBox], ...],
 ) -> None:
     with Image.open(source) as opened:
-        image = opened.copy()
-        exif = opened.info.get("exif")
-        icc_profile = opened.info.get("icc_profile")
+        transposed = ImageOps.exif_transpose(opened)
+        image = transposed.copy()
+        exif = transposed.info.get("exif")
+        icc_profile = transposed.info.get("icc_profile") or opened.info.get("icc_profile")
 
     suffix = destination.suffix.lower()
     if suffix == ".png" and image.mode not in ("RGB", "RGBA"):

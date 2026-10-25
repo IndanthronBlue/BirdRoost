@@ -48,8 +48,8 @@ def test_hierarchy_and_label_fallbacks():
     hierarchy = taxon.hierarchy()
     assert [rank for rank, _, _ in hierarchy] == ["界", "门", "纲", "目", "科", "属", "种"]
     assert hierarchy[0][1:] == ("动物界", "Animalia")
-    assert hierarchy[3][1] == "CHARADRIIFORMES"
-    assert hierarchy[4][1] == "Scolopacidae"
+    assert hierarchy[3][1] == "鸻形目"
+    assert hierarchy[4][1] == "鹬科"
     assert hierarchy[6][1] == "三趾滨鹬"
 
 

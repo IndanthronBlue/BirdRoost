@@ -276,3 +276,28 @@ def test_archive_pending_preview_degrades_to_original_when_drawing_fails(tmp_pat
     assert original.is_file()
     assert annotated is None
     assert not list(original.parent.glob("*_待确认框*"))
+
+
+def test_archive_pending_preview_uses_display_orientation(tmp_path: Path):
+    import piexif
+
+    source = tmp_path / "source"
+    source.mkdir()
+    path = source / "rotated.jpg"
+    Image.new("RGB", (100, 80), "green").save(path)
+    piexif.insert(piexif.dump({"0th": {piexif.ImageIFD.Orientation: 6}}), str(path))
+    archiver = FileArchiver(tmp_path / "output")
+
+    _, annotated = archiver.archive_pending_with_preview(
+        item(path, source), ((0, (0.1, 0.1, 0.5, 0.5)),)
+    )
+
+    assert annotated is not None
+    with Image.open(annotated) as preview:
+        assert preview.size == (80, 100)
+        assert preview.getexif().get(274) in (None, 1)
+        colors = preview.convert("RGB").getcolors(maxcolors=1_000_000) or []
+    assert any(
+        abs(color[0] - 255) < 12 and abs(color[1] - 176) < 12 and abs(color[2] - 32) < 12
+        for _, color in colors
+    )

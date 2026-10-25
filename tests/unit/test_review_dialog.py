@@ -37,7 +37,7 @@ def test_review_dialog_shows_image_candidates_and_confirm(qtbot, tmp_path):
     assert dialog.candidate_list.count() == 2
     assert "80.00%" in dialog.candidate_list.item(0).text()
     assert dialog.defer_button.text() == "稍后处理（仅当前目标）"
-    assert not dialog.image_label.pixmap().isNull()
+    assert dialog.image_canvas.image is not None
     dialog.candidate_list.setCurrentRow(1)
     dialog.confirm()
 
@@ -67,7 +67,8 @@ def test_closing_review_defers_and_stops(qtbot, tmp_path):
     assert dialog.result.candidate is None
 
 
-def test_review_dialog_highlights_normalized_target_with_letterboxing(qtbot, tmp_path):
+def test_review_dialog_shows_current_target_box_on_canvas(qtbot, tmp_path):
+    from PySide6.QtCore import QRectF
     from PySide6.QtWidgets import QLabel
 
     image = tmp_path / "bird.png"
@@ -88,25 +89,19 @@ def test_review_dialog_highlights_normalized_target_with_letterboxing(qtbot, tmp
     dialog = ReviewDialog(context)
     qtbot.addWidget(dialog)
 
-    dialog.image_label.resize(400, 300)
-    dialog._update_image()
-    rect = dialog.image_label.highlight_rect
-
-    assert rect is not None
-    assert rect.left() == 40
-    assert rect.top() == 90
-    assert rect.right() == 200
-    assert rect.bottom() == 210
+    assert dialog.image_canvas.has_boxes() is True
+    assert dialog.image_canvas.show_boxes is True
+    assert dialog.image_canvas._box_items[0].rect() == QRectF(10.0, 10.0, 40.0, 30.0)
     assert any("目标 1/2" in label.text() for label in dialog.findChildren(QLabel))
 
 
-def test_review_dialog_high_dpi_uses_logical_paint_coordinates(qtbot, tmp_path):
+def test_review_dialog_canvas_supports_zoom_and_fit(qtbot, tmp_path):
     image = tmp_path / "bird.png"
     Image.new("RGB", (100, 50), "green").save(image)
     context = ReviewContext(
         image_path=image,
         relative_path="bird.png",
-        result_id="retina",
+        result_id="zoom-review",
         candidates=(candidate("1", "麻雀", "60"),),
         reason="low_confidence",
         low_threshold=Decimal("80"),
@@ -116,18 +111,18 @@ def test_review_dialog_high_dpi_uses_logical_paint_coordinates(qtbot, tmp_path):
     )
     dialog = ReviewDialog(context)
     qtbot.addWidget(dialog)
-    dialog._pixmap.setDevicePixelRatio(2)
-    dialog.image_label.resize(400, 300)
+    dialog.show()
+    qtbot.waitExposed(dialog)
 
-    dialog._update_image()
-    rect = dialog.image_label.highlight_rect
+    dialog.image_canvas.zoom_in()
+    assert dialog.image_canvas.transform().m11() > 0
+    dialog.image_canvas.actual_size()
+    assert dialog.image_canvas.transform().m11() == 1.0
+    dialog.image_canvas.fit_to_window()
+    assert dialog.image_canvas.has_boxes() is True
 
-    assert rect is not None
-    assert dialog.image_label.pixmap().deviceIndependentSize().width() == 200
-    assert (rect.left(), rect.top(), rect.right(), rect.bottom()) == (120, 120, 200, 180)
 
-
-def test_highlight_recalculates_when_image_label_resizes(qtbot, tmp_path):
+def test_review_dialog_box_survives_canvas_resize(qtbot, tmp_path):
     from PySide6.QtWidgets import QSplitter
 
     image = tmp_path / "bird.png"
@@ -148,18 +143,11 @@ def test_highlight_recalculates_when_image_label_resizes(qtbot, tmp_path):
     dialog.show()
     qtbot.waitExposed(dialog)
 
+    original = dialog.image_canvas._box_items[0].rect()
     dialog.findChild(QSplitter).setSizes([650, 200])
-    qtbot.waitUntil(lambda: dialog.image_label.width() > 600)
-    rect = dialog.image_label.highlight_rect
-    scaled = dialog.image_label.pixmap().deviceIndependentSize()
-    expected_left = (dialog.image_label.width() - scaled.width()) / 2 + 0.1 * scaled.width()
-    expected_top = (dialog.image_label.height() - scaled.height()) / 2 + 0.2 * scaled.height()
+    qtbot.wait(20)
 
-    assert rect is not None
-    assert round(rect.left(), 6) == round(expected_left, 6)
-    assert round(rect.top(), 6) == round(expected_top, 6)
-    assert round(rect.width(), 6) == round(0.4 * scaled.width(), 6)
-    assert round(rect.height(), 6) == round(0.6 * scaled.height(), 6)
+    assert dialog.image_canvas._box_items[0].rect() == original
 
 
 def test_candidate_rows_show_english_and_latin_names_on_two_lines(qtbot, tmp_path):
@@ -277,8 +265,8 @@ def test_preview_failure_keeps_candidates_and_actions(qtbot, tmp_path):
     dialog = ReviewDialog(context)
     qtbot.addWidget(dialog)
 
-    assert dialog.image_label.pixmap().isNull()
-    assert dialog.image_label.text() == "无法加载原图预览"
+    assert dialog.image_canvas.image is None
+    assert dialog.preview_label.text() == "无法加载原图预览"
     assert dialog.candidate_list.count() == 1
     assert dialog.confirm_button.isEnabled()
     assert dialog.defer_button.isEnabled()

@@ -1,0 +1,221 @@
+rank,scientific_name,name_zh,source
+order,ACCIPITRIFORMES,鹰形目,curated Chinese bird order name
+order,AEGOTHELIFORMES,裸鼻夜鹰目,curated Chinese bird order name
+order,ANSERIFORMES,雁形目,curated Chinese bird order name
+order,APODIFORMES,雨燕目,curated Chinese bird order name
+order,APTERYGIFORMES,无翼鸟目,curated Chinese bird order name
+order,BUCEROTIFORMES,犀鸟目,curated Chinese bird order name
+order,CAPRIMULGIFORMES,夜鹰目,curated Chinese bird order name
+order,CARIAMIFORMES,叫鹤目,curated Chinese bird order name
+order,CASUARIIFORMES,鹤鸵目,curated Chinese bird order name
+order,CHARADRIIFORMES,鸻形目,curated Chinese bird order name
+order,CICONIIFORMES,鹳形目,curated Chinese bird order name
+order,COLIIFORMES,鼠鸟目,curated Chinese bird order name
+order,COLUMBIFORMES,鸽形目,curated Chinese bird order name
+order,CORACIIFORMES,佛法僧目,curated Chinese bird order name
+order,CUCULIFORMES,鹃形目,curated Chinese bird order name
+order,EURYPYGIFORMES,日鳽目,curated Chinese bird order name
+order,FALCONIFORMES,隼形目,curated Chinese bird order name
+order,GALLIFORMES,鸡形目,curated Chinese bird order name
+order,GAVIIFORMES,潜鸟目,curated Chinese bird order name
+order,GRUIFORMES,鹤形目,curated Chinese bird order name
+order,LEPTOSOMIFORMES,鹃鴗目,curated Chinese bird order name
+order,MESITORNITHIFORMES,拟鹑目,curated Chinese bird order name
+order,MUSOPHAGIFORMES,蕉鹃目,curated Chinese bird order name
+order,NYCTIBIIFORMES,林鸱目,curated Chinese bird order name
+order,OPISTHOCOMIFORMES,麝雉目,curated Chinese bird order name
+order,OTIDIFORMES,鸨形目,curated Chinese bird order name
+order,PASSERIFORMES,雀形目,curated Chinese bird order name
+order,PELECANIFORMES,鹈形目,curated Chinese bird order name
+order,PHAETHONTIFORMES,鹲形目,curated Chinese bird order name
+order,PHOENICOPTERIFORMES,红鹳目,curated Chinese bird order name
+order,PICIFORMES,䴕形目,curated Chinese bird order name
+order,PODARGIFORMES,蟆口鸱目,curated Chinese bird order name
+order,PODICIPEDIFORMES,䴙䴘目,curated Chinese bird order name
+order,PROCELLARIIFORMES,鹱形目,curated Chinese bird order name
+order,PSITTACIFORMES,鹦形目,curated Chinese bird order name
+order,PTEROCLIFORMES,沙鸡目,curated Chinese bird order name
+order,RHEIFORMES,美洲鸵目,curated Chinese bird order name
+order,SPHENISCIFORMES,企鹅目,curated Chinese bird order name
+order,STEATORNITHIFORMES,油鸱目,curated Chinese bird order name
+order,STRIGIFORMES,鸮形目,curated Chinese bird order name
+order,STRUTHIONIFORMES,鸵鸟目,curated Chinese bird order name
+order,SULIFORMES,鲣鸟目,curated Chinese bird order name
+order,TINAMIFORMES,䳍形目,curated Chinese bird order name
+order,TROGONIFORMES,咬鹃目,curated Chinese bird order name
+family,Acanthisittidae,刺鹩科,Catalogue of Life via GBIF; simplified character normalization
+family,Acanthizidae,刺嘴莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Acrocephalidae,葦莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Accipitridae,鹰科,Catalogue of Life via GBIF; simplified character normalization
+family,Aegithalidae,长尾山雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Aegithinidae,雀鹎科,Catalogue of Life via GBIF; simplified character normalization
+family,Alaudidae,百靈科,Catalogue of Life via GBIF; simplified character normalization
+family,Alcedinidae,翠鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Alcidae,海雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Anatidae,鸭科,Catalogue of Life via GBIF; simplified character normalization
+family,Anhimidae,叫鸭科,Catalogue of Life via GBIF; simplified character normalization
+family,Anhingidae,蛇鹈科,Catalogue of Life via GBIF; simplified character normalization
+family,Apodidae,雨燕科,Catalogue of Life via GBIF; simplified character normalization
+family,Apterygidae,無翼鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Aramidae,秧鹤科,Catalogue of Life via GBIF; simplified character normalization
+family,Ardeidae,鹭科,Catalogue of Life via GBIF; simplified character normalization
+family,Artamidae,燕鵙科,Catalogue of Life via GBIF; simplified character normalization
+family,Atrichornithidae,藪鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Balaenicipitidae,鯨頭鹳科,Catalogue of Life via GBIF; simplified character normalization
+family,Bernieridae,馬島莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Bombycillidae,太平鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Bucerotidae,犀鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Buphagidae,牛椋鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Burhinidae,石鸻科,Catalogue of Life via GBIF; simplified character normalization
+family,Cacatuidae,鳳頭鸚鵡科,Catalogue of Life via GBIF; simplified character normalization
+family,Calcariidae,铁爪鹀科,Catalogue of Life via GBIF; simplified character normalization
+family,Campephagidae,鹃鵙科,Catalogue of Life via GBIF; simplified character normalization
+family,Caprimulgidae,夜鹰科,Catalogue of Life via GBIF; simplified character normalization
+family,Cardinalidae,美洲雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Casuariidae,鹤鸵科,Catalogue of Life via GBIF; simplified character normalization
+family,Cathartidae,新大陸禿鹫,Catalogue of Life via GBIF; simplified character normalization
+family,Certhiidae,旋木雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Cettiidae,樹莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Charadriidae,鸻科,Catalogue of Life via GBIF; simplified character normalization
+family,Chloropseidae,葉鹎科,Catalogue of Life via GBIF; simplified character normalization
+family,Ciconiidae,鹳科,Catalogue of Life via GBIF; simplified character normalization
+family,Cinclidae,河烏科,Catalogue of Life via GBIF; simplified character normalization
+family,Cisticolidae,扇尾莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Climacteridae,短嘴旋木雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Columbidae,鸠鸽科,Catalogue of Life via GBIF; simplified character normalization
+family,Conopophagidae,食蚊鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Corcoracidae,拟鸦科,Catalogue of Life via GBIF; simplified character normalization
+family,Corvidae,鸦科,Catalogue of Life via GBIF; simplified character normalization
+family,Cotingidae,伞鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Cracidae,鳳冠雉科,Catalogue of Life via GBIF; simplified character normalization
+family,Dasyornithidae,刺莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Cuculidae,杜鹃科,Catalogue of Life via GBIF; simplified character normalization
+family,Dicruridae,卷尾科,Catalogue of Life via GBIF; simplified character normalization
+family,Dicaeidae,啄花鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Donacobiidae,黑顶鹪鹩科,Catalogue of Life via GBIF; simplified character normalization
+family,Diomedeidae,信天翁科,Catalogue of Life via GBIF; simplified character normalization
+family,Emberizidae,鹀科,Catalogue of Life via GBIF; simplified character normalization
+family,Erythrocercidae,红鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Estrildidae,梅花雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Eurylaimidae,阔嘴鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Falconidae,隼科,Catalogue of Life via GBIF; simplified character normalization
+family,Formicariidae,蚁鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Fregatidae,軍艦鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Furnariidae,灶鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Fringillidae,雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Gaviidae,潛鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Gruidae,鹤科,Catalogue of Life via GBIF; simplified character normalization
+family,Haematopodidae,蠣鹬,Catalogue of Life via GBIF; simplified character normalization
+family,Hemiprocnidae,鳳頭雨燕科,Catalogue of Life via GBIF; simplified character normalization
+family,Heliornithidae,日䴘科,Catalogue of Life via GBIF; simplified character normalization
+family,Hirundinidae,燕科,Catalogue of Life via GBIF; simplified character normalization
+family,Hydrobatidae,海燕科,Catalogue of Life via GBIF; simplified character normalization
+family,Hypocoliidae,灰連雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Icteridae,擬黃鹂科,Catalogue of Life via GBIF; simplified character normalization
+family,Jacanidae,雉鸻科,Catalogue of Life via GBIF; simplified character normalization
+family,Laridae,鸥科,Catalogue of Life via GBIF; simplified character normalization
+family,Laniidae,伯勞科,Catalogue of Life via GBIF; simplified character normalization
+family,Leiothrichidae,噪鹛科,Catalogue of Life via GBIF; simplified character normalization
+family,Locustellidae,蝗莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Macrosphenidae,长嘴莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Maluridae,鹩莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Malaconotidae,丛鵙科,Catalogue of Life via GBIF; simplified character normalization
+family,Megalaimidae,鬚䴕科,Catalogue of Life via GBIF; simplified character normalization
+family,Megapodiidae,塚雉科,Catalogue of Life via GBIF; simplified character normalization
+family,Meliphagidae,吸蜜鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Menuridae,琴鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Meropidae,蜂虎科,Catalogue of Life via GBIF; simplified character normalization
+family,Mimidae,嘲鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Modulatricidae,喉䳭科,Catalogue of Life via GBIF; simplified character normalization
+family,Monarchidae,王鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Motacillidae,鹡鸰科,Catalogue of Life via GBIF; simplified character normalization
+family,Muscicapidae,鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Musophagidae,蕉鹃科,Catalogue of Life via GBIF; simplified character normalization
+family,Nectariniidae,花蜜鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Neosittidae,澳鳾科,Catalogue of Life via GBIF; simplified character normalization
+family,Nicatoridae,斗鹎科,Catalogue of Life via GBIF; simplified character normalization
+family,Notiomystidae,缝叶吸蜜鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Onychorhynchidae,皇霸鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Oriolidae,黃鹂科,Catalogue of Life via GBIF; simplified character normalization
+family,Orthonychidae,木鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Otididae,鸨科,Catalogue of Life via GBIF; simplified character normalization
+family,Pachycephalidae,啸鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Pandionidae,鹗科,Catalogue of Life via GBIF; simplified character normalization
+family,Panuridae,文须雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Paradisaeidae,極樂鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Paradoxornithidae,鸚嘴科,Catalogue of Life via GBIF; simplified character normalization
+family,Pardalotidae,斑食蜜鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Parulidae,森莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Passerellidae,雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Paridae,山雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Passeridae,麻雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Pellorneidae,雀眉科,Catalogue of Life via GBIF; simplified character normalization
+family,Pelecanidae,鹈鶘科,Catalogue of Life via GBIF; simplified character normalization
+family,Petroicidae,鸲鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Phalacrocoracidae,鸬鹚科,Catalogue of Life via GBIF; simplified character normalization
+family,Phasianidae,雉科,Catalogue of Life via GBIF; simplified character normalization
+family,Philepittidae,裸眉鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Phoenicopteridae,紅鹤科,Catalogue of Life via GBIF; simplified character normalization
+family,Phylloscopidae,柳莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Picathartidae,岩鹛科,Catalogue of Life via GBIF; simplified character normalization
+family,Picidae,啄木鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Pipridae,侏儒鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Pittidae,八色鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Ploceidae,织布鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Pnoepygidae,鳞胸鹪鹛科,Catalogue of Life via GBIF; simplified character normalization
+family,Podicipedidae,鸊䴘科,Catalogue of Life via GBIF; simplified character normalization
+family,Polioptilidae,蚋莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Pomatostomidae,弯嘴鹛科,Catalogue of Life via GBIF; simplified character normalization
+family,Procellariidae,鹱科,Catalogue of Life via GBIF; simplified character normalization
+family,Promeropidae,澳䳭科,Catalogue of Life via GBIF; simplified character normalization
+family,Prunellidae,岩鹨科,Catalogue of Life via GBIF; simplified character normalization
+family,Psittacidae,鸚鵡科,Catalogue of Life via GBIF; simplified character normalization
+family,Psittaculidae,舊世界鸚鵡科,Catalogue of Life via GBIF; simplified character normalization
+family,Psophiidae,喇叭鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Pteroclidae,沙鸡科,Catalogue of Life via GBIF; simplified character normalization
+family,Ptilonorhynchidae,园丁鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Pycnonotidae,鹎科,Catalogue of Life via GBIF; simplified character normalization
+family,Rallidae,秧雞科,Catalogue of Life via GBIF; simplified character normalization
+family,Ramphastidae,𱉻𱊊科,Catalogue of Life via GBIF; simplified character normalization
+family,Recurvirostridae,長腳鹬科,Catalogue of Life via GBIF; simplified character normalization
+family,Regulidae,戴菊科,Catalogue of Life via GBIF; simplified character normalization
+family,Remizidae,攀雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Rheidae,美洲鸵鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Rhinocryptidae,鼠鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Rhipiduridae,扇尾鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Rhodinocichlidae,玫瑰鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Rostratulidae,彩鹬科,Catalogue of Life via GBIF; simplified character normalization
+family,Sapayoidae,阔嘴霸鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Scolopacidae,鹬科,Catalogue of Life via GBIF; simplified character normalization
+family,Scopidae,鎚頭鹳科,Catalogue of Life via GBIF; simplified character normalization
+family,Scotocercidae,纹鹪莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Sittidae,鳾科,Catalogue of Life via GBIF; simplified character normalization
+family,Spheniscidae,企鵝科,Catalogue of Life via GBIF; simplified character normalization
+family,Stenostiridae,莺鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Stercorariidae,賊鸥科,Catalogue of Life via GBIF; simplified character normalization
+family,Strigidae,鸱鸮科,Catalogue of Life via GBIF; simplified character normalization
+family,Struthionidae,鸵鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Sturnidae,椋鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Sulidae,鰹鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Sylviidae,莺科,Catalogue of Life via GBIF; simplified character normalization
+family,Thamnophilidae,蚁鵙科,Catalogue of Life via GBIF; simplified character normalization
+family,Thinocoridae,籽鹬科,Catalogue of Life via GBIF; simplified character normalization
+family,Thraupidae,裸鼻雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Threskiornithidae,朱鹭科,Catalogue of Life via GBIF; simplified character normalization
+family,Tichodromidae,旋壁雀科,Catalogue of Life via GBIF; simplified character normalization
+family,Timaliidae,畫眉科,Catalogue of Life via GBIF; simplified character normalization
+family,Tinamidae,䳍鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Trochilidae,蜂鸟科,Catalogue of Life via GBIF; simplified character normalization
+family,Trogonidae,咬鹃科,Catalogue of Life via GBIF; simplified character normalization
+family,Troglodytidae,鹪鹩科,Catalogue of Life via GBIF; simplified character normalization
+family,Turdidae,鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Turnicidae,三趾鹑科,Catalogue of Life via GBIF; simplified character normalization
+family,Tyrannidae,霸鹟科,Catalogue of Life via GBIF; simplified character normalization
+family,Tytonidae,草鸮科,Catalogue of Life via GBIF; simplified character normalization
+family,Upupidae,戴勝科,Catalogue of Life via GBIF; simplified character normalization
+family,Urocynchramidae,朱鹀科,Catalogue of Life via GBIF; simplified character normalization
+family,Viduidae,維達鳥科,Catalogue of Life via GBIF; simplified character normalization
+family,Vangidae,钩嘴鵙科,Catalogue of Life via GBIF; simplified character normalization
+family,Vireonidae,绿鹃科,Catalogue of Life via GBIF; simplified character normalization
+family,Zeledoniidae,冠鹩鸫科,Catalogue of Life via GBIF; simplified character normalization
+family,Zosteropidae,繡眼科,Catalogue of Life via GBIF; simplified character normalization
