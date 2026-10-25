@@ -238,3 +238,53 @@ def test_blank_custom_species_is_not_submitted(qtbot, tmp_path):
 
     assert dialog.result.action == ReviewAction.STOP
     assert dialog.result.custom_name_cn == ""
+
+
+def test_many_candidates_are_listed_and_scrollable(qtbot, tmp_path):
+    image = tmp_path / "bird.jpg"
+    Image.new("RGB", (100, 80), "green").save(image)
+    candidates = tuple(candidate(str(index), f"鸟{index}", "60") for index in range(20))
+    context = ReviewContext(
+        image_path=image,
+        relative_path="bird.jpg",
+        result_id="many-candidates",
+        candidates=candidates,
+        reason="low_confidence",
+        low_threshold=Decimal("80"),
+        delta_threshold=Decimal("10"),
+        confidence_gap=None,
+    )
+    dialog = ReviewDialog(context)
+    qtbot.addWidget(dialog)
+    dialog.show()
+    qtbot.waitExposed(dialog)
+
+    assert dialog.candidate_list.count() == 20
+    assert dialog.candidate_list.verticalScrollBar().maximum() > 0
+
+
+def test_preview_failure_keeps_candidates_and_actions(qtbot, tmp_path):
+    context = ReviewContext(
+        image_path=tmp_path / "missing.jpg",
+        relative_path="missing.jpg",
+        result_id="missing-preview",
+        candidates=(candidate("1", "麻雀", "60"),),
+        reason="low_confidence",
+        low_threshold=Decimal("80"),
+        delta_threshold=Decimal("10"),
+        confidence_gap=None,
+    )
+    dialog = ReviewDialog(context)
+    qtbot.addWidget(dialog)
+
+    assert dialog.image_label.pixmap().isNull()
+    assert dialog.image_label.text() == "无法加载原图预览"
+    assert dialog.candidate_list.count() == 1
+    assert dialog.confirm_button.isEnabled()
+    assert dialog.defer_button.isEnabled()
+    assert dialog.stop_button.isEnabled()
+
+    dialog.confirm()
+
+    assert dialog.result.action == ReviewAction.CONFIRM
+    assert dialog.result.candidate.species_id == "1"

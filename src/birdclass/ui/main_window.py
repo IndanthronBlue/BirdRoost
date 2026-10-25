@@ -38,6 +38,7 @@ class MainWindow(QMainWindow):
         self._settings = QSettings("BirdClass", "BirdClass")
         self._worker: ClassificationWorker | None = None
         self._quota_worker: QuotaWorker | None = None
+        self._closing = False
         self._build_ui()
         self._restore_settings()
 
@@ -187,12 +188,19 @@ class MainWindow(QMainWindow):
         worker.finished.connect(worker.deleteLater)
         worker.start()
 
-    def _quota_succeeded(self, quota: Quota) -> None:
+    @staticmethod
+    def _quota_text(quota: Quota) -> str:
         if quota.unlimited:
-            text = f"不限次数 · 已使用 {quota.used}"
-        else:
-            text = f"剩余 {quota.remaining} 次 · 已使用 {quota.used} / 共 {quota.total}"
+            return f"不限次数 · 已使用 {quota.used}"
+        return f"剩余 {quota.remaining} 次 · 已使用 {quota.used} / 共 {quota.total}"
+
+    def _show_quota(self, quota: Quota) -> str:
+        text = self._quota_text(quota)
         self.quota_label.setText(text)
+        return text
+
+    def _quota_succeeded(self, quota: Quota) -> None:
+        text = self._show_quota(quota)
         self._append_log(f"额度查询成功：{text}")
 
     def _quota_failed(self, message: str) -> None:
@@ -253,6 +261,16 @@ class MainWindow(QMainWindow):
             self.status_label.setText("正在安全停止…")
 
     def _on_progress(self, event: str, data: dict) -> None:
+        if event == "quota":
+            quota = data.get("quota")
+            if isinstance(quota, Quota):
+                text = self._show_quota(quota)
+                label = "批次结束额度" if data.get("final") else "批次开始额度"
+                self._append_log(f"{label}：{text}")
+            return
+        if event == "quota_failed":
+            self._append_log(f"额度复查失败：{data.get('error', '')}")
+            return
         path = data.get("relative_path", "")
         destinations = data.get("destinations") or [data.get("destination", "")]
         destination_text = "；".join(str(destination) for destination in destinations if destination)
@@ -360,7 +378,44 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._save_settings()
-        if self._worker is not None:
-            self._worker.request_stop()
-            self._worker.wait(5000)
-        event.accept()
+        if self._closing:
+            event.ignore()
+            return
+        if self._worker is None:
+            event.accept()
+            return
+        if not self._confirm_stop_and_exit():
+            event.ignore()
+            return
+        worker = self._worker
+        if worker is None or (
+            hasattr(worker, "isRunning") and not worker.isRunning()
+        ):
+            self._worker = None
+            event.accept()
+            return
+        self._closing = True
+        worker.request_stop()
+        self.stop_button.setEnabled(False)
+        self.status_label.setText("正在安全停止…")
+        self._append_log("正在停止后台任务，完成当前图片后自动退出…")
+        worker.finished.connect(self._close_after_worker)
+        event.ignore()
+
+    def _confirm_stop_and_exit(self) -> bool:
+        box = QMessageBox(self)
+        box.setWindowTitle("羽栖 BirdRoost")
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setText("分类仍在进行。")
+        box.setInformativeText("停止并退出会等待当前图片处理完成后关闭窗口。")
+        stop_button = box.addButton("停止并退出", QMessageBox.ButtonRole.AcceptRole)
+        cancel_button = box.addButton("取消关闭", QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(cancel_button)
+        box.exec()
+        return box.clickedButton() is stop_button
+
+    def _close_after_worker(self) -> None:
+        if not self._closing:
+            return
+        self._closing = False
+        self.close()

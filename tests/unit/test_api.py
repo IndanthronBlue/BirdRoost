@@ -6,6 +6,7 @@ from birdclass.api import DongNiaoClient
 from birdclass.errors import (
     ApiProtocolError,
     ConfigError,
+    RecognitionFailedError,
     RecognitionTimeoutError,
     SpeciesNotFoundError,
 )
@@ -119,3 +120,38 @@ def test_invalid_area_remains_a_configuration_error():
 
     with pytest.raises(ConfigError, match="1009"):
         client.poll_result("result-1")
+
+
+@pytest.mark.parametrize(
+    ("code", "error"),
+    [
+        (1002, RecognitionFailedError),
+        (1003, RecognitionFailedError),
+        (1004, ConfigError),
+        (1005, ConfigError),
+    ],
+)
+def test_submit_known_business_errors(tmp_path: Path, code: int, error):
+    image = tmp_path / "a.jpg"
+    image.write_bytes(b"jpg")
+    client = DongNiaoClient("secret")
+    client._post = lambda **_: (code, "business error")
+
+    with pytest.raises(error):
+        client.submit_image(image, "B", "WORLD")
+
+
+@pytest.mark.parametrize(
+    ("code", "error"),
+    [
+        (1008, RecognitionFailedError),
+        (1009, ConfigError),
+        (1010, RecognitionFailedError),
+    ],
+)
+def test_poll_known_business_errors(code: int, error):
+    client = DongNiaoClient("secret")
+    client._post = lambda **_: (code, "business error")
+
+    with pytest.raises(error):
+        client.poll_result("result-1", total_wait_seconds=1)

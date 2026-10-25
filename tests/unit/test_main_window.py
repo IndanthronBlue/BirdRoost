@@ -3,7 +3,29 @@ from pathlib import Path
 import pytest
 from PySide6.QtCore import QSettings
 
+from birdclass.models import Quota
 from birdclass.ui.main_window import MainWindow
+
+
+class FakeSignal:
+    def __init__(self) -> None:
+        self._slots = []
+
+    def connect(self, slot) -> None:
+        self._slots.append(slot)
+
+    def emit(self) -> None:
+        for slot in self._slots:
+            slot()
+
+
+class FakeWorker:
+    def __init__(self) -> None:
+        self.finished = FakeSignal()
+        self.stop_requested = False
+
+    def request_stop(self) -> None:
+        self.stop_requested = True
 
 
 def isolated_settings(tmp_path: Path) -> None:
@@ -153,3 +175,50 @@ def test_window_leaves_colors_to_application_system_theme(qtbot, tmp_path):
     qtbot.addWidget(window)
 
     assert window.styleSheet() == ""
+
+
+def test_batch_quota_progress_updates_label_and_log(qtbot, tmp_path):
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    window._on_progress("quota", {"quota": Quota(2, 10, 0), "final": True})
+    window._on_progress("quota_failed", {"error": "网络请求失败"})
+
+    assert window.quota_label.text() == "剩余 0 次 · 已使用 2 / 共 10"
+    message = window.log.toPlainText()
+    assert "批次结束额度：剩余 0 次" in message
+    assert "额度复查失败：网络请求失败" in message
+
+
+def test_close_while_running_can_be_cancelled(qtbot, tmp_path, monkeypatch):
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    worker = FakeWorker()
+    window._worker = worker
+    monkeypatch.setattr(window, "_confirm_stop_and_exit", lambda: False)
+
+    assert window.close() is False
+    assert worker.stop_requested is False
+    assert window._closing is False
+
+
+def test_close_while_running_requests_stop_and_waits_for_finish(qtbot, tmp_path, monkeypatch):
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    worker = FakeWorker()
+    window._worker = worker
+    monkeypatch.setattr(window, "_confirm_stop_and_exit", lambda: True)
+
+    assert window.close() is False
+    assert worker.stop_requested is True
+    assert window._closing is True
+    assert window.status_label.text() == "正在安全停止…"
+    assert "自动退出" in window.log.toPlainText()
+
+    window._worker = None
+    worker.finished.emit()
+
+    assert window._closing is False

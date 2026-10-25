@@ -94,3 +94,17 @@ def test_unreadable_image_is_controlled_error(tmp_path: Path):
 
     with pytest.raises((ImageValidationError, ImagePreparationError)):
         UploadPreparer.prepare(make_item(path))
+
+
+def test_prepared_upload_cleanup_is_idempotent(tmp_path: Path):
+    path = tmp_path / "large.png"
+    Image.frombytes("RGB", (1000, 1000), os.urandom(1000 * 1000 * 3)).save(path)
+    prepared = UploadPreparer.prepare(make_item(path))
+    temporary_path = prepared.temporary_path
+
+    assert temporary_path is not None and temporary_path.exists()
+
+    prepared.cleanup()
+    prepared.cleanup()
+
+    assert not temporary_path.exists()

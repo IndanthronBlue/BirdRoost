@@ -11,7 +11,12 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from birdclass.errors import RecognitionFailedError, SpeciesNotFoundError
+from birdclass.errors import (
+    ApiTransportError,
+    ConfigError,
+    RecognitionFailedError,
+    SpeciesNotFoundError,
+)
 from birdclass.history import CsvHistory
 from birdclass.models import (
     AppConfig,
@@ -53,13 +58,18 @@ def payload(first: str = "95", second: str | None = None, name: str = "麻雀"):
 
 
 class FakeAPI:
-    def __init__(self, quota: Quota, result_payload=None):
+    def __init__(self, quota: Quota, result_payload=None, quota_sequence=None):
         self.quota = quota
         self.result_payload = result_payload if result_payload is not None else payload()
+        self.quota_sequence = list(quota_sequence or [])
+        self.quota_calls = 0
         self.submit_calls = 0
         self.poll_wait_seconds = []
 
     def query_quota(self):
+        self.quota_calls += 1
+        if self.quota_sequence:
+            return self.quota_sequence.pop(0)
         return self.quota
 
     def submit_image(self, image_path, animal_class, area_code):
@@ -432,6 +442,13 @@ def test_partial_multi_copy_failure_resumes_without_upload_or_duplicates(tmp_pat
     with pytest.raises(ArchiveError, match="第二张"):
         run_service(make_service(api), config)
 
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    failed = rows[-1]
+    assert failed["status"] == "failed"
+    assert failed["error_code"] == "ArchiveError"
+    assert failed["archive_payload"]
+
     monkeypatch.setattr(FileArchiver, "_copy_atomic", staticmethod(original_copy))
     second = run_service(make_service(api), config)
 
@@ -698,3 +715,255 @@ def test_schema1_pending_review_accepts_custom_name_without_upload(tmp_path):
     assert summary.completed == 1
     assert api.submit_calls == 0
     assert (output / "白鹡鸰" / "全球_白鹡鸰_001.jpg").is_file()
+
+
+def test_batch_end_requeries_quota_and_reports_final_value(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "a.jpg")
+    make_image(source / "b.jpg")
+    api = FakeAPI(
+        Quota(0, 10, 2),
+        quota_sequence=[Quota(0, 10, 2), Quota(2, 10, 0)],
+    )
+    progress = []
+
+    summary = make_service(api).run(
+        make_config(tmp_path),
+        auto_review,
+        lambda event, data: progress.append((event, data)),
+        threading.Event(),
+    )
+
+    assert summary.completed == 2
+    assert api.quota_calls == 2
+    final = [data for event, data in progress if event == "quota" and data.get("final")]
+    assert final and final[-1]["quota"] == Quota(2, 10, 0)
+
+
+def test_batch_end_quota_failure_does_not_fail_completed_batch(tmp_path):
+    class FailingFinalQuotaAPI(FakeAPI):
+        def query_quota(self):
+            self.quota_calls += 1
+            if self.quota_calls > 1:
+                raise ApiTransportError("网络请求失败：Timeout")
+            return self.quota
+
+    source = tmp_path / "source"
+    make_image(source / "bird.jpg")
+    api = FailingFinalQuotaAPI(Quota(0, 10, 1))
+    progress = []
+
+    summary = make_service(api).run(
+        make_config(tmp_path),
+        auto_review,
+        lambda event, data: progress.append((event, data)),
+        threading.Event(),
+    )
+
+    assert summary.completed == 1
+    assert [event for event, _ in progress].count("quota_failed") == 1
+
+
+def test_completed_only_run_still_requeries_quota(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "bird.jpg")
+    api = FakeAPI(Quota(0, 10, 10))
+    config = make_config(tmp_path)
+
+    first = run_service(make_service(api), config)
+    second = run_service(make_service(api), config)
+
+    assert first.completed == 1
+    assert second.skipped == 1
+    assert api.quota_calls == 3
+
+
+def test_poll_transport_error_records_failed_with_result_id(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "bird.jpg")
+    api = FakeAPI(Quota(0, 10, 10))
+
+    def fail_poll(result_id, total_wait_seconds=60):
+        raise ApiTransportError("网络请求失败：Timeout")
+
+    api.poll_result = fail_poll
+
+    with pytest.raises(ApiTransportError, match="resultid: result-1"):
+        run_service(make_service(api), make_config(tmp_path))
+
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    failed = rows[-1]
+    assert failed["status"] == "failed"
+    assert failed["error_code"] == "ApiTransportError"
+    assert failed["result_id"] == "result-1"
+    assert "resultid: result-1" in failed["error_message"]
+
+
+def test_upload_transport_error_marks_result_unknown(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "bird.jpg")
+    api = FakeAPI(Quota(0, 10, 10))
+
+    def fail_submit(*_args, **_kwargs):
+        raise ApiTransportError("网络请求失败：ConnectionError")
+
+    api.submit_image = fail_submit
+
+    with pytest.raises(ApiTransportError, match="上传结果未知"):
+        run_service(make_service(api), make_config(tmp_path))
+
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    failed = rows[-1]
+    assert failed["status"] == "failed"
+    assert failed["error_code"] == "ApiTransportError"
+    assert "上传结果未知" in failed["error_message"]
+
+
+def test_config_error_records_failed_and_stops_batch(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "a.jpg")
+    make_image(source / "b.jpg")
+    api = FakeAPI(Quota(0, 10, 10))
+
+    def fail_poll(result_id, total_wait_seconds=60):
+        raise ConfigError("地区配置错误（1009）：Invalid area")
+
+    api.poll_result = fail_poll
+
+    with pytest.raises(ConfigError, match="1009"):
+        run_service(make_service(api), make_config(tmp_path))
+
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert len(rows) == 1
+    assert rows[0]["status"] == "failed"
+    assert rows[0]["error_code"] == "ConfigError"
+    assert rows[0]["result_id"] == "result-1"
+    assert api.submit_calls == 1
+
+
+def test_partial_review_copy_failure_resumes_review_without_upload(tmp_path, monkeypatch):
+    from birdclass.archiver import FileArchiver
+    from birdclass.errors import ArchiveError
+
+    source = tmp_path / "source"
+    make_image(source / "birds.jpg")
+    result_payload = [
+        {"box": [0, 0, 10, 20], "list": [["60", "麻雀|Sparrow|Passer", "1", "B"]]},
+        {"box": [10, 0, 20, 20], "list": [["55", "家燕|Swallow|Hirundo", "2", "B"]]},
+    ]
+    api = FakeAPI(Quota(0, 10, 10), result_payload)
+    config = make_config(tmp_path)
+    original_copy = FileArchiver._copy_atomic
+    calls = 0
+
+    def fail_first(self, item, destination):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise ArchiveError("模拟部分归档复制失败")
+        return original_copy(item, destination)
+
+    def defer_second(context):
+        action = ReviewAction.DEFER if context.target_index == 1 else ReviewAction.CONFIRM
+        candidate = context.candidates[0] if action == ReviewAction.CONFIRM else None
+        return ReviewResult(action, candidate)
+
+    monkeypatch.setattr(FileArchiver, "_copy_atomic", fail_first)
+    with pytest.raises(ArchiveError, match="部分归档"):
+        run_service(make_service(api), config, defer_second)
+
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[-1]["status"] == "failed"
+    assert rows[-1]["error_code"] == "ArchiveError"
+    assert "selection" in rows[-1]["detection_payload"]
+
+    monkeypatch.setattr(FileArchiver, "_copy_atomic", staticmethod(original_copy))
+    resumed_targets = []
+
+    def confirm_remaining(context):
+        resumed_targets.append(context.target_index)
+        return ReviewResult(ReviewAction.CONFIRM, context.candidates[0])
+
+    second = run_service(make_service(api), config, confirm_remaining)
+
+    assert second.completed == 1
+    assert resumed_targets == [1]
+    assert api.submit_calls == 1
+    assert (tmp_path / "output" / "麻雀" / "全球_麻雀_001.jpg").is_file()
+    assert (tmp_path / "output" / "家燕" / "全球_家燕_001.jpg").is_file()
+
+
+def test_schema1_recognized_copy_failure_resumes_without_upload(tmp_path, monkeypatch):
+    from birdclass.archiver import FileArchiver
+    from birdclass.errors import ArchiveError
+
+    source = tmp_path / "source"
+    output = tmp_path / "output"
+    make_image(source / "legacy.jpg")
+    stat = (source / "legacy.jpg").stat()
+    history = CsvHistory(source / "birdclass_records.csv")
+    history.load()
+    history.append(HistoryEvent(
+        identity=FileIdentity("legacy.jpg", stat.st_size, stat.st_mtime_ns),
+        status="recognized",
+        updated_at=datetime.now(timezone.utc).isoformat(),
+        event_id="legacy-copy",
+        result_id="saved-legacy",
+        species_id="1",
+        species_cn="麻雀",
+        species_en="Sparrow",
+        species_latin="Passer",
+        confidence_percent="95",
+        animal_class="B",
+        selection_mode="automatic",
+    ))
+    api = FakeAPI(Quota(0, 10, 10))
+    original_copy = FileArchiver._copy_atomic
+
+    def fail_copy(item, destination):
+        raise ArchiveError("模拟旧版复制失败")
+
+    monkeypatch.setattr(FileArchiver, "_copy_atomic", staticmethod(fail_copy))
+    with pytest.raises(ArchiveError, match="旧版复制失败"):
+        run_service(make_service(api), make_config(tmp_path))
+
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[-1]["status"] == "failed"
+    assert rows[-1]["error_code"] == "ArchiveError"
+
+    monkeypatch.setattr(FileArchiver, "_copy_atomic", staticmethod(original_copy))
+    second = run_service(make_service(api), make_config(tmp_path))
+
+    assert second.completed == 1
+    assert api.submit_calls == 0
+    assert (output / "麻雀" / "全球_麻雀_001.jpg").is_file()
+
+
+def test_csv_write_failure_stops_before_further_uploads(tmp_path, monkeypatch):
+    from birdclass.errors import HistoryError
+
+    source = tmp_path / "source"
+    make_image(source / "a.jpg")
+    make_image(source / "b.jpg")
+    api = FakeAPI(Quota(0, 10, 10))
+    original_append = CsvHistory.append
+    calls = 0
+
+    def fail_second_append(self, event):
+        nonlocal calls
+        calls += 1
+        if calls >= 2:
+            raise HistoryError("模拟 CSV 写入失败")
+        return original_append(self, event)
+
+    monkeypatch.setattr(CsvHistory, "append", fail_second_append)
+
+    with pytest.raises(HistoryError, match="CSV 写入失败"):
+        run_service(make_service(api), make_config(tmp_path))
+
+    assert api.submit_calls == 1

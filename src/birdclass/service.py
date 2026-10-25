@@ -4,7 +4,7 @@ import json
 import threading
 import uuid
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Callable
 
@@ -12,6 +12,10 @@ from .api import DongNiaoClient
 from .archiver import FileArchiver
 from .errors import (
     ApiProtocolError,
+    ApiTransportError,
+    ArchiveError,
+    BirdClassError,
+    ConfigError,
     HistoryError,
     ImagePreparationError,
     ImageValidationError,
@@ -68,19 +72,26 @@ class ClassificationService:
         pending_new: list[ImageItem] = []
         api = self._api_factory(config.api_key)
 
+        def finish_batch() -> BatchSummary:
+            self._report_final_quota(api, progress_callback)
+            return summary
+
         for item in items:
             event = history.latest_for(item)
-            if event is None or event.status == "failed":
+            status = event.status if event is not None else None
+            if status == "failed":
+                status = self._failed_resume_kind(event) or "failed"
+            if event is None or status == "failed":
                 pending_new.append(item)
                 continue
-            if event.status == "completed":
+            if status == "completed":
                 summary.skipped += 1
                 self._progress(progress_callback, "skipped", item)
                 continue
             if stop_event.is_set():
                 summary.stop_reason = "user"
-                return summary
-            if event.status == "recognized":
+                return finish_batch()
+            if status == "recognized":
                 if event.schema_version >= 2 and event.archive_payload:
                     self._archive_many_and_complete(
                         item, event, history, archiver, summary, progress_callback
@@ -91,7 +102,7 @@ class ClassificationService:
                         item, recognition, event, history, archiver, summary, progress_callback
                     )
                 continue
-            if event.status == "review_pending":
+            if status == "review_pending":
                 if event.schema_version >= 2:
                     selections, reviewed, deferred_targets, stop_action = self._review_multi(
                         item, event, review_callback, history
@@ -99,7 +110,7 @@ class ClassificationService:
                     if stop_action == ReviewAction.STOP:
                         summary.deferred += 1
                         summary.stop_reason = "user"
-                        return summary
+                        return finish_batch()
                     self._finish_multi_review(
                         item, event, selections, reviewed, deferred_targets,
                         history, archiver, summary, progress_callback,
@@ -123,9 +134,16 @@ class ClassificationService:
                 if result.action == ReviewAction.STOP:
                     summary.deferred += 1
                     summary.stop_reason = "user"
-                    return summary
+                    return finish_batch()
                 if result.action == ReviewAction.DEFER:
-                    pending_destination = archiver.archive_pending(item)
+                    try:
+                        pending_destination = archiver.archive_pending(item)
+                    except ArchiveError as exc:
+                        self._record_failure(
+                            item, self._config_from_event(event), event, exc,
+                            history, summary, progress_callback,
+                        )
+                        raise
                     summary.deferred += 1
                     summary.stop_reason = summary.stop_reason or "deferred"
                     self._progress(
@@ -151,7 +169,7 @@ class ClassificationService:
             raise HistoryError(f"未知 CSV 状态：{event.status}")
 
         if not pending_new:
-            return summary
+            return finish_batch()
         quota = api.query_quota()
         self._progress(progress_callback, "quota", None, quota=quota)
         remaining = quota.remaining
@@ -166,6 +184,8 @@ class ClassificationService:
             prepared: PreparedUpload | None = None
             upload_was_compressed = False
             upload_bytes = 0
+            result_id = ""
+            previous_event = history.latest_for(item)
             try:
                 with UploadPreparer.prepare(item) as prepared_upload:
                     prepared = prepared_upload
@@ -221,19 +241,34 @@ class ClassificationService:
                         history, archiver, summary, progress_callback,
                     )
                     continue
-                recognized_event = self._recognized_multi(item, base_event, selections, archiver)
+                try:
+                    recognized_event = self._recognized_multi(item, base_event, selections, archiver)
+                except ArchiveError as exc:
+                    self._record_failure(
+                        item, config, base_event, exc, history, summary, progress_callback
+                    )
+                    raise
                 history.append(recognized_event)
                 self._archive_many_and_complete(
                     item, recognized_event, history, archiver, summary, progress_callback
                 )
             except (ImageValidationError, ImagePreparationError, RecognitionFailedError) as exc:
-                summary.failed += 1
                 pending_destination = None
                 if isinstance(exc, SpeciesNotFoundError):
-                    pending_destination = archiver.archive_pending(item)
+                    try:
+                        pending_destination = archiver.archive_pending(item)
+                    except ArchiveError as pending_exc:
+                        self._record_failure(
+                            item, config, previous_event, pending_exc,
+                            history, summary, progress_callback,
+                            upload_was_compressed=upload_was_compressed,
+                            upload_bytes=upload_bytes,
+                        )
+                        raise
                     summary.deferred += 1
+                summary.failed += 1
                 history.append(self._event(
-                    item, "failed", config, None, None,
+                    item, "failed", config, None, previous_event,
                     error_code=exc.__class__.__name__,
                     error_message=str(exc),
                     upload_was_compressed=upload_was_compressed,
@@ -243,7 +278,27 @@ class ClassificationService:
                     progress_callback, "failed", item,
                     error=str(exc), destination=pending_destination,
                 )
-        return summary
+            except ConfigError as exc:
+                self._record_failure(
+                    item, config, previous_event, exc, history, summary, progress_callback,
+                    result_id=result_id,
+                    upload_was_compressed=upload_was_compressed, upload_bytes=upload_bytes,
+                )
+                raise
+            except ApiTransportError as exc:
+                detail = str(exc)
+                if result_id:
+                    detail = f"{detail}（resultid: {result_id}）"
+                else:
+                    detail = f"{detail}（上传结果未知，重试可能再次消耗额度）"
+                failure = ApiTransportError(detail)
+                self._record_failure(
+                    item, config, previous_event, failure, history, summary, progress_callback,
+                    result_id=result_id,
+                    upload_was_compressed=upload_was_compressed, upload_bytes=upload_bytes,
+                )
+                raise failure from exc
+        return finish_batch()
 
     @staticmethod
     def _detection_payload(
@@ -269,6 +324,66 @@ class ClassificationService:
             if item.get("selection"):
                 selections.append(TargetSelection.from_dict(item["selection"]))
         return targets, selections
+
+    @classmethod
+    def _failed_resume_kind(cls, event: HistoryEvent) -> str | None:
+        """Return how a failed event with a complete snapshot can be resumed."""
+        if event.schema_version < 2:
+            if event.species_id and event.species_cn:
+                return "recognized"
+            return None
+        if event.detection_payload:
+            try:
+                targets, selections = cls._parse_detection_payload(event.detection_payload)
+            except (ValueError, KeyError, TypeError, InvalidOperation):
+                return None
+            valid_targets = [target for target in targets if target.candidates]
+            if valid_targets:
+                selected = {selection.target_index for selection in selections}
+                if any(target.target_index not in selected for target in valid_targets):
+                    return "review_pending"
+                if event.archive_payload:
+                    return "recognized"
+                return None
+        if event.archive_payload:
+            return "recognized"
+        return None
+
+    def _record_failure(
+        self,
+        item: ImageItem,
+        config: AppConfig,
+        previous: HistoryEvent | None,
+        exc: Exception,
+        history: CsvHistory,
+        summary: BatchSummary,
+        progress_callback: ProgressCallback,
+        **overrides,
+    ) -> None:
+        try:
+            stat = item.absolute_path.stat()
+            failed_item = ImageItem(
+                item.absolute_path, item.relative_path, stat.st_size, stat.st_mtime_ns
+            )
+        except OSError:
+            failed_item = item
+        failed = self._event(
+            failed_item, "failed", config, None, previous,
+            error_code=exc.__class__.__name__,
+            error_message=str(exc),
+            **overrides,
+        )
+        history.append(failed)
+        summary.failed += 1
+        self._progress(progress_callback, "failed", failed_item, error=str(exc))
+
+    def _report_final_quota(self, api, progress_callback: ProgressCallback) -> None:
+        try:
+            quota = api.query_quota()
+        except BirdClassError as exc:
+            self._progress(progress_callback, "quota_failed", None, error=str(exc))
+            return
+        self._progress(progress_callback, "quota", None, quota=quota, final=True)
 
     def _review_multi(
         self,
@@ -341,18 +456,34 @@ class ClassificationService:
         if deferred_targets:
             summary.deferred += 1
             summary.stop_reason = summary.stop_reason or "deferred"
-            if selections:
-                self._archive_partial_and_keep_pending(
-                    item, event, selections, deferred_targets,
-                    history, archiver, progress_callback,
+            try:
+                if selections:
+                    self._archive_partial_and_keep_pending(
+                        item, event, selections, deferred_targets,
+                        history, archiver, progress_callback,
+                    )
+                pending_destination = archiver.archive_pending(item)
+            except ArchiveError as exc:
+                previous = history.latest_for(item) or event
+                self._record_failure(
+                    item, self._config_from_event(event), previous, exc,
+                    history, summary, progress_callback,
                 )
-            pending_destination = archiver.archive_pending(item)
+                raise
             self._progress(
                 progress_callback, "deferred", item,
                 destination=pending_destination, deferred_targets=deferred_targets,
             )
             return
-        recognized_event = self._recognized_multi(item, event, selections, archiver)
+        try:
+            recognized_event = self._recognized_multi(item, event, selections, archiver)
+        except ArchiveError as exc:
+            previous = history.latest_for(item) or event
+            self._record_failure(
+                item, self._config_from_event(event), previous, exc,
+                history, summary, progress_callback,
+            )
+            raise
         history.append(recognized_event)
         self._archive_many_and_complete(
             item, recognized_event, history, archiver, summary, progress_callback
@@ -467,21 +598,32 @@ class ClassificationService:
         config = self._config_from_event(recognized_event)
         raw = json.loads(recognized_event.archive_payload)
         selections = [ArchiveSelection.from_dict(value) for value in raw["selections"]]
-        write_species_metadata(item.absolute_path, "、".join(
-            selection.candidate.name_cn for selection in selections
-        ))
-        stat = item.absolute_path.stat()
-        updated_item = ImageItem(item.absolute_path, item.relative_path, stat.st_size, stat.st_mtime_ns)
-        updated_recognized = self._event(
-            updated_item, "recognized", config, None, recognized_event,
-            schema_version=recognized_event.schema_version,
-            detection_payload=recognized_event.detection_payload,
-            archive_payload=recognized_event.archive_payload,
-        )
-        history.append(updated_recognized)
-        destinations = archiver.archive_many(
-            updated_item, selections, area_name_for_code(recognized_event.area_code)
-        )
+        updated_item = item
+        updated_recognized = recognized_event
+        try:
+            write_species_metadata(item.absolute_path, "、".join(
+                selection.candidate.name_cn for selection in selections
+            ))
+            stat = item.absolute_path.stat()
+            updated_item = ImageItem(
+                item.absolute_path, item.relative_path, stat.st_size, stat.st_mtime_ns
+            )
+            updated_recognized = self._event(
+                updated_item, "recognized", config, None, recognized_event,
+                schema_version=recognized_event.schema_version,
+                detection_payload=recognized_event.detection_payload,
+                archive_payload=recognized_event.archive_payload,
+            )
+            history.append(updated_recognized)
+            destinations = archiver.archive_many(
+                updated_item, selections, area_name_for_code(recognized_event.area_code)
+            )
+        except ArchiveError as exc:
+            self._record_failure(
+                updated_item, config, updated_recognized, exc,
+                history, summary, progress_callback,
+            )
+            raise
         completed = self._event(
             updated_item, "completed", config, None, updated_recognized,
             schema_version=recognized_event.schema_version,
@@ -506,14 +648,20 @@ class ClassificationService:
         progress_callback: ProgressCallback,
     ) -> None:
         config = self._config_from_event(recognized_event)
-        destination = archiver.archive(
-            item,
-            recognition,
-            area_name=area_name_for_code(recognized_event.area_code),
-            destination_path=recognized_event.destination_path or None,
-            observation_location=recognized_event.observation_location,
-            observation_time=recognized_event.observation_time,
-        )
+        try:
+            destination = archiver.archive(
+                item,
+                recognition,
+                area_name=area_name_for_code(recognized_event.area_code),
+                destination_path=recognized_event.destination_path or None,
+                observation_location=recognized_event.observation_location,
+                observation_time=recognized_event.observation_time,
+            )
+        except ArchiveError as exc:
+            self._record_failure(
+                item, config, recognized_event, exc, history, summary, progress_callback
+            )
+            raise
         stat = item.absolute_path.stat()
         updated_item = ImageItem(item.absolute_path, item.relative_path, stat.st_size, stat.st_mtime_ns)
         relative_destination = destination.relative_to(archiver.output_root).as_posix()
