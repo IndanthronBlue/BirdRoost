@@ -145,3 +145,11 @@ def test_window_uses_birdroost_name(qtbot, tmp_path):
     qtbot.addWidget(window)
 
     assert window.windowTitle() == "羽栖 BirdRoost · 鸟图整理"
+
+
+def test_window_leaves_colors_to_application_system_theme(qtbot, tmp_path):
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    assert window.styleSheet() == ""

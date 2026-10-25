@@ -141,15 +141,6 @@ class MainWindow(QMainWindow):
             self.low_threshold, self.delta_threshold, self.result_wait_seconds,
             self.source_dir, self.output_dir,
         ]
-        self.setStyleSheet("""
-            QMainWindow { background: #f4f6f3; }
-            QGroupBox { font-weight: 600; border: 1px solid #d5ddd5; border-radius: 8px;
-                        margin-top: 12px; padding: 14px 10px 10px; background: white; }
-            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 4px; }
-            QLineEdit, QComboBox, QDoubleSpinBox, QSpinBox { min-height: 28px; }
-            QPushButton { padding: 6px 14px; }
-            QPlainTextEdit { background: #152019; color: #d7eadc; border-radius: 6px; }
-        """)
 
     @staticmethod
     def _threshold(value: int) -> QDoubleSpinBox:
