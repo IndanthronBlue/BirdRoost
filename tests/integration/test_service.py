@@ -1117,3 +1117,31 @@ def test_deferred_image_writes_pending_group_with_both_copies(tmp_path):
         "待复核/birds_待确认框.png",
     }
     assert all(copy["target_indices"] == [0] for copy in group["copies"])
+
+
+def test_import_old_csv_rebuilds_groups_without_source(tmp_path):
+    import shutil
+
+    from birdclass.library import ArchiveLibrary
+    from birdclass.library_import import import_csv_to_library
+
+    source = tmp_path / "source"
+    make_image(source / "bird.png")
+    api = FakeAPI(
+        Quota(0, 10, 10),
+        [{"box": [2, 2, 18, 18], "list": [["95", "麻雀|Sparrow|Passer", "1", "B"]]}],
+    )
+    run_service(make_service(api), make_config(tmp_path))
+    csv_path = source / "birdclass_records.csv"
+    original_csv = csv_path.read_bytes()
+    shutil.rmtree(tmp_path / "output" / ".birdroost")
+
+    result = import_csv_to_library(csv_path, tmp_path / "output")
+
+    assert result.imported == 1
+    assert csv_path.read_bytes() == original_csv
+    library = ArchiveLibrary(tmp_path / "output")
+    group = library.load_groups()[0]
+    assert group["copies"][0]["relative_path"] == "麻雀/全球_麻雀_001.png"
+    assert group["targets"][0]["box"] == pytest.approx([0.1, 0.1, 0.9, 0.9])
+    assert library.load_batches()[0]["groups"] == [group["group_id"]]

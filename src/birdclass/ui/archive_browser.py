@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -27,6 +28,7 @@ from PySide6.QtWidgets import (
 from ..archive_index import ArchiveEntry, ArchiveIndex
 from ..correction import CorrectionError, correct_archive_copy
 from ..library import ArchiveLibrary
+from ..library_import import import_csv_to_library
 from .image_canvas import CanvasBox, ZoomableImageCanvas
 from .species_picker import SpeciesPickerDialog
 
@@ -123,6 +125,10 @@ class ArchiveBrowserWindow(QMainWindow):
         self.cleanup_button.clicked.connect(self.cleanup_replaced)
         self.cleanup_button.setVisible(False)
         toolbar.addWidget(self.cleanup_button)
+        self.import_button = QPushButton("导入旧 CSV")
+        self.import_button.setToolTip("从旧 birdclass_records.csv 导入批次和检测框数据")
+        self.import_button.clicked.connect(self.import_old_csv)
+        toolbar.addWidget(self.import_button)
         root.addLayout(toolbar)
 
         self.summary_label = QLabel("正在读取归档…")
@@ -492,6 +498,19 @@ class ArchiveBrowserWindow(QMainWindow):
         self.status_label.setText(
             f"已改为 {taxon.display_name}；旧副本：{outcome.replaced_relative_path or '保留'}"
         )
+        self.refresh()
+
+    def import_old_csv(self) -> None:
+        selected, _filter = QFileDialog.getOpenFileName(
+            self, "选择 birdclass_records.csv", str(self.output_root.parent), "CSV (*.csv)"
+        )
+        if not selected:
+            return
+        result = import_csv_to_library(Path(selected), self.output_root)
+        message = f"已导入 {result.imported} 张，跳过 {result.skipped} 张。"
+        if result.errors:
+            message += f"\n有 {len(result.errors)} 条记录解析失败。"
+        QMessageBox.information(self, "导入旧 CSV", message)
         self.refresh()
 
     def cleanup_replaced(self) -> None:
