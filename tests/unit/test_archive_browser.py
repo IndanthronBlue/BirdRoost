@@ -246,3 +246,61 @@ def test_batch_target_level_correction_splits_shared_copy(qtbot, tmp_path: Path,
     assert new_copy["target_indices"] == [0]
     assert updated["targets"][0]["selection"]["species_latin"] == "Calidris ruficollis"
     assert updated["targets"][1]["selection"]["species_latin"] == "Calidris alba"
+
+
+def test_recent_batch_selector_switches_filter(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    make_image(output / "欧乌鸫" / "b.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch_a = new_batch_id()
+    batch_b = new_batch_id()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=batch_a,
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    add_group(library, "欧乌鸫/b.jpg", batch_id=batch_b,
+              species_cn="欧乌鸫", species_latin="Turdus merula")
+    for batch_id in (batch_a, batch_b):
+        library.write_batch({
+            "schema_version": 1,
+            "batch_id": batch_id,
+            "finished_at": f"2026-01-0{1 if batch_id == batch_a else 2}T00:00:00+00:00",
+            "groups": [],
+            "summary": {"total": 1},
+        })
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+
+    index = browser.batch_combo.findData(batch_b)
+    assert index > 0
+    browser.batch_combo.setCurrentIndex(index)
+
+    assert browser.batch_id == batch_b
+    assert [entry.batch_id for entry in browser._visible_entries()] == [batch_b]
+
+
+def test_cleanup_replaced_requires_confirmation_and_deletes(qtbot, tmp_path: Path, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    replaced = output / "已纠正" / "stamp" / "三趾滨鹬" / "old.jpg"
+    replaced.parent.mkdir(parents=True)
+    replaced.write_bytes(b"old")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+
+    monkeypatch.setattr(
+        "birdclass.ui.archive_browser.QMessageBox.question",
+        lambda *args, **kwargs: QMessageBox.StandardButton.No,
+    )
+    browser.cleanup_replaced()
+    assert replaced.exists()
+
+    monkeypatch.setattr(
+        "birdclass.ui.archive_browser.QMessageBox.question",
+        lambda *args, **kwargs: QMessageBox.StandardButton.Yes,
+    )
+    browser.cleanup_replaced()
+
+    assert not (output / "已纠正").exists()

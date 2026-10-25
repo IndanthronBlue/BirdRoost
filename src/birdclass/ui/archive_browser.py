@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from PySide6.QtCore import QFileSystemWatcher, QSize, Qt, QTimer
@@ -7,6 +8,7 @@ from PySide6.QtGui import QIcon, QImageReader, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QComboBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -48,6 +50,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = ""
         self._initialized = False
         self._closed = False
+        self._updating_batch_combo = False
         self._thumbnail_cache: dict[tuple[str, float], QIcon] = {}
         self._watcher = QFileSystemWatcher(self)
         self._refresh_timer = QTimer(self)
@@ -77,6 +80,10 @@ class ArchiveBrowserWindow(QMainWindow):
         self.search.textChanged.connect(self._on_search_changed)
         toolbar.addWidget(self.search, 1)
 
+        self.batch_combo = QComboBox()
+        self.batch_combo.setMinimumWidth(250)
+        self.batch_combo.currentIndexChanged.connect(self._on_batch_combo_changed)
+        toolbar.addWidget(self.batch_combo)
         self.batch_label = QLabel()
         toolbar.addWidget(self.batch_label)
         self.clear_batch_button = QPushButton("显示全部")
@@ -112,6 +119,10 @@ class ArchiveBrowserWindow(QMainWindow):
         self.refresh_button = QPushButton("刷新")
         self.refresh_button.clicked.connect(self.refresh)
         toolbar.addWidget(self.refresh_button)
+        self.cleanup_button = QPushButton("清理已纠正")
+        self.cleanup_button.clicked.connect(self.cleanup_replaced)
+        self.cleanup_button.setVisible(False)
+        toolbar.addWidget(self.cleanup_button)
         root.addLayout(toolbar)
 
         self.summary_label = QLabel("正在读取归档…")
@@ -174,11 +185,13 @@ class ArchiveBrowserWindow(QMainWindow):
             path for path, item in self._tree_items.items() if item.isExpanded()
         }
         self.index.refresh()
+        self._update_batch_combo()
         entries = self._visible_entries()
         self._rebuild_tree(entries)
         self._restore_tree_state(expanded)
         self._refresh_grid()
         self._update_summary()
+        self.cleanup_button.setVisible((self.output_root / "已纠正").exists())
         self._setup_watcher()
 
     def _visible_entries(self) -> list[ArchiveEntry]:
@@ -481,10 +494,67 @@ class ArchiveBrowserWindow(QMainWindow):
         )
         self.refresh()
 
+    def cleanup_replaced(self) -> None:
+        folder = self.output_root / "已纠正"
+        if not folder.exists():
+            self.status_label.setText("没有已纠正副本")
+            return
+        files = [path for path in folder.rglob("*") if path.is_file()]
+        if not files:
+            self.status_label.setText("没有已纠正副本")
+            return
+        answer = QMessageBox.question(
+            self,
+            "清理已纠正副本",
+            f"将永久删除 {len(files)} 个已纠正副本。\n"
+            "这些文件不再被归档库引用，删除后不可恢复。",
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            shutil.rmtree(folder)
+        except OSError as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", f"清理失败：{exc}")
+            return
+        self.status_label.setText(f"已删除 {len(files)} 个已纠正副本")
+        self.refresh()
+
     def clear_batch_filter(self) -> None:
         self.batch_id = None
         self.clear_batch_button.setVisible(False)
         self.setWindowTitle("羽栖 BirdRoost · 浏览归档")
+        self.refresh()
+
+    def _update_batch_combo(self) -> None:
+        self._updating_batch_combo = True
+        try:
+            self.batch_combo.clear()
+            self.batch_combo.addItem("全部归档", "")
+            batches = sorted(
+                self.library.load_batches(),
+                key=lambda batch: str(batch.get("finished_at") or batch.get("started_at") or ""),
+                reverse=True,
+            )
+            for batch in batches[:30]:
+                batch_id = str(batch.get("batch_id") or "")
+                stamp = str(batch.get("finished_at") or batch.get("started_at") or "")[:16]
+                self.batch_combo.addItem(f"{stamp} · {batch_id[:8]}…", batch_id)
+            index = self.batch_combo.findData(self.batch_id or "")
+            self.batch_combo.setCurrentIndex(max(0, index))
+        finally:
+            self._updating_batch_combo = False
+
+    def _on_batch_combo_changed(self, _index: int) -> None:
+        if self._updating_batch_combo:
+            return
+        selected = self.batch_combo.currentData() or None
+        if selected == self.batch_id:
+            return
+        self.batch_id = selected
+        self.clear_batch_button.setVisible(bool(self.batch_id))
+        self.setWindowTitle(
+            "羽栖 BirdRoost · 批次结果" if self.batch_id else "羽栖 BirdRoost · 浏览归档"
+        )
         self.refresh()
 
     def _update_summary(self) -> None:
