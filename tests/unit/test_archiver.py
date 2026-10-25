@@ -196,3 +196,83 @@ def test_archive_pending_is_idempotent_and_never_overwrites_name_collision(tmp_p
     assert second == second_repeated == tmp_path / "output" / "待复核" / "bird_002.jpg"
     assert len(list(first.parent.glob("*.jpg"))) == 2
     assert pixels(first) != pixels(second)
+
+
+def test_archive_pending_preview_draws_boxes_and_keeps_original(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    path = source / "bird.png"
+    Image.new("RGB", (100, 80), "green").save(path)
+    original_pixels = pixels(path)
+    archiver = FileArchiver(tmp_path / "output")
+    boxes = (
+        (0, (0.1, 0.2, 0.5, 0.8)),
+        (1, (0.5, 0.2, 0.9, 0.8)),
+    )
+
+    original, annotated = archiver.archive_pending_with_preview(item(path, source), boxes)
+
+    assert original == tmp_path / "output" / "待复核" / "bird.png"
+    assert annotated == tmp_path / "output" / "待复核" / "bird_待确认框.png"
+    assert pixels(original) == original_pixels
+    assert annotated is not None and annotated.is_file()
+    with Image.open(annotated) as image:
+        colors = image.convert("RGB").getcolors(maxcolors=1_000_000) or []
+    assert any(color == (255, 176, 32) for _, color in colors)
+
+
+def test_archive_pending_preview_is_skipped_when_no_boxes(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    path = source / "bird.png"
+    Image.new("RGB", (100, 80), "green").save(path)
+    archiver = FileArchiver(tmp_path / "output")
+
+    original, annotated = archiver.archive_pending_with_preview(item(path, source), ())
+
+    assert original.is_file()
+    assert annotated is None
+    assert not list(original.parent.glob("*_待确认框*"))
+
+
+def test_archive_pending_preview_is_idempotent_and_numbers_changed_boxes(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    path = source / "bird.png"
+    Image.new("RGB", (100, 80), "green").save(path)
+    archiver = FileArchiver(tmp_path / "output")
+    first_boxes = ((0, (0.1, 0.2, 0.5, 0.8)),)
+
+    original, first = archiver.archive_pending_with_preview(item(path, source), first_boxes)
+    repeated_original, repeated = archiver.archive_pending_with_preview(
+        item(path, source), first_boxes
+    )
+    _, changed = archiver.archive_pending_with_preview(
+        item(path, source), ((1, (0.5, 0.2, 0.9, 0.8)),)
+    )
+
+    assert repeated_original == original
+    assert repeated == first
+    assert changed == tmp_path / "output" / "待复核" / "bird_待确认框_002.png"
+    assert len(list(original.parent.glob("bird_待确认框*.png"))) == 2
+
+
+def test_archive_pending_preview_degrades_to_original_when_drawing_fails(tmp_path: Path, monkeypatch):
+    source = tmp_path / "source"
+    source.mkdir()
+    path = source / "bird.png"
+    Image.new("RGB", (100, 80), "green").save(path)
+    archiver = FileArchiver(tmp_path / "output")
+
+    def fail(*_args, **_kwargs):
+        raise OSError("模拟标注失败")
+
+    monkeypatch.setattr("birdclass.archiver._draw_pending_boxes", fail)
+
+    original, annotated = archiver.archive_pending_with_preview(
+        item(path, source), ((0, (0.1, 0.2, 0.5, 0.8)),)
+    )
+
+    assert original.is_file()
+    assert annotated is None
+    assert not list(original.parent.glob("*_待确认框*"))

@@ -8,11 +8,11 @@ import tempfile
 from dataclasses import replace
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from .errors import ArchiveError
 from .metadata import write_species_metadata
-from .models import ArchiveSelection, ImageItem, Recognition
+from .models import ArchiveSelection, ImageItem, NormalizedBox, Recognition
 
 INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
@@ -113,25 +113,69 @@ class FileArchiver:
             raise ArchiveError(f"复制多物种图片失败：{exc}") from exc
 
     def archive_pending(self, item: ImageItem) -> Path:
-        source = item.absolute_path
+        destination, _ = self.archive_pending_with_preview(item, ())
+        return destination
+
+    def archive_pending_with_preview(
+        self,
+        item: ImageItem,
+        boxes: tuple[tuple[int, NormalizedBox], ...] = (),
+    ) -> tuple[Path, Path | None]:
         directory = self.output_root / "待复核"
         try:
             directory.mkdir(parents=True, exist_ok=True)
-            number = 1
-            while True:
-                suffix = "" if number == 1 else f"_{number:03d}"
-                destination = directory / f"{source.stem}{suffix}{source.suffix}"
-                if destination.exists():
-                    if _same_pixels(source, destination):
-                        return destination
-                    number += 1
-                    continue
-                self._copy_atomic(item, destination)
-                return destination
+            destination = self._pending_destination(item, directory)
+            annotated = self._annotate_pending(destination, boxes) if boxes else None
+            return destination, annotated
         except ArchiveError:
             raise
         except OSError as exc:
             raise ArchiveError(f"复制待复核图片失败：{exc}") from exc
+
+    def _pending_destination(self, item: ImageItem, directory: Path) -> Path:
+        source = item.absolute_path
+        number = 1
+        while True:
+            suffix = "" if number == 1 else f"_{number:03d}"
+            destination = directory / f"{source.stem}{suffix}{source.suffix}"
+            if destination.exists():
+                if _same_pixels(source, destination):
+                    return destination
+                number += 1
+                continue
+            self._copy_atomic(item, destination)
+            return destination
+
+    def _annotate_pending(
+        self,
+        original: Path,
+        boxes: tuple[tuple[int, NormalizedBox], ...],
+    ) -> Path | None:
+        suffix = original.suffix
+        base = f"{original.stem}_待确认框"
+        temporary_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                prefix=".birdclass-box-", suffix=suffix, dir=original.parent, delete=False
+            ) as handle:
+                temporary_path = Path(handle.name)
+            _draw_pending_boxes(original, temporary_path, boxes)
+            number = 1
+            while True:
+                sequence = "" if number == 1 else f"_{number:03d}"
+                candidate = original.parent / f"{base}{sequence}{suffix}"
+                if candidate.exists():
+                    if _same_pixels(temporary_path, candidate):
+                        temporary_path.unlink(missing_ok=True)
+                        return candidate
+                    number += 1
+                    continue
+                os.replace(temporary_path, candidate)
+                return candidate
+        except (OSError, TypeError, ValueError, ArchiveError):
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
+            return None
 
     def archive(
         self,
@@ -206,6 +250,63 @@ class FileArchiver:
             if temporary_name:
                 Path(temporary_name).unlink(missing_ok=True)
             raise ArchiveError(f"复制图片失败：{exc}") from exc
+
+
+def _draw_pending_boxes(
+    source: Path,
+    destination: Path,
+    boxes: tuple[tuple[int, NormalizedBox], ...],
+) -> None:
+    with Image.open(source) as opened:
+        image = opened.copy()
+        exif = opened.info.get("exif")
+        icc_profile = opened.info.get("icc_profile")
+
+    suffix = destination.suffix.lower()
+    if suffix == ".png" and image.mode not in ("RGB", "RGBA"):
+        image = image.convert("RGBA")
+
+    width, height = image.size
+    draw = ImageDraw.Draw(image)
+    line_width = max(3, min(width, height) // 300)
+    font_size = max(14, min(64, min(width, height) // 40))
+    try:
+        font = ImageFont.load_default(size=font_size)
+    except TypeError:
+        font = ImageFont.load_default()
+    for target_index, box in boxes:
+        left, top, right, bottom = box
+        x0 = max(0, min(width - 1, round(left * width)))
+        y0 = max(0, min(height - 1, round(top * height)))
+        x1 = max(0, min(width - 1, round(right * width)))
+        y1 = max(0, min(height - 1, round(bottom * height)))
+        if x1 <= x0 or y1 <= y0:
+            continue
+        draw.rectangle((x0, y0, x1, y1), outline=(255, 176, 32), width=line_width)
+        label = str(target_index + 1)
+        text_box = draw.textbbox((0, 0), label, font=font)
+        label_width = text_box[2] - text_box[0]
+        label_height = text_box[3] - text_box[1]
+        draw.rectangle(
+            (x0, y0, x0 + label_width + 8, y0 + label_height + 6),
+            fill=(255, 176, 32),
+        )
+        draw.text((x0 + 4, y0 + 3), label, fill=(0, 0, 0), font=font)
+
+    if suffix == ".png":
+        options: dict[str, object] = {}
+        if icc_profile:
+            options["icc_profile"] = icc_profile
+        if exif:
+            options["exif"] = exif
+        image.save(destination, format="PNG", **options)
+    else:
+        options = {"quality": 95, "subsampling": 0}
+        if icc_profile:
+            options["icc_profile"] = icc_profile
+        if exif:
+            options["exif"] = exif
+        image.convert("RGB").save(destination, format="JPEG", **options)
 
 
 def _same_content(first: Path, second: Path) -> bool:

@@ -500,7 +500,14 @@ class ClassificationService:
                         item, event, selections, deferred_targets,
                         history, archiver, progress_callback,
                     )
-                pending_destination = archiver.archive_pending(item)
+                targets, _ = self._parse_detection_payload(event.detection_payload)
+                deferred_set = set(deferred_targets)
+                boxes = tuple(
+                    (target.target_index, target.box)
+                    for target in targets
+                    if target.target_index in deferred_set and target.box is not None
+                )
+                pending_destination, annotated = archiver.archive_pending_with_preview(item, boxes)
             except ArchiveError as exc:
                 previous = history.latest_for(item) or event
                 self._record_failure(
@@ -508,9 +515,15 @@ class ClassificationService:
                     history, summary, progress_callback,
                 )
                 raise
+            destinations = [pending_destination]
+            if annotated is not None:
+                destinations.append(annotated)
             self._progress(
                 progress_callback, "deferred", item,
-                destination=pending_destination, deferred_targets=deferred_targets,
+                destination=pending_destination,
+                annotated_destination=annotated,
+                destinations=destinations,
+                deferred_targets=deferred_targets,
             )
             return
         try:

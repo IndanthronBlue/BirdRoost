@@ -122,16 +122,19 @@ def test_deferred_log_lists_pending_review_copy(qtbot, tmp_path):
     window = MainWindow()
     qtbot.addWidget(window)
     pending = tmp_path / "output" / "待复核" / "birds.jpg"
+    annotated = tmp_path / "output" / "待复核" / "birds_待确认框.jpg"
 
     window._on_progress("deferred", {
         "relative_path": "birds.jpg",
         "destination": pending,
+        "destinations": [pending, annotated],
         "deferred_targets": [0, 1],
     })
 
     message = window.log.toPlainText()
     assert "待复核：birds.jpg" in message
     assert "待复核/birds.jpg" in message
+    assert "待复核/birds_待确认框.jpg" in message
 
 
 def test_result_wait_defaults_to_60_and_enters_config(qtbot, tmp_path):

@@ -181,6 +181,7 @@ def test_deferred_review_recovers_without_new_upload(tmp_path):
     pending = tmp_path / "output" / "待复核" / "bird.jpg"
     assert pending.is_file()
     assert len(list(pending.parent.glob("*.jpg"))) == 1
+    assert not list(pending.parent.glob("*_待确认框*"))
 
 
 def test_defer_skips_only_current_image_and_continues_batch(tmp_path):
@@ -391,7 +392,8 @@ def test_defer_skips_only_current_target_and_resumes_remaining_target(tmp_path):
         assert len(list(directory.glob("*.jpg"))) == 1
         assert (directory / f"原始地点_原始时间_{species}_001.jpg").is_file()
     assert not list((tmp_path / "output").rglob("新地点*"))
-    assert len(list(pending_copy.parent.glob("*.jpg"))) == 1
+    assert (pending_copy.parent / "birds_待确认框.jpg").is_file()
+    assert len(list(pending_copy.parent.glob("*.jpg"))) == 2
 
 
 def test_multiple_deferred_targets_create_only_one_pending_copy(tmp_path):
@@ -413,7 +415,8 @@ def test_multiple_deferred_targets_create_only_one_pending_copy(tmp_path):
     assert contexts == [0, 1]
     pending_directory = tmp_path / "output" / "待复核"
     assert (pending_directory / "birds.jpg").is_file()
-    assert len(list(pending_directory.glob("*.jpg"))) == 1
+    assert (pending_directory / "birds_待确认框.jpg").is_file()
+    assert len(list(pending_directory.glob("*.jpg"))) == 2
     assert not (tmp_path / "output" / "斑鸠").exists()
     assert not (tmp_path / "output" / "麻雀").exists()
 
@@ -542,6 +545,7 @@ def test_species_not_found_records_failure_and_continues_batch(tmp_path):
     assert [entry[:2] for entry in failed_progress] == [("failed", "first.jpg")]
     pending = tmp_path / "output" / "待复核" / "first.jpg"
     assert pending.is_file()
+    assert not list(pending.parent.glob("*_待确认框*"))
     assert failed_progress[0][2]["destination"] == pending
     events = CsvHistory(source / "birdclass_records.csv").load()
     statuses = {event.identity.relative_path: event.status for event in events.values()}
@@ -1014,3 +1018,27 @@ def test_apply_to_remaining_marks_later_targets_without_second_dialog(tmp_path):
         if target["selection"]
     ]
     assert selected == [0, 1]
+
+
+def test_defer_creates_annotated_pending_copy_when_box_exists(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "birds.png")
+    api = FakeAPI(
+        Quota(0, 10, 10),
+        [{"box": [4, 4, 16, 16], "list": [["60", "麻雀|Sparrow|Passer", "1", "B"]]}],
+    )
+
+    summary = run_service(
+        make_service(api),
+        make_config(tmp_path),
+        lambda _context: ReviewResult(ReviewAction.DEFER),
+    )
+
+    original = tmp_path / "output" / "待复核" / "birds.png"
+    annotated = tmp_path / "output" / "待复核" / "birds_待确认框.png"
+    assert summary.deferred == 1
+    assert original.is_file()
+    assert annotated.is_file()
+    with Image.open(annotated) as image:
+        colors = image.convert("RGB").getcolors(maxcolors=1_000_000) or []
+    assert any(color == (255, 176, 32) for _, color in colors)
