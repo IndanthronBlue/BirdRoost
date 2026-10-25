@@ -38,6 +38,10 @@ class RecognitionFailedError(BirdClassError):
     pass
 
 
+class SpeciesNotFoundError(RecognitionFailedError):
+    pass
+
+
 class RecognitionTimeoutError(RecognitionFailedError):
     pass
 

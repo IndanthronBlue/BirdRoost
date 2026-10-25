@@ -257,6 +257,10 @@ class MainWindow(QMainWindow):
         destinations = data.get("destinations") or [data.get("destination", "")]
         destination_text = "；".join(str(destination) for destination in destinations if destination)
         deferred_text = "、".join(str(index + 1) for index in data.get("deferred_targets", []))
+        failure_pending_text = (
+            f"；已复制到待复核：{destination_text}"
+            if event == "failed" and destination_text else ""
+        )
         messages = {
             "uploading": f"上传并识别：{path}",
             "completed": f"已分类：{path} → {destination_text}",
@@ -265,7 +269,7 @@ class MainWindow(QMainWindow):
             ),
             "deferred": f"待复核：{path} → {destination_text}",
             "skipped": f"跳过已完成：{path}",
-            "failed": f"失败：{path}；{data.get('error', '')}",
+            "failed": f"失败：{path}；{data.get('error', '')}{failure_pending_text}",
         }
         if event in messages:
             self._append_log(messages[event])

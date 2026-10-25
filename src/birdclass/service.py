@@ -16,6 +16,7 @@ from .errors import (
     ImagePreparationError,
     ImageValidationError,
     RecognitionFailedError,
+    SpeciesNotFoundError,
 )
 from .history import CsvHistory
 from .metadata import write_species_metadata
@@ -227,6 +228,10 @@ class ClassificationService:
                 )
             except (ImageValidationError, ImagePreparationError, RecognitionFailedError) as exc:
                 summary.failed += 1
+                pending_destination = None
+                if isinstance(exc, SpeciesNotFoundError):
+                    pending_destination = archiver.archive_pending(item)
+                    summary.deferred += 1
                 history.append(self._event(
                     item, "failed", config, None, None,
                     error_code=exc.__class__.__name__,
@@ -234,7 +239,10 @@ class ClassificationService:
                     upload_was_compressed=upload_was_compressed,
                     upload_bytes=upload_bytes,
                 ))
-                self._progress(progress_callback, "failed", item, error=str(exc))
+                self._progress(
+                    progress_callback, "failed", item,
+                    error=str(exc), destination=pending_destination,
+                )
         return summary
 
     @staticmethod

@@ -15,6 +15,7 @@ from .errors import (
     ConfigError,
     RecognitionFailedError,
     RecognitionTimeoutError,
+    SpeciesNotFoundError,
 )
 from .models import Quota
 
@@ -113,8 +114,10 @@ class DongNiaoClient:
                 continue
             if code == 1000 and isinstance(payload, list):
                 return payload
-            if code in (1009, 1011):
-                raise ConfigError(f"地区筛选未返回可用物种（{code}）：{payload}")
+            if code == 1009:
+                raise ConfigError(f"地区配置错误（1009）：{payload}")
+            if code == 1011:
+                raise SpeciesNotFoundError(f"地区筛选未返回可用物种（1011）：{payload}")
             raise RecognitionFailedError(f"识别失败（{code}）：{payload}")
         raise RecognitionTimeoutError(
             f"识别超时：结果查询等待 {total_wait_seconds:g} 秒仍未完成（resultid: {result_id}）"
