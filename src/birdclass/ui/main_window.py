@@ -261,6 +261,9 @@ class MainWindow(QMainWindow):
             self.status_label.setText("正在安全停止…")
 
     def _on_progress(self, event: str, data: dict) -> None:
+        if event == "library_warning":
+            self._append_log(f"归档库写入失败：{data.get('error', '')}")
+            return
         if event == "quota":
             quota = data.get("quota")
             if isinstance(quota, Quota):

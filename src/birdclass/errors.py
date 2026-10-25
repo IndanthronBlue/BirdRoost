@@ -52,3 +52,7 @@ class HistoryError(BirdClassError):
 
 class ArchiveError(BirdClassError):
     pass
+
+
+class LibraryError(BirdClassError):
+    pass

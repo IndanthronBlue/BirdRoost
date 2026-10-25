@@ -5,6 +5,8 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
+from .coordinates import display_size as oriented_display_size
+from .coordinates import image_orientation
 from .errors import ImagePreparationError
 from .image_validator import validate_image
 from .models import ImageItem
@@ -22,12 +24,19 @@ class PreparedUpload:
         was_compressed: bool,
         temporary_path: Path | None,
         temporary_dir: tempfile.TemporaryDirectory[str] | None,
+        *,
+        upload_oriented: bool = False,
     ) -> None:
         self.original_path = original_path
         self.upload_path = upload_path
         self.was_compressed = was_compressed
         self.temporary_path = temporary_path
         self.upload_bytes = upload_path.stat().st_size
+        with Image.open(original_path) as original:
+            self.source_size = original.size
+        self.exif_orientation = image_orientation(original_path)
+        self.display_size = oriented_display_size(self.source_size, self.exif_orientation)
+        self.upload_oriented = upload_oriented
         with Image.open(upload_path) as uploaded:
             self.upload_size = uploaded.size
         self._temporary_dir = temporary_dir
@@ -49,7 +58,12 @@ class UploadPreparer:
     def prepare(item: ImageItem) -> PreparedUpload:
         width, height = validate_image(item)
         original = item.absolute_path
-        if item.size <= MAX_UPLOAD_BYTES and max(width, height) <= 8192:
+        orientation = image_orientation(original)
+        if (
+            item.size <= MAX_UPLOAD_BYTES
+            and max(width, height) <= 8192
+            and orientation in (0, 1)
+        ):
             return PreparedUpload(original, original, False, None, None)
 
         temporary_dir: tempfile.TemporaryDirectory[str] | None = None
@@ -68,7 +82,10 @@ class UploadPreparer:
                 )
 
             if _save_within_limit(current, temporary_path, INITIAL_QUALITIES):
-                return PreparedUpload(original, temporary_path, True, temporary_path, temporary_dir)
+                return PreparedUpload(
+                    original, temporary_path, True, temporary_path, temporary_dir,
+                    upload_oriented=True,
+                )
 
             for _ in range(20):
                 width = int(current.width * 0.85)
@@ -77,7 +94,10 @@ class UploadPreparer:
                     break
                 current = current.resize((width, height), Image.Resampling.LANCZOS)
                 if _save_within_limit(current, temporary_path, RESIZE_QUALITIES):
-                    return PreparedUpload(original, temporary_path, True, temporary_path, temporary_dir)
+                    return PreparedUpload(
+                        original, temporary_path, True, temporary_path, temporary_dir,
+                        upload_oriented=True,
+                    )
             raise ImagePreparationError("无法将临时图片压缩到 2 MB 以内")
         except Exception:
             if temporary_dir is not None:

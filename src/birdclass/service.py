@@ -10,6 +10,7 @@ from typing import Callable
 
 from .api import DongNiaoClient
 from .archiver import FileArchiver
+from .coordinates import upload_box_to_display
 from .errors import (
     ApiProtocolError,
     ApiTransportError,
@@ -19,10 +20,18 @@ from .errors import (
     HistoryError,
     ImagePreparationError,
     ImageValidationError,
+    LibraryError,
     RecognitionFailedError,
     SpeciesNotFoundError,
 )
 from .history import CsvHistory
+from .library import (
+    ArchiveLibrary,
+    ImageGeometry,
+    new_batch_id,
+    new_group_id,
+    now_iso,
+)
 from .metadata import write_species_metadata
 from .models import (
     AppConfig,
@@ -42,6 +51,7 @@ from .models import (
 from .resource_loader import area_name_for_code
 from .scanner import HISTORY_FILENAME, scan_images
 from .species import aggregate_selections, decide_candidate, parse_candidates, parse_detections
+from .taxonomy import TAXONOMY_VERSION
 from .upload_preparer import PreparedUpload, UploadPreparer
 
 ProgressCallback = Callable[[str, dict], None]
@@ -71,9 +81,42 @@ class ClassificationService:
         summary = BatchSummary(total=len(items))
         pending_new: list[ImageItem] = []
         api = self._api_factory(config.api_key)
+        library: ArchiveLibrary | None = ArchiveLibrary(output)
+        batch_id = new_batch_id()
+        batch_started_at = now_iso()
+        batch_groups: list[str] = []
+        try:
+            library.ensure(taxonomy_version=TAXONOMY_VERSION)
+        except LibraryError as exc:
+            library = None
+            self._progress(progress_callback, "library_warning", None, error=str(exc))
 
         def finish_batch() -> BatchSummary:
             self._report_final_quota(api, progress_callback)
+            if library is not None:
+                try:
+                    library.write_batch({
+                        "schema_version": 1,
+                        "batch_id": batch_id,
+                        "started_at": batch_started_at,
+                        "finished_at": now_iso(),
+                        "source_dir": str(source),
+                        "output_root": str(output),
+                        "groups": list(batch_groups),
+                        "summary": {
+                            "total": summary.total,
+                            "skipped": summary.skipped,
+                            "completed": summary.completed,
+                            "failed": summary.failed,
+                            "deferred": summary.deferred,
+                            "reviewed": summary.reviewed,
+                        },
+                        "stop_reason": summary.stop_reason,
+                    })
+                except LibraryError as exc:
+                    self._progress(
+                        progress_callback, "library_warning", None, error=str(exc)
+                    )
             return summary
 
         for item in items:
@@ -185,6 +228,8 @@ class ClassificationService:
             upload_was_compressed = False
             upload_bytes = 0
             result_id = ""
+            group_id = new_group_id()
+            geometry: ImageGeometry | None = None
             previous_event = history.latest_for(item)
             try:
                 with UploadPreparer.prepare(item) as prepared_upload:
@@ -198,6 +243,14 @@ class ClassificationService:
                     if not quota.unlimited:
                         remaining -= 1
                     raw_candidates = api.poll_result(result_id, config.result_wait_seconds)
+                geometry = ImageGeometry(
+                    source_size=prepared.source_size,
+                    display_size=prepared.display_size,
+                    exif_orientation=prepared.exif_orientation,
+                    upload_size=prepared.upload_size,
+                    upload_was_compressed=prepared.was_compressed,
+                    upload_oriented=prepared.upload_oriented,
+                )
                 targets = [
                     target for target in parse_detections(raw_candidates, prepared.upload_size)
                     if target.candidates
@@ -239,6 +292,10 @@ class ClassificationService:
                     self._finish_multi_review(
                         item, base_event, selections, reviewed, deferred_targets,
                         history, archiver, summary, progress_callback,
+                        library=library, batch_id=batch_id, group_id=group_id,
+                        group_ids=batch_groups, geometry=geometry,
+                        observation_location=config.observation_location,
+                        observation_time=config.observation_time,
                     )
                     continue
                 try:
@@ -250,7 +307,11 @@ class ClassificationService:
                     raise
                 history.append(recognized_event)
                 self._archive_many_and_complete(
-                    item, recognized_event, history, archiver, summary, progress_callback
+                    item, recognized_event, history, archiver, summary, progress_callback,
+                    library=library, batch_id=batch_id, group_id=group_id,
+                    group_ids=batch_groups, geometry=geometry,
+                    observation_location=config.observation_location,
+                    observation_time=config.observation_time,
                 )
             except (ImageValidationError, ImagePreparationError, RecognitionFailedError) as exc:
                 pending_destination = None
@@ -267,13 +328,32 @@ class ClassificationService:
                         raise
                     summary.deferred += 1
                 summary.failed += 1
-                history.append(self._event(
+                failed_event = self._event(
                     item, "failed", config, None, previous_event,
                     error_code=exc.__class__.__name__,
                     error_message=str(exc),
                     upload_was_compressed=upload_was_compressed,
                     upload_bytes=upload_bytes,
-                ))
+                )
+                history.append(failed_event)
+                if geometry is None:
+                    try:
+                        geometry = ImageGeometry.from_path(
+                            item.absolute_path,
+                            upload_was_compressed=upload_was_compressed,
+                            upload_oriented=upload_was_compressed,
+                        )
+                    except OSError:
+                        geometry = None
+                pending_copies = [pending_destination] if pending_destination is not None else []
+                self._record_group(
+                    library=library, batch_id=batch_id, group_id=group_id,
+                    group_ids=batch_groups, item=item, event=failed_event,
+                    status="failed", geometry=geometry,
+                    observation_location=config.observation_location,
+                    observation_time=config.observation_time,
+                    pending_copies=pending_copies, progress_callback=progress_callback,
+                )
                 self._progress(
                     progress_callback, "failed", item,
                     error=str(exc), destination=pending_destination,
@@ -376,6 +456,116 @@ class ClassificationService:
         history.append(failed)
         summary.failed += 1
         self._progress(progress_callback, "failed", failed_item, error=str(exc))
+
+    def _record_group(
+        self,
+        *,
+        library: ArchiveLibrary | None,
+        batch_id: str,
+        group_id: str,
+        group_ids: list[str] | None,
+        item: ImageItem,
+        event: HistoryEvent | None,
+        status: str,
+        geometry: ImageGeometry | None,
+        observation_location: str,
+        observation_time: str,
+        pending_copies: tuple | list = (),
+        deferred_targets: tuple[int, ...] | list[int] = (),
+        progress_callback: ProgressCallback | None = None,
+    ) -> None:
+        if library is None or geometry is None or not group_id or event is None:
+            return
+        targets, selections = [], []
+        if event.detection_payload:
+            try:
+                targets, selections = self._parse_detection_payload(event.detection_payload)
+            except (ValueError, KeyError, TypeError, InvalidOperation):
+                targets, selections = [], []
+        selection_by_target = {selection.target_index: selection for selection in selections}
+        target_records = []
+        for target in targets:
+            box_upload = target.box
+            box = (
+                upload_box_to_display(
+                    box_upload,
+                    orientation=geometry.exif_orientation,
+                    upload_oriented=geometry.upload_oriented,
+                )
+                if box_upload is not None else None
+            )
+            record = {
+                "target_index": target.target_index,
+                "box": list(box) if box is not None else None,
+                "box_upload": list(box_upload) if box_upload is not None else None,
+                "candidates": [candidate.to_dict() for candidate in target.candidates],
+            }
+            selection = selection_by_target.get(target.target_index)
+            record["selection"] = selection.to_dict() if selection is not None else None
+            target_records.append(record)
+
+        copies: list[dict] = []
+        if event.archive_payload:
+            try:
+                for value in json.loads(event.archive_payload)["selections"]:
+                    saved = ArchiveSelection.from_dict(value)
+                    if saved.destination_path:
+                        copies.append({
+                            "relative_path": saved.destination_path,
+                            "species_cn": saved.candidate.name_cn,
+                            "species_latin": saved.candidate.name_latin,
+                            "target_indices": list(saved.source_targets),
+                        })
+            except (ValueError, KeyError, TypeError, InvalidOperation):
+                pass
+        if not copies and event.destination_path:
+            for destination_path in event.destination_path.split("；"):
+                if destination_path:
+                    copies.append({
+                        "relative_path": destination_path,
+                        "species_cn": event.species_cn.split("、")[0] if event.species_cn else "",
+                        "species_latin": event.species_latin.split("、")[0] if event.species_latin else "",
+                        "target_indices": [],
+                    })
+        for pending_path in pending_copies:
+            try:
+                relative = Path(pending_path).relative_to(library.output_root).as_posix()
+            except (TypeError, ValueError):
+                continue
+            if any(copy["relative_path"] == relative for copy in copies):
+                continue
+            copies.append({
+                "relative_path": relative,
+                "species_cn": event.species_cn,
+                "species_latin": event.species_latin,
+                "target_indices": list(deferred_targets),
+                "pending": True,
+            })
+
+        group = {
+            "schema_version": 1,
+            "group_id": group_id,
+            "batch_id": batch_id,
+            "created_at": now_iso(),
+            "status": status,
+            "source_relative_path": item.relative_path,
+            "observation": {
+                "location": observation_location,
+                "time": observation_time,
+            },
+            "image": geometry.to_dict(),
+            "targets": target_records,
+            "copies": copies,
+            "result_id": event.result_id,
+        }
+        try:
+            library.write_group(group)
+        except LibraryError as exc:
+            if progress_callback is not None:
+                self._progress(progress_callback, "library_warning", item, error=str(exc))
+            return
+        if group_ids is not None and group_id not in group_ids:
+            group_ids.append(group_id)
 
     def _report_final_quota(self, api, progress_callback: ProgressCallback) -> None:
         try:
@@ -489,6 +679,14 @@ class ClassificationService:
         archiver: FileArchiver,
         summary: BatchSummary,
         progress_callback: ProgressCallback,
+        *,
+        library: ArchiveLibrary | None = None,
+        batch_id: str = "",
+        group_id: str = "",
+        group_ids: list[str] | None = None,
+        geometry: ImageGeometry | None = None,
+        observation_location: str = "",
+        observation_time: str = "",
     ) -> None:
         summary.reviewed += reviewed
         if deferred_targets:
@@ -518,6 +716,17 @@ class ClassificationService:
             destinations = [pending_destination]
             if annotated is not None:
                 destinations.append(annotated)
+            latest_event = history.latest_for_relative_path(item.relative_path) or event
+            self._record_group(
+                library=library, batch_id=batch_id, group_id=group_id,
+                group_ids=group_ids, item=item, event=latest_event,
+                status="review_pending", geometry=geometry,
+                observation_location=observation_location,
+                observation_time=observation_time,
+                pending_copies=destinations,
+                deferred_targets=deferred_targets,
+                progress_callback=progress_callback,
+            )
             self._progress(
                 progress_callback, "deferred", item,
                 destination=pending_destination,
@@ -537,7 +746,11 @@ class ClassificationService:
             raise
         history.append(recognized_event)
         self._archive_many_and_complete(
-            item, recognized_event, history, archiver, summary, progress_callback
+            item, recognized_event, history, archiver, summary, progress_callback,
+            library=library, batch_id=batch_id, group_id=group_id,
+            group_ids=group_ids, geometry=geometry,
+            observation_location=observation_location,
+            observation_time=observation_time,
         )
 
     def _recognized_multi(
@@ -645,6 +858,14 @@ class ClassificationService:
         archiver: FileArchiver,
         summary: BatchSummary,
         progress_callback: ProgressCallback,
+        *,
+        library: ArchiveLibrary | None = None,
+        batch_id: str = "",
+        group_id: str = "",
+        group_ids: list[str] | None = None,
+        geometry: ImageGeometry | None = None,
+        observation_location: str = "",
+        observation_time: str = "",
     ) -> None:
         config = self._config_from_event(recognized_event)
         raw = json.loads(recognized_event.archive_payload)
@@ -687,6 +908,14 @@ class ClassificationService:
             progress_callback, "completed", updated_item,
             destination=destinations[0], destinations=destinations,
         )
+        self._record_group(
+            library=library, batch_id=batch_id, group_id=group_id,
+            group_ids=group_ids, item=updated_item, event=completed,
+            status="completed", geometry=geometry,
+            observation_location=observation_location,
+            observation_time=observation_time,
+            progress_callback=progress_callback,
+        )
 
     def _archive_and_complete(
         self,
@@ -697,6 +926,14 @@ class ClassificationService:
         archiver: FileArchiver,
         summary: BatchSummary,
         progress_callback: ProgressCallback,
+        *,
+        library: ArchiveLibrary | None = None,
+        batch_id: str = "",
+        group_id: str = "",
+        group_ids: list[str] | None = None,
+        geometry: ImageGeometry | None = None,
+        observation_location: str = "",
+        observation_time: str = "",
     ) -> None:
         config = self._config_from_event(recognized_event)
         try:
@@ -728,6 +965,14 @@ class ClassificationService:
         history.append(completed_event)
         summary.completed += 1
         self._progress(progress_callback, "completed", updated_item, destination=destination)
+        self._record_group(
+            library=library, batch_id=batch_id, group_id=group_id,
+            group_ids=group_ids, item=updated_item, event=completed_event,
+            status="completed", geometry=geometry,
+            observation_location=observation_location,
+            observation_time=observation_time,
+            progress_callback=progress_callback,
+        )
 
     @staticmethod
     def _selected_candidate(

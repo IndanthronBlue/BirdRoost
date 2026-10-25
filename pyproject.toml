@@ -35,7 +35,7 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-birdclass = ["assets/*.csv", "assets/*.ico"]
+birdclass = ["assets/*.csv", "assets/*.ico", "assets/taxonomy/*.csv", "assets/taxonomy/NOTICE"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

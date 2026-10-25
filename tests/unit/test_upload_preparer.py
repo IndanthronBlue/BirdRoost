@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import piexif
 import pytest
 from PIL import Image
 
@@ -108,3 +109,22 @@ def test_prepared_upload_cleanup_is_idempotent(tmp_path: Path):
     prepared.cleanup()
 
     assert not temporary_path.exists()
+
+
+def test_small_rotated_image_uses_oriented_temporary_upload(tmp_path: Path):
+    path = tmp_path / "rotated.jpg"
+    Image.new("RGB", (100, 80), "green").save(path)
+    exif = piexif.dump({"0th": {piexif.ImageIFD.Orientation: 6}})
+    piexif.insert(exif, str(path))
+    original_bytes = path.read_bytes()
+
+    with UploadPreparer.prepare(make_item(path)) as prepared:
+        assert prepared.was_compressed is True
+        assert prepared.upload_oriented is True
+        assert prepared.source_size == (100, 80)
+        assert prepared.display_size == (80, 100)
+        assert prepared.upload_size == (80, 100)
+        assert prepared.temporary_path is not None
+        assert prepared.upload_path != path
+
+    assert path.read_bytes() == original_bytes

@@ -1042,3 +1042,78 @@ def test_defer_creates_annotated_pending_copy_when_box_exists(tmp_path):
     with Image.open(annotated) as image:
         colors = image.convert("RGB").getcolors(maxcolors=1_000_000) or []
     assert any(color == (255, 176, 32) for _, color in colors)
+
+
+def test_completed_image_writes_group_and_batch(tmp_path):
+    from birdclass.library import ArchiveLibrary
+
+    source = tmp_path / "source"
+    make_image(source / "bird.png")
+    api = FakeAPI(
+        Quota(0, 10, 10),
+        [{"box": [2, 2, 18, 18], "list": [["95", "麻雀|Sparrow|Passer", "1", "B"]]}],
+    )
+
+    summary = run_service(make_service(api), make_config(tmp_path))
+
+    library = ArchiveLibrary(tmp_path / "output")
+    groups = library.load_groups()
+    batches = library.load_batches()
+    assert summary.completed == 1
+    assert len(groups) == 1
+    group = groups[0]
+    assert group["status"] == "completed"
+    assert group["batch_id"] == batches[0]["batch_id"]
+    assert batches[0]["groups"] == [group["group_id"]]
+    assert group["image"]["source_size"] == [20, 20]
+    assert group["targets"][0]["box"] == pytest.approx([0.1, 0.1, 0.9, 0.9])
+    assert group["copies"][0]["relative_path"] == "麻雀/全球_麻雀_001.png"
+
+
+def test_rotated_upload_records_display_oriented_box(tmp_path):
+    import piexif
+
+    from birdclass.library import ArchiveLibrary
+
+    source = tmp_path / "source"
+    make_image(source / "rotated.jpg", size=(100, 80))
+    exif = piexif.dump({"0th": {piexif.ImageIFD.Orientation: 6}})
+    piexif.insert(exif, str(source / "rotated.jpg"))
+    api = FakeAPI(
+        Quota(0, 10, 10),
+        [{"box": [8, 20, 40, 60], "list": [["95", "麻雀|Sparrow|Passer", "1", "B"]]}],
+    )
+
+    run_service(make_service(api), make_config(tmp_path))
+
+    group = ArchiveLibrary(tmp_path / "output").load_groups()[0]
+    assert group["image"]["source_size"] == [100, 80]
+    assert group["image"]["display_size"] == [80, 100]
+    assert group["image"]["exif_orientation"] == 6
+    assert group["image"]["upload_oriented"] is True
+    assert group["targets"][0]["box"] == pytest.approx([0.1, 0.2, 0.5, 0.6])
+
+
+def test_deferred_image_writes_pending_group_with_both_copies(tmp_path):
+    from birdclass.library import ArchiveLibrary
+
+    source = tmp_path / "source"
+    make_image(source / "birds.png")
+    api = FakeAPI(
+        Quota(0, 10, 10),
+        [{"box": [4, 4, 16, 16], "list": [["60", "麻雀|Sparrow|Passer", "1", "B"]]}],
+    )
+
+    run_service(
+        make_service(api),
+        make_config(tmp_path),
+        lambda _context: ReviewResult(ReviewAction.DEFER),
+    )
+
+    group = ArchiveLibrary(tmp_path / "output").load_groups()[0]
+    assert group["status"] == "review_pending"
+    assert {copy["relative_path"] for copy in group["copies"]} == {
+        "待复核/birds.png",
+        "待复核/birds_待确认框.png",
+    }
+    assert all(copy["target_indices"] == [0] for copy in group["copies"])

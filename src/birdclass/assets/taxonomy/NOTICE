@@ -1,0 +1,16 @@
+BirdRoost taxonomy data
+======================
+
+Species taxonomy and Chinese/English/vernacular names are derived from the
+IOC World Bird List v15.2 multilingual list:
+  https://www.worldbirdnames.org/new/ioc-lists/master-list-2/
+  https://worldbirdnames.org/Multiling%20IOC%2015.2.xlsx
+
+IOC World Bird List v15.2 by Frank Gill, David Donsker & Pamela Rasmussen (Eds)
+is licensed under a Creative Commons Attribution 3.0 Unported License:
+  https://creativecommons.org/licenses/by/3.0/
+
+Chinese names in the IOC multilingual list credit Zheng Guangmei (Ed.),
+A Checklist on the Classification and Distribution of the Birds of the World
+(Second Edition), Science Press, and the China Bird Report checklist.
+The generated alias table only normalizes spelling variants for local lookup.

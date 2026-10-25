@@ -124,6 +124,16 @@ class CsvHistory:
         assert self._events is not None
         return self._events.get(item.identity)
 
+    def latest_for_relative_path(self, relative_path: str) -> HistoryEvent | None:
+        if self._events is None:
+            self.load()
+        assert self._events is not None
+        events = [
+            event for event in self._events.values()
+            if event.identity.relative_path == relative_path
+        ]
+        return max(events, key=lambda event: event.updated_at) if events else None
+
     @staticmethod
     def _to_row(event: HistoryEvent) -> dict[str, object]:
         return {
