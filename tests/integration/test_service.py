@@ -10,6 +10,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from birdclass.errors import SpeciesNotFoundError
 from birdclass.history import CsvHistory
 from birdclass.models import (
     AppConfig,
@@ -486,3 +487,43 @@ def test_configured_result_wait_is_passed_to_api(tmp_path):
 
     assert summary.completed == 1
     assert api.poll_wait_seconds == [17]
+
+
+def test_species_not_found_records_failure_and_continues_batch(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "first.jpg")
+    make_image(source / "second.jpg")
+    api = FakeAPI(Quota(0, 10, 10))
+
+    def fail_first(result_id, total_wait_seconds=60):
+        if result_id == "result-1":
+            raise SpeciesNotFoundError(
+                "地区筛选未返回可用物种（1011）：Species not found in this area"
+            )
+        return payload()
+
+    api.poll_result = fail_first
+    progress = []
+
+    summary = make_service(api).run(
+        make_config(tmp_path),
+        auto_review,
+        lambda event, data: progress.append(
+            (event, data.get("relative_path"), data)
+        ),
+        threading.Event(),
+    )
+
+    assert api.submit_calls == 2
+    assert summary.failed == 1
+    assert summary.completed == 1
+    assert summary.deferred == 1
+    assert summary.stop_reason == ""
+    failed_progress = [entry for entry in progress if entry[0] == "failed"]
+    assert [entry[:2] for entry in failed_progress] == [("failed", "first.jpg")]
+    pending = tmp_path / "output" / "待复核" / "first.jpg"
+    assert pending.is_file()
+    assert failed_progress[0][2]["destination"] == pending
+    events = CsvHistory(source / "birdclass_records.csv").load()
+    statuses = {event.identity.relative_path: event.status for event in events.values()}
+    assert statuses == {"first.jpg": "failed", "second.jpg": "completed"}

@@ -3,7 +3,12 @@ from pathlib import Path
 import pytest
 
 from birdclass.api import DongNiaoClient
-from birdclass.errors import ApiProtocolError, RecognitionTimeoutError
+from birdclass.errors import (
+    ApiProtocolError,
+    ConfigError,
+    RecognitionTimeoutError,
+    SpeciesNotFoundError,
+)
 
 
 class FakeClock:
@@ -98,3 +103,19 @@ def test_non_array_business_response_is_protocol_error():
 
     with pytest.raises(ApiProtocolError):
         client.query_quota()
+
+
+def test_species_not_found_is_a_single_image_failure():
+    client = DongNiaoClient("secret")
+    client._post = lambda **_: (1011, "Species not found in this area")
+
+    with pytest.raises(SpeciesNotFoundError, match="1011"):
+        client.poll_result("result-1")
+
+
+def test_invalid_area_remains_a_configuration_error():
+    client = DongNiaoClient("secret")
+    client._post = lambda **_: (1009, "Invalid area")
+
+    with pytest.raises(ConfigError, match="1009"):
+        client.poll_result("result-1")
