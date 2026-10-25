@@ -287,6 +287,10 @@ class MainWindow(QMainWindow):
             ),
             "deferred": f"待复核：{path} → {destination_text}",
             "skipped": f"跳过已完成：{path}",
+            "review_applied": (
+                f"人工复核：{path} · 后面同样应用到 "
+                f"{len(data.get('target_indices', []))} 个目标"
+            ),
             "failed": f"失败：{path}；{data.get('error', '')}{failure_pending_text}",
         }
         if event in messages:

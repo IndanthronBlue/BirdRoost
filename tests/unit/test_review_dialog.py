@@ -288,3 +288,38 @@ def test_preview_failure_keeps_candidates_and_actions(qtbot, tmp_path):
 
     assert dialog.result.action == ReviewAction.CONFIRM
     assert dialog.result.candidate.species_id == "1"
+
+
+def test_apply_to_remaining_checkbox_sets_review_result(qtbot, tmp_path):
+    image = tmp_path / "bird.jpg"
+    Image.new("RGB", (100, 80), "green").save(image)
+    context = ReviewContext(
+        image_path=image,
+        relative_path="bird.jpg",
+        result_id="apply-remaining",
+        candidates=(candidate("1", "麻雀", "60"),),
+        reason="low_confidence",
+        low_threshold=Decimal("80"),
+        delta_threshold=Decimal("10"),
+        confidence_gap=None,
+        target_index=0,
+        target_count=2,
+    )
+    first = ReviewDialog(context)
+    qtbot.addWidget(first)
+
+    assert not first.apply_remaining.isChecked()
+    first.apply_remaining.setChecked(True)
+    first.confirm()
+
+    assert first.result.action == ReviewAction.CONFIRM
+    assert first.result.apply_to_remaining is True
+
+    second = ReviewDialog(context)
+    qtbot.addWidget(second)
+    second.custom_name.setText("白鹡鸰")
+    second.apply_remaining.setChecked(True)
+    second.confirm_custom()
+
+    assert second.result.action == ReviewAction.CUSTOM
+    assert second.result.apply_to_remaining is True

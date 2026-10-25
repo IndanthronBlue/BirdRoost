@@ -3,6 +3,7 @@ from __future__ import annotations
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
@@ -104,6 +105,12 @@ class ReviewDialog(QDialog):
         self.custom_button.clicked.connect(self.confirm_custom)
         candidate_layout.addWidget(self.custom_name)
         candidate_layout.addWidget(self.custom_button)
+        self.apply_remaining = QCheckBox("后面同样（应用到本图剩余目标）")
+        self.apply_remaining.setToolTip(
+            "勾选后，确认所选鸟种或按人工鸟名归档时，本次选择会应用到本图所有"
+            "尚未确认的后续检测目标；每个目标仍单独记录选择。"
+        )
+        candidate_layout.addWidget(self.apply_remaining)
         splitter.addWidget(candidate_panel)
         splitter.setSizes([520, 360])
         layout.addWidget(splitter, 1)
@@ -126,7 +133,11 @@ class ReviewDialog(QDialog):
         row = self.candidate_list.currentRow()
         if row < 0:
             return
-        self.result = ReviewResult(ReviewAction.CONFIRM, self.context.candidates[row])
+        self.result = ReviewResult(
+            ReviewAction.CONFIRM,
+            self.context.candidates[row],
+            apply_to_remaining=self.apply_remaining.isChecked(),
+        )
         self.accept()
 
     def defer(self) -> None:
@@ -137,7 +148,11 @@ class ReviewDialog(QDialog):
         name = self.custom_name.text().strip()
         if not name:
             return
-        self.result = ReviewResult(ReviewAction.CUSTOM, custom_name_cn=name)
+        self.result = ReviewResult(
+            ReviewAction.CUSTOM,
+            custom_name_cn=name,
+            apply_to_remaining=self.apply_remaining.isChecked(),
+        )
         self.accept()
 
     def reject(self) -> None:

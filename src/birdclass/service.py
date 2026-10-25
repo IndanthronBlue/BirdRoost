@@ -105,7 +105,7 @@ class ClassificationService:
             if status == "review_pending":
                 if event.schema_version >= 2:
                     selections, reviewed, deferred_targets, stop_action = self._review_multi(
-                        item, event, review_callback, history
+                        item, event, review_callback, history, progress_callback
                     )
                     if stop_action == ReviewAction.STOP:
                         summary.deferred += 1
@@ -230,7 +230,7 @@ class ClassificationService:
                 if needs_review:
                     history.append(base_event)
                     selections, reviewed, deferred_targets, stop_action = self._review_multi(
-                        item, base_event, review_callback, history
+                        item, base_event, review_callback, history, progress_callback
                     )
                     if stop_action == ReviewAction.STOP:
                         summary.deferred += 1
@@ -391,6 +391,7 @@ class ClassificationService:
         event: HistoryEvent,
         review_callback: ReviewCallback,
         history: CsvHistory,
+        progress_callback: ProgressCallback,
     ) -> tuple[list[TargetSelection], int, list[int], ReviewAction | None]:
         targets, selections = self._parse_detection_payload(event.detection_payload)
         selected_indices = {selection.target_index for selection in selections}
@@ -423,21 +424,58 @@ class ClassificationService:
                 deferred_targets.append(target.target_index)
                 continue
             candidate = self._selected_candidate(result, target.candidates)
+            reviewed_at = self._now()
             selections.append(TargetSelection(
                 target_index=target.target_index,
                 candidate=candidate,
                 selection_mode="manual",
                 review_reason=decision.reason,
-                reviewed_at=self._now(),
+                reviewed_at=reviewed_at,
             ))
             selected_indices.add(target.target_index)
             reviewed += 1
+            applied_indices: list[int] = []
+            if result.apply_to_remaining:
+                for other in targets:
+                    if other.target_index <= target.target_index:
+                        continue
+                    if other.target_index in selected_indices or not other.candidates:
+                        continue
+                    other_decision = decide_candidate(
+                        other.candidates,
+                        config.low_confidence_threshold,
+                        config.ambiguity_delta_threshold,
+                    )
+                    other_candidate = next(
+                        (
+                            candidate_for_target
+                            for candidate_for_target in other.candidates
+                            if (candidate_for_target.species_id, candidate_for_target.animal_class)
+                            == (candidate.species_id, candidate.animal_class)
+                        ),
+                        candidate,
+                    )
+                    selections.append(TargetSelection(
+                        target_index=other.target_index,
+                        candidate=other_candidate,
+                        selection_mode="manual",
+                        review_reason=other_decision.reason,
+                        reviewed_at=reviewed_at,
+                    ))
+                    selected_indices.add(other.target_index)
+                    reviewed += 1
+                    applied_indices.append(other.target_index)
             pending = self._event(
                 item, "review_pending", config, None, event,
                 schema_version=event.schema_version,
                 detection_payload=self._detection_payload(targets, selections),
             )
             history.append(pending)
+            if applied_indices:
+                self._progress(
+                    progress_callback, "review_applied", item,
+                    target_indices=applied_indices,
+                )
         return selections, reviewed, deferred_targets, None
 
     def _finish_multi_review(

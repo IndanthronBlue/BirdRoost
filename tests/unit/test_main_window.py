@@ -222,3 +222,16 @@ def test_close_while_running_requests_stop_and_waits_for_finish(qtbot, tmp_path,
     worker.finished.emit()
 
     assert window._closing is False
+
+
+def test_review_applied_progress_logs_target_count(qtbot, tmp_path):
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    window._on_progress("review_applied", {
+        "relative_path": "flock.jpg",
+        "target_indices": [1, 2],
+    })
+
+    assert "后面同样应用到 2 个目标" in window.log.toPlainText()

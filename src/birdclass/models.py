@@ -195,6 +195,7 @@ class ReviewResult:
     action: ReviewAction
     candidate: RecognitionCandidate | None = None
     custom_name_cn: str = ""
+    apply_to_remaining: bool = False
 
 
 @dataclass(frozen=True)

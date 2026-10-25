@@ -967,3 +967,50 @@ def test_csv_write_failure_stops_before_further_uploads(tmp_path, monkeypatch):
         run_service(make_service(api), make_config(tmp_path))
 
     assert api.submit_calls == 1
+
+
+def test_apply_to_remaining_marks_later_targets_without_second_dialog(tmp_path):
+    import json
+
+    source = tmp_path / "source"
+    make_image(source / "flock.jpg")
+    result_payload = [
+        {"box": [0, 0, 10, 20], "list": [["60", "麻雀|Sparrow|Passer", "1", "B"]]},
+        {"box": [10, 0, 20, 20], "list": [["55", "麻雀|Sparrow|Passer", "1", "B"]]},
+    ]
+    api = FakeAPI(Quota(0, 10, 10), result_payload)
+    contexts = []
+
+    def review(context):
+        contexts.append(context.target_index)
+        return ReviewResult(
+            ReviewAction.CONFIRM,
+            context.candidates[0],
+            apply_to_remaining=True,
+        )
+
+    progress = []
+    summary = make_service(api).run(
+        make_config(tmp_path),
+        review,
+        lambda event, data: progress.append((event, data)),
+        threading.Event(),
+    )
+
+    assert contexts == [0]
+    assert summary.completed == 1
+    assert summary.reviewed == 2
+    assert api.submit_calls == 1
+    assert len(list((tmp_path / "output" / "麻雀").glob("*.jpg"))) == 1
+    applied = [data for event, data in progress if event == "review_applied"]
+    assert applied and applied[0]["target_indices"] == [1]
+
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    payload = json.loads(rows[-1]["detection_payload"])
+    selected = [
+        target["selection"]["target_index"]
+        for target in payload["targets"]
+        if target["selection"]
+    ]
+    assert selected == [0, 1]
