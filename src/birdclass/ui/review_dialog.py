@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPushButton,
@@ -57,7 +58,7 @@ class ReviewDialog(QDialog):
         gap = "无" if context.confidence_gap is None else f"{context.confidence_gap:.2f} 个百分点"
         description = QLabel(
             f"目标 {context.target_index + 1}/{context.target_count} · {context.relative_path}\n"
-            f"{reason}；当前差值：{gap}。请选择正确鸟种，或稍后处理。"
+            f"{reason}；当前差值：{gap}。请选择正确鸟种、输入人工鸟名，或稍后处理。"
         )
         description.setWordWrap(True)
         layout.addWidget(description)
@@ -76,6 +77,8 @@ class ReviewDialog(QDialog):
         candidate_layout.addWidget(QLabel("识别候选（按置信度从高到低）"))
         self.candidate_list = QListWidget()
         self.candidate_list.setAlternatingRowColors(True)
+        self.candidate_list.setWordWrap(True)
+        line_height = self.candidate_list.fontMetrics().height()
         for candidate in context.candidates:
             names = " / ".join(filter(None, [candidate.name_en, candidate.name_latin]))
             text = f"{candidate.name_cn}    {candidate.confidence_percent:.2f}%"
@@ -83,10 +86,24 @@ class ReviewDialog(QDialog):
                 text += f"\n{names}"
             item = QListWidgetItem(text)
             item.setData(Qt.ItemDataRole.UserRole, candidate.source_order)
+            item.setSizeHint(QSize(0, line_height * (2 if names else 1) + 10))
             self.candidate_list.addItem(item)
         self.candidate_list.setCurrentRow(0)
         self.candidate_list.itemDoubleClicked.connect(lambda _item: self.confirm())
         candidate_layout.addWidget(self.candidate_list)
+        candidate_layout.addWidget(QLabel("候选都不正确时，输入人工确认的鸟种中文名"))
+        self.custom_name = QLineEdit()
+        self.custom_name.setPlaceholderText("例如：白鹡鸰")
+        self.custom_name.setClearButtonEnabled(True)
+        self.custom_button = QPushButton("按人工鸟名归档")
+        self.custom_button.setEnabled(False)
+        self.custom_name.textChanged.connect(
+            lambda text: self.custom_button.setEnabled(bool(text.strip()))
+        )
+        self.custom_name.returnPressed.connect(self.confirm_custom)
+        self.custom_button.clicked.connect(self.confirm_custom)
+        candidate_layout.addWidget(self.custom_name)
+        candidate_layout.addWidget(self.custom_button)
         splitter.addWidget(candidate_panel)
         splitter.setSizes([520, 360])
         layout.addWidget(splitter, 1)
@@ -114,6 +131,13 @@ class ReviewDialog(QDialog):
 
     def defer(self) -> None:
         self.result = ReviewResult(ReviewAction.DEFER)
+        self.accept()
+
+    def confirm_custom(self) -> None:
+        name = self.custom_name.text().strip()
+        if not name:
+            return
+        self.result = ReviewResult(ReviewAction.CUSTOM, custom_name_cn=name)
         self.accept()
 
     def reject(self) -> None:

@@ -160,3 +160,81 @@ def test_highlight_recalculates_when_image_label_resizes(qtbot, tmp_path):
     assert round(rect.top(), 6) == round(expected_top, 6)
     assert round(rect.width(), 6) == round(0.4 * scaled.width(), 6)
     assert round(rect.height(), 6) == round(0.6 * scaled.height(), 6)
+
+
+def test_candidate_rows_show_english_and_latin_names_on_two_lines(qtbot, tmp_path):
+    image = tmp_path / "bird.png"
+    Image.new("RGB", (100, 80), "green").save(image)
+    context = ReviewContext(
+        image_path=image,
+        relative_path="bird.png",
+        result_id="two-line-candidate",
+        candidates=(candidate("1", "麻雀", "80"),),
+        reason="low_confidence",
+        low_threshold=Decimal("80"),
+        delta_threshold=Decimal("10"),
+        confidence_gap=None,
+    )
+    dialog = ReviewDialog(context)
+    qtbot.addWidget(dialog)
+
+    item = dialog.candidate_list.item(0)
+    line_height = dialog.candidate_list.fontMetrics().height()
+
+    assert dialog.candidate_list.wordWrap()
+    assert "English / Latin" in item.text()
+    assert item.sizeHint().height() >= line_height * 2
+
+
+
+
+def test_custom_species_entry_enables_button_and_returns_trimmed_name(qtbot, tmp_path):
+    image = tmp_path / "bird.jpg"
+    Image.new("RGB", (100, 80), "green").save(image)
+    context = ReviewContext(
+        image_path=image,
+        relative_path="bird.jpg",
+        result_id="custom-1",
+        candidates=(candidate("1", "麻雀", "60"),),
+        reason="low_confidence",
+        low_threshold=Decimal("80"),
+        delta_threshold=Decimal("10"),
+        confidence_gap=None,
+    )
+    dialog = ReviewDialog(context)
+    qtbot.addWidget(dialog)
+
+    assert not dialog.custom_button.isEnabled()
+    dialog.custom_name.setText("   ")
+    assert not dialog.custom_button.isEnabled()
+
+    dialog.custom_name.setText("  白鹡鸰  ")
+    assert dialog.custom_button.isEnabled()
+    dialog.custom_button.click()
+
+    assert dialog.result.action == ReviewAction.CUSTOM
+    assert dialog.result.custom_name_cn == "白鹡鸰"
+    assert dialog.result.candidate is None
+
+
+def test_blank_custom_species_is_not_submitted(qtbot, tmp_path):
+    image = tmp_path / "bird.jpg"
+    Image.new("RGB", (100, 80), "green").save(image)
+    context = ReviewContext(
+        image_path=image,
+        relative_path="bird.jpg",
+        result_id="custom-2",
+        candidates=(candidate("1", "麻雀", "60"),),
+        reason="low_confidence",
+        low_threshold=Decimal("80"),
+        delta_threshold=Decimal("10"),
+        confidence_gap=None,
+    )
+    dialog = ReviewDialog(context)
+    qtbot.addWidget(dialog)
+
+    dialog.custom_name.setText("   ")
+    dialog.confirm_custom()
+
+    assert dialog.result.action == ReviewAction.STOP
+    assert dialog.result.custom_name_cn == ""

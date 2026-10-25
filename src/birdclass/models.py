@@ -185,6 +185,7 @@ class CandidateDecision:
 
 class ReviewAction(Enum):
     CONFIRM = "confirm"
+    CUSTOM = "custom"
     DEFER = "defer"
     STOP = "stop"
 
@@ -193,6 +194,7 @@ class ReviewAction(Enum):
 class ReviewResult:
     action: ReviewAction
     candidate: RecognitionCandidate | None = None
+    custom_name_cn: str = ""
 
 
 @dataclass(frozen=True)

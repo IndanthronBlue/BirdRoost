@@ -8,9 +8,10 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
-from birdclass.errors import SpeciesNotFoundError
+from birdclass.errors import RecognitionFailedError, SpeciesNotFoundError
 from birdclass.history import CsvHistory
 from birdclass.models import (
     AppConfig,
@@ -18,6 +19,7 @@ from birdclass.models import (
     HistoryEvent,
     ImageItem,
     Quota,
+    RecognitionCandidate,
     ReviewAction,
     ReviewResult,
 )
@@ -527,3 +529,172 @@ def test_species_not_found_records_failure_and_continues_batch(tmp_path):
     events = CsvHistory(source / "birdclass_records.csv").load()
     statuses = {event.identity.relative_path: event.status for event in events.values()}
     assert statuses == {"first.jpg": "failed", "second.jpg": "completed"}
+
+
+def test_custom_species_name_is_archived_with_metadata_and_csv(tmp_path):
+    import piexif
+
+    source = tmp_path / "source"
+    make_image(source / "bird.jpg")
+    api = FakeAPI(Quota(0, 10, 10), payload("0.60"))
+
+    summary = run_service(
+        make_service(api),
+        make_config(tmp_path),
+        lambda _context: ReviewResult(ReviewAction.CUSTOM, custom_name_cn="白鹡鸰"),
+    )
+
+    archived = tmp_path / "output" / "白鹡鸰" / "全球_白鹡鸰_001.jpg"
+    assert summary.completed == 1
+    assert summary.reviewed == 1
+    assert archived.is_file()
+    source_exif = piexif.load(str(source / "bird.jpg"))
+    archive_exif = piexif.load(str(archived))
+    assert source_exif["0th"][piexif.ImageIFD.ImageDescription].decode("utf-8") == "白鹡鸰"
+    assert archive_exif["0th"][piexif.ImageIFD.ImageDescription].decode("utf-8") == "白鹡鸰"
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    completed = rows[-1]
+    assert completed["status"] == "completed"
+    assert completed["species_id"] == "manual:白鹡鸰"
+    assert completed["species_cn"] == "白鹡鸰"
+    assert completed["selection_mode"] == "manual"
+    assert completed["confidence_percent"] == "0"
+    assert completed["review_reason"] == "low_confidence"
+
+
+def test_duplicate_custom_names_across_targets_are_archived_once(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "birds.jpg")
+    result_payload = [
+        {"box": [0, 0, 10, 20], "list": [["60", "麻雀|Sparrow|Passer", "1", "B"]]},
+        {"box": [10, 0, 20, 20], "list": [["55", "家燕|Swallow|Hirundo", "2", "B"]]},
+    ]
+    api = FakeAPI(Quota(0, 10, 10), result_payload)
+
+    summary = run_service(
+        make_service(api),
+        make_config(tmp_path),
+        lambda _context: ReviewResult(ReviewAction.CUSTOM, custom_name_cn="白鹡鸰"),
+    )
+
+    assert summary.completed == 1
+    assert summary.reviewed == 2
+    assert len(list((tmp_path / "output" / "白鹡鸰").glob("*.jpg"))) == 1
+    assert not (tmp_path / "output" / "麻雀").exists()
+    assert not (tmp_path / "output" / "家燕").exists()
+    with (source / "birdclass_records.csv").open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[-1]["species_id"] == "manual:白鹡鸰"
+    assert '"source_targets": [0, 1]' in rows[-1]["archive_payload"]
+
+
+def test_custom_species_then_defer_resumes_without_duplicate(tmp_path):
+    source = tmp_path / "source"
+    make_image(source / "birds.jpg")
+    result_payload = [
+        {"box": [0, 0, 10, 20], "list": [["60", "麻雀|Sparrow|Passer", "1", "B"]]},
+        {"box": [10, 0, 20, 20], "list": [["55", "家燕|Swallow|Hirundo", "2", "B"]]},
+    ]
+    api = FakeAPI(Quota(0, 10, 10), result_payload)
+    config = make_config(tmp_path)
+
+    def custom_then_defer(context):
+        if context.target_index == 0:
+            return ReviewResult(ReviewAction.CUSTOM, custom_name_cn="白鹡鸰")
+        return ReviewResult(ReviewAction.DEFER)
+
+    first = run_service(make_service(api), config, custom_then_defer)
+
+    assert first.reviewed == 1
+    assert first.deferred == 1
+    assert first.completed == 0
+    assert (tmp_path / "output" / "白鹡鸰" / "全球_白鹡鸰_001.jpg").is_file()
+    assert (tmp_path / "output" / "待复核" / "birds.jpg").is_file()
+
+    resumed_targets = []
+
+    def confirm_remaining(context):
+        resumed_targets.append(context.target_index)
+        return ReviewResult(ReviewAction.CONFIRM, context.candidates[0])
+
+    second = run_service(make_service(api), config, confirm_remaining)
+
+    assert second.completed == 1
+    assert resumed_targets == [1]
+    assert api.submit_calls == 1
+    assert (tmp_path / "output" / "家燕" / "全球_家燕_001.jpg").is_file()
+    assert len(list((tmp_path / "output" / "白鹡鸰").glob("*.jpg"))) == 1
+
+
+def test_custom_candidate_inherits_target_class_and_rejects_blank():
+    candidates = (
+        RecognitionCandidate(
+            species_id="1593",
+            animal_class="B",
+            name_cn="红颈滨鹬",
+            name_en="Red-necked Stint",
+            name_latin="Calidris ruficollis",
+            confidence_raw="42.51",
+            confidence_percent=Decimal("42.51"),
+        ),
+    )
+
+    custom = ClassificationService._selected_candidate(
+        ReviewResult(ReviewAction.CUSTOM, custom_name_cn="  白鹡鸰  "), candidates
+    )
+
+    assert custom.species_id == "manual:白鹡鸰"
+    assert custom.name_cn == "白鹡鸰"
+    assert custom.animal_class == "B"
+    assert custom.name_en == ""
+    assert custom.name_latin == ""
+    assert custom.confidence_raw == "manual"
+    assert custom.confidence_percent == Decimal("0")
+    assert custom.source_order == -1
+
+    with pytest.raises(RecognitionFailedError, match="人工鸟名"):
+        ClassificationService._selected_candidate(
+            ReviewResult(ReviewAction.CUSTOM, custom_name_cn="   "), candidates
+        )
+    with pytest.raises(RecognitionFailedError, match="人工鸟名"):
+        ClassificationService._selected_candidate(
+            ReviewResult(ReviewAction.CUSTOM, custom_name_cn="白鹡鸰"), ()
+        )
+
+
+def test_schema1_pending_review_accepts_custom_name_without_upload(tmp_path):
+    import json
+
+    source = tmp_path / "source"
+    output = tmp_path / "output"
+    make_image(source / "legacy.jpg")
+    stat = (source / "legacy.jpg").stat()
+    history = CsvHistory(source / "birdclass_records.csv")
+    history.load()
+    history.append(HistoryEvent(
+        identity=FileIdentity("legacy.jpg", stat.st_size, stat.st_mtime_ns),
+        status="review_pending",
+        updated_at=datetime.now(timezone.utc).isoformat(),
+        event_id="legacy",
+        result_id="saved-legacy",
+        review_reason="low_confidence",
+        low_confidence_threshold="80",
+        ambiguity_delta_threshold="10",
+        candidate_payload=json.dumps([{
+            "species_id": "1", "animal_class": "B", "name_cn": "麻雀",
+            "name_en": "Sparrow", "name_latin": "Passer",
+            "confidence_raw": "0.5", "confidence_percent": "50", "source_order": 0,
+        }], ensure_ascii=False),
+    ))
+    api = FakeAPI(Quota(0, 10, 0))
+
+    summary = run_service(
+        make_service(api),
+        make_config(tmp_path),
+        lambda _context: ReviewResult(ReviewAction.CUSTOM, custom_name_cn="白鹡鸰"),
+    )
+
+    assert summary.completed == 1
+    assert api.submit_calls == 0
+    assert (output / "白鹡鸰" / "全球_白鹡鸰_001.jpg").is_file()

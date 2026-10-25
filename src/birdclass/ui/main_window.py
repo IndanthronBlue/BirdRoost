@@ -284,6 +284,11 @@ class MainWindow(QMainWindow):
         worker.resolve_review(request_id, result)
         if result.action.value == "confirm":
             self._append_log(f"人工确认：{context.relative_path} → {result.candidate.name_cn}")
+        elif result.action.value == "custom":
+            self._append_log(
+                f"人工鸟名：{context.relative_path} · "
+                f"目标 {context.target_index + 1}/{context.target_count} → {result.custom_name_cn}"
+            )
         elif result.action.value == "defer":
             self._append_log(
                 f"稍后处理：{context.relative_path} · "

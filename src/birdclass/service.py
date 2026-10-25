@@ -534,6 +534,20 @@ class ClassificationService:
     def _selected_candidate(
         result: ReviewResult, candidates: tuple[RecognitionCandidate, ...]
     ) -> RecognitionCandidate:
+        if result.action == ReviewAction.CUSTOM:
+            name = result.custom_name_cn.strip()
+            if not name or not candidates:
+                raise RecognitionFailedError("人工鸟名不能为空")
+            return RecognitionCandidate(
+                species_id=f"manual:{name}",
+                animal_class=candidates[0].animal_class,
+                name_cn=name,
+                name_en="",
+                name_latin="",
+                confidence_raw="manual",
+                confidence_percent=Decimal("0"),
+                source_order=-1,
+            )
         if result.action != ReviewAction.CONFIRM or result.candidate is None:
             raise RecognitionFailedError("人工复核未选择有效候选")
         selected = next(
