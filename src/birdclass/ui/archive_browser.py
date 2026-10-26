@@ -360,6 +360,13 @@ class ArchiveBrowserWindow(QMainWindow):
         self.apply_all_button.setVisible(False)
         self.apply_all_button.clicked.connect(self.apply_all_targets)
         info_layout.addWidget(self.apply_all_button)
+        self.already_classified_button = QPushButton("已分类")
+        self.already_classified_button.setToolTip("这张图已在别处分类，从待复核中移除")
+        self.already_classified_button.setVisible(False)
+        self.already_classified_button.clicked.connect(
+            lambda: self.resolve_pending("already_classified")
+        )
+        info_layout.addWidget(self.already_classified_button)
         self.non_bird_panel = QWidget()
         non_bird_layout = QHBoxLayout(self.non_bird_panel)
         non_bird_layout.setContentsMargins(0, 4, 0, 4)
@@ -410,7 +417,6 @@ class ArchiveBrowserWindow(QMainWindow):
             ("无鸟", "no_bird"),
             ("非鸟动物", "non_bird_animal"),
             ("风景", "scenery"),
-            ("已分类", "already_classified"),
             ("稍后处理", "defer"),
         ):
             button = QPushButton(label)
@@ -997,7 +1003,10 @@ class ArchiveBrowserWindow(QMainWindow):
             target for target in entry.group.get("targets", [])
             if not (target.get("selection") or {}).get("species_cn")
         ]
-        self.apply_all_button.setVisible(bool(unresolved) and bool(entry.species_cn))
+        real_species = bool(entry.species_cn) and entry.special not in {
+            "待复核", "非鸟动物", "风景", "无鸟", "已删除", "已纠正"
+        }
+        self.apply_all_button.setVisible(bool(unresolved) and real_species)
         self.apply_all_button.setText(
             f"同图全部标为「{entry.species_cn}」" if entry.species_cn else "同图全部标为当前物种"
         )
@@ -1019,6 +1028,7 @@ class ArchiveBrowserWindow(QMainWindow):
             and bool(pending_copies)
         )
         self.manual_panel.setVisible(is_pending)
+        self.already_classified_button.setVisible(is_pending)
         self.manual_name.clear()
         observation = entry.group.get("observation") or {}
         self.manual_location.setText(entry.observation_location or str(observation.get("location", "")))
@@ -1101,6 +1111,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.setVisible(False)
         self.alias_button.setVisible(False)
         self.apply_all_button.setVisible(False)
+        self.already_classified_button.setVisible(False)
         self.non_bird_panel.setVisible(False)
         self.manual_panel.setVisible(False)
         self.delete_button.setEnabled(False)
