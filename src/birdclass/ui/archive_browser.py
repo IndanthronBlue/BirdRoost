@@ -1252,7 +1252,10 @@ class ArchiveBrowserWindow(QMainWindow):
             return paths[row - 1], row - 1
         return paths[row], row
 
-    def _restore_pending_view(self, successor: str | None = None, fallback_row: int = 0) -> None:
+    def _restore_pending_view(
+        self, successor: str | None = None, fallback_row: int = 0,
+        prefer: str | None = None,
+    ) -> None:
         item = self._tree_items.get(("待复核",))
         if item is None:
             return
@@ -1266,9 +1269,10 @@ class ArchiveBrowserWindow(QMainWindow):
         if not self.grid.count():
             return
         target = None
-        if successor:
+        preference = prefer or successor
+        if preference:
             for row in range(self.grid.count()):
-                if self.grid.item(row).data(Qt.ItemDataRole.UserRole) == successor:
+                if self.grid.item(row).data(Qt.ItemDataRole.UserRole) == preference:
                     target = row
                     break
         if target is None:
@@ -1333,12 +1337,18 @@ class ArchiveBrowserWindow(QMainWindow):
         name = self.manual_name.text().split(" · ", 1)[0].strip()
         if entry is None or not name:
             return
+        target_index = self._selected_target_index()
+        if entry.group.get("targets") and target_index is None:
+            QMessageBox.warning(self, "羽栖 BirdRoost", "请先在目标列表中选择一个目标。")
+            return
         successor, row = self._pending_successor()
+        current_path = self._selected_entry_path
         try:
             new_relative = resolve_manual(
                 self.library, entry, action="manual", name=name,
                 observation_location=self.manual_location.text().strip(),
                 observation_time=self.manual_time.text().strip(),
+                target_indices={target_index} if target_index is not None else None,
             )
         except ManualReviewError as exc:
             QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
@@ -1346,7 +1356,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = new_relative
         self.status_label.setText(f"已人工归档：{name}")
         self.refresh()
-        self._restore_pending_view(successor, row)
+        self._restore_pending_view(successor, row, prefer=current_path)
 
     def resolve_pending(self, action: str) -> None:
         if action == "already_classified":

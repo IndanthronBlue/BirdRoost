@@ -152,18 +152,29 @@ def test_manual_archive_reuses_existing_species_copy_for_remaining_targets(tmp_p
     library.write_group(group)
     entry = next(e for e in ArchiveIndex(output).refresh() if e.relative_path == "黑腹滨鹬/a.jpg")
 
-    new_relative = resolve_manual(library, entry, action="manual", name="黑腹滨鹬")
+    first = resolve_manual(
+        library, entry, action="manual", name="黑腹滨鹬", target_indices={2}
+    )
 
-    assert new_relative == "黑腹滨鹬/a.jpg"
-    assert not pending.exists()
+    assert first == "黑腹滨鹬/a.jpg"
+    assert pending.exists()
+    updated = library.read_group(group["group_id"])
+    assert updated["status"] == "review_pending"
+    black_copy = next(c for c in updated["copies"] if c["species_cn"] == "黑腹滨鹬")
+    assert black_copy["target_indices"] == [0, 2]
     assert sorted(path.name for path in (output / "黑腹滨鹬").iterdir()) == ["a.jpg"]
+    assert updated["targets"][3]["selection"] is None
+
+    resolve_manual(
+        library, entry, action="manual", name="黑腹滨鹬", target_indices={3}
+    )
+
+    assert not pending.exists()
     updated = library.read_group(group["group_id"])
     assert updated["status"] == "completed"
     black_copy = next(c for c in updated["copies"] if c["species_cn"] == "黑腹滨鹬")
     assert black_copy["target_indices"] == [0, 2, 3]
-    assert [target["selection"]["species_cn"] for target in updated["targets"]] == [
-        "黑腹滨鹬", "红腹滨鹬", "黑腹滨鹬", "黑腹滨鹬"
-    ]
+    assert sorted(path.name for path in (output / "黑腹滨鹬").iterdir()) == ["a.jpg"]
 
 
 def test_non_bird_animal_accepts_note_and_folders_by_note(tmp_path: Path):

@@ -98,6 +98,7 @@ def resolve_manual(
     observation_location: str = "",
     observation_time: str = "",
     label: str = "",
+    target_indices: set[int] | None = None,
 ) -> str:
     """Resolve a pending/failed group as manual species or no-bird.
 
@@ -138,25 +139,26 @@ def resolve_manual(
             for target in targets
             if not (target.get("selection") or {}).get("species_cn")
         ]
-        pending_indices = sorted({
-            int(index)
-            for copy in pending
-            for index in copy.get("target_indices", [])
-        })
-        target_indices = (
-            sorted(set(pending_indices) & set(unresolved))
-            if pending_indices and unresolved else unresolved
+        selected = (
+            sorted(set(target_indices))
+            if target_indices is not None
+            else unresolved
         )
-        if target_indices:
-            for target in targets:
-                if int(target.get("target_index", -1)) not in target_indices:
-                    continue
-                target["selection"] = {
-                    "species_cn": name,
-                    "species_latin": scientific,
-                    "selection_mode": "manual",
-                    "review_reason": "manual_review",
-                }
+        selected = [
+            index for index in selected
+            if any(int(target.get("target_index", -1)) == index for target in targets)
+        ]
+        if not selected:
+            raise ManualReviewError("没有可归档的目标")
+        for target in targets:
+            if int(target.get("target_index", -1)) not in selected:
+                continue
+            target["selection"] = {
+                "species_cn": name,
+                "species_latin": scientific,
+                "selection_mode": "manual",
+                "review_reason": "manual_review",
+            }
         remaining_unresolved = any(
             not (target.get("selection") or {}).get("species_cn") for target in targets
         )
@@ -174,14 +176,11 @@ def resolve_manual(
         )
         if existing is not None:
             existing["target_indices"] = sorted(dict.fromkeys(
-                [*existing.get("target_indices", []), *target_indices]
+                [*existing.get("target_indices", []), *selected]
             ))
             new_relative = str(existing.get("relative_path", ""))
-            group["copies"] = [copy for copy in copies if copy not in pending]
-            for copy in pending:
-                old = output / str(copy.get("relative_path", ""))
-                if old.is_file():
-                    old.unlink(missing_ok=True)
+            if not remaining_unresolved:
+                group["copies"] = [copy for copy in copies if copy not in pending]
         else:
             folder = sanitize_species_directory(name, "manual")
             filename = source.name
@@ -197,29 +196,27 @@ def resolve_manual(
             new_path = _unique_path(output / folder / filename)
             try:
                 new_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(source), str(new_path))
+                shutil.copy2(source, new_path)
                 write_species_metadata(new_path, name)
             except Exception as exc:
-                if not source.exists() and new_path.exists():
-                    try:
-                        shutil.move(str(new_path), str(source))
-                    except OSError:
-                        pass
                 new_path.unlink(missing_ok=True)
                 raise ManualReviewError(f"创建人工归档副本失败：{exc}") from exc
             new_relative = new_path.relative_to(output).as_posix()
-            for copy in pending:
-                old = output / str(copy.get("relative_path", ""))
-                if old != source and old.is_file():
-                    old.unlink(missing_ok=True)
-            group["copies"] = [
-                copy for copy in copies if copy not in pending
-            ] + [{
+            group["copies"] = copies + [{
                 "relative_path": new_relative,
                 "species_cn": name,
                 "species_latin": scientific,
-                "target_indices": target_indices,
+                "target_indices": selected,
             }]
+            if not remaining_unresolved:
+                group["copies"] = [
+                    copy for copy in group["copies"] if copy not in pending
+                ]
+        if not remaining_unresolved:
+            for copy in pending:
+                old = output / str(copy.get("relative_path", ""))
+                if old.is_file():
+                    old.unlink(missing_ok=True)
         group["observation"] = {
             "location": observation_location or group.get("observation", {}).get("location", ""),
             "time": observation_time or group.get("observation", {}).get("time", ""),
@@ -236,7 +233,7 @@ def resolve_manual(
             "old_relative_paths": [copy.get("relative_path", "") for copy in pending],
             "new_relative_path": new_relative,
             "reused_existing_copy": existing is not None,
-            "target_indices": target_indices,
+            "target_indices": selected,
         })
         return new_relative
 
