@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from PIL import Image
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from birdclass.library import ArchiveLibrary, new_batch_id, new_group_id
@@ -839,3 +840,29 @@ def test_non_bird_note_is_edited_under_tree_node(qtbot, tmp_path: Path):
 
     assert library.read_group(group["group_id"])["label"] == "蜥蜴"
     assert "蜥蜴" in browser.grid.item(0).text()
+
+
+def test_grid_arrow_keys_move_selection_and_summary_counts_species(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    for name in ("三趾滨鹬", "欧乌鸫", "黑腹滨鹬"):
+        make_image(output / name / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=batch,
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    add_group(library, "欧乌鸫/a.jpg", batch_id=batch,
+              species_cn="欧乌鸫", species_latin="Turdus merula")
+    add_group(library, "黑腹滨鹬/a.jpg", batch_id=batch,
+              species_cn="黑腹滨鹬", species_latin="Calidris alpina")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.show()
+    browser.tree.setCurrentItem(browser._tree_items[("动物界",)])
+    browser.grid.setFocus()
+    browser.grid.setCurrentRow(0)
+
+    qtbot.keyClick(browser.grid, Qt.Key.Key_Right)
+
+    assert browser.grid.currentRow() == 1
+    assert "已归档 3 种鸟" in browser.summary_label.text()

@@ -56,9 +56,33 @@ from ..manual_review import (
 )
 from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
+from .compare_dialog import CompareDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
 from .lightbox import LightboxDialog
 from .species_picker import SpeciesPickerDialog
+
+
+class ArchiveImageGrid(QListWidget):
+    def keyPressEvent(self, event) -> None:
+        if event.key() in {
+            Qt.Key.Key_Left, Qt.Key.Key_Right, Qt.Key.Key_Up, Qt.Key.Key_Down
+        }:
+            row = self.currentRow()
+            if row < 0:
+                row = 0
+            columns = max(1, self.viewport().width() // max(1, self.gridSize().width()))
+            delta = {
+                Qt.Key.Key_Left: -1,
+                Qt.Key.Key_Right: 1,
+                Qt.Key.Key_Up: -columns,
+                Qt.Key.Key_Down: columns,
+            }[event.key()]
+            target = max(0, min(self.count() - 1, row + delta))
+            if self.count():
+                self.setCurrentRow(target)
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
 class _ThumbnailSignals(QObject):
@@ -230,6 +254,9 @@ class ArchiveBrowserWindow(QMainWindow):
         self.lightbox_button = QPushButton("全屏")
         self.lightbox_button.clicked.connect(self.open_lightbox)
         toolbar.addWidget(self.lightbox_button)
+        self.compare_button = QPushButton("比较")
+        self.compare_button.clicked.connect(self.open_compare)
+        toolbar.addWidget(self.compare_button)
         self.refresh_button = QPushButton("刷新")
         self.refresh_button.clicked.connect(self.refresh)
         toolbar.addWidget(self.refresh_button)
@@ -297,12 +324,12 @@ class ArchiveBrowserWindow(QMainWindow):
         self.tree.itemSelectionChanged.connect(self._on_tree_selection)
         splitter.addWidget(self.tree)
 
-        self.grid = QListWidget()
+        self.grid = ArchiveImageGrid()
         self.grid.setViewMode(QListWidget.ViewMode.IconMode)
         self.grid.setIconSize(QSize(160, 120))
         self.grid.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.grid.setMovement(QListWidget.Movement.Static)
-        self.grid.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        self.grid.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
         self.grid.setWordWrap(False)
         self.grid.setTextElideMode(Qt.TextElideMode.ElideMiddle)
         self.grid.setUniformItemSizes(True)
@@ -1435,6 +1462,46 @@ class ArchiveBrowserWindow(QMainWindow):
         self.refresh()
         self._restore_pending_view(successor, row)
 
+    def open_compare(self) -> None:
+        selected = sorted(
+            self.grid.selectedItems(),
+            key=lambda item: self.grid.row(item),
+        )
+        entries = []
+        for item in selected:
+            relative_path = item.data(Qt.ItemDataRole.UserRole)
+            entry = next(
+                (value for value in self.index.entries
+                 if value.relative_path == relative_path),
+                None,
+            )
+            if entry is not None:
+                entries.append(entry)
+        if len(entries) < 2:
+            row = self.grid.currentRow()
+            for candidate_row in (row, row - 1, row + 1):
+                if 0 <= candidate_row < self.grid.count():
+                    relative_path = self.grid.item(candidate_row).data(Qt.ItemDataRole.UserRole)
+                    entry = next(
+                        (value for value in self.index.entries
+                         if value.relative_path == relative_path),
+                        None,
+                    )
+                    if entry is not None and entry not in entries:
+                        entries.append(entry)
+                if len(entries) >= 2:
+                    break
+        if len(entries) < 2:
+            self.status_label.setText("请至少选择两张图片再比较")
+            return
+        dialog = CompareDialog(
+            entries[:2], boxes_provider=lambda entry: self._entry_boxes(entry), parent=self
+        )
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        dialog.destroyed.connect(lambda _obj=None: setattr(self, "_compare", None))
+        self._compare = dialog
+        dialog.showMaximized()
+
     def open_lightbox(self) -> None:
         entries = []
         for row in range(self.grid.count()):
@@ -1639,6 +1706,17 @@ class ArchiveBrowserWindow(QMainWindow):
         self.refresh()
 
     def _update_summary(self) -> None:
+        visible = self._visible_entries()
+        scope = [
+            entry for entry in self.index.entries
+            if not entry.special
+            and (not self.batch_id or entry.group.get("batch_id") == self.batch_id)
+        ]
+        species_count = len({
+            entry.taxonomy.scientific_name if entry.taxonomy is not None
+            else (entry.species_cn or entry.folder)
+            for entry in scope
+        })
         if self.batch_id:
             self.batch_label.setText(f"批次：{self.batch_id[:8]}…")
             batch = next(
@@ -1650,13 +1728,15 @@ class ArchiveBrowserWindow(QMainWindow):
                 self.summary_label.setText(
                     f"本批共 {summary.get('total', 0)} · 完成 {summary.get('completed', 0)} · "
                     f"失败 {summary.get('failed', 0)} · 待复核 {summary.get('deferred', 0)} · "
-                    f"当前树显示 {len(self._visible_entries())} 张"
+                    f"当前树显示 {len(visible)} 张 · {species_count} 种鸟"
                 )
             else:
                 self.summary_label.setText(f"当前批次 {len(self._visible_entries())} 张")
         else:
             self.batch_label.setText("全部归档")
-            self.summary_label.setText(f"归档共 {len(self.index.entries)} 张图片")
+            self.summary_label.setText(
+                f"归档共 {len(self.index.entries)} 张图片 · 已归档 {species_count} 种鸟"
+            )
 
     # ---------- dynamic updates ----------
 
