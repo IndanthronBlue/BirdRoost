@@ -354,8 +354,15 @@ class ArchiveBrowserWindow(QMainWindow):
         splitter.splitterMoved.connect(self._save_splitter_sizes)
         root.addWidget(splitter, 1)
 
+        bottom_row = QHBoxLayout()
         self.status_label = QLabel("就绪")
-        root.addWidget(self.status_label)
+        bottom_row.addWidget(self.status_label, 1)
+        self.confirm_button = QPushButton("确认结果并关闭")
+        self.confirm_button.setMinimumHeight(32)
+        self.confirm_button.setVisible(bool(self.batch_id))
+        self.confirm_button.clicked.connect(self.confirm_and_close)
+        bottom_row.addWidget(self.confirm_button)
+        root.addLayout(bottom_row)
 
     # ---------- refresh / tree ----------
 
@@ -1092,6 +1099,7 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self.batch_id = batch_id
         self.clear_batch_button.setVisible(bool(batch_id))
+        self.confirm_button.setVisible(bool(batch_id))
         self.setWindowTitle(
             "羽栖 BirdRoost · 批次结果" if batch_id else "羽栖 BirdRoost · 浏览归档"
         )
@@ -1099,9 +1107,13 @@ class ArchiveBrowserWindow(QMainWindow):
             self.box_toggle.setChecked(True)
         self.refresh()
 
+    def confirm_and_close(self) -> None:
+        self.close()
+
     def clear_batch_filter(self) -> None:
         self.batch_id = None
         self.clear_batch_button.setVisible(False)
+        self.confirm_button.setVisible(False)
         self.setWindowTitle("羽栖 BirdRoost · 浏览归档")
         self.refresh()
 

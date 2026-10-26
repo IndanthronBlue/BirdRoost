@@ -576,3 +576,33 @@ def test_detail_shows_order_family_genus_species(qtbot, tmp_path: Path):
     assert "科：鹬科 · Scolopacidae" in info
     assert "属：滨鹬属 · Calidris" in info
     assert "种：三趾滨鹬 · Calidris alba" in info
+
+
+def test_batch_page_confirm_button_closes_window(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=batch,
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    browser = ArchiveBrowserWindow(output, batch_id=batch)
+    qtbot.addWidget(browser)
+    browser.show()
+    qtbot.waitExposed(browser)
+
+    assert browser.confirm_button.isVisible() is True
+    browser.confirm_button.click()
+    qtbot.wait(20)
+
+    assert browser.isVisible() is False
+    assert browser._closed is True
+
+
+def test_all_archive_page_has_no_confirm_button(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+
+    assert browser.confirm_button.isVisible() is False
