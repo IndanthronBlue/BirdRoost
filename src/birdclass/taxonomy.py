@@ -85,6 +85,7 @@ class _Loaded:
     by_chinese: dict[str, Taxon | None]
     by_english: dict[str, Taxon | None]
     aliases: dict[str, str]
+    aliases_by_scientific: dict[str, tuple[str, ...]]
 
 
 def _fold(value: str) -> str:
@@ -149,10 +150,19 @@ def load_taxonomy() -> "Taxonomy":
                 mapping.setdefault(key, taxon)
 
     aliases: dict[str, str] = {}
+    aliases_by_scientific: dict[str, list[str]] = {}
     for row in _read_rows(ALIASES_RESOURCE):
-        aliases[_fold(row["alias"])] = _scientific_key(row["scientific_name"])
+        alias = row["alias"].strip()
+        scientific = _scientific_key(row["scientific_name"])
+        if not alias or not scientific:
+            continue
+        aliases[_fold(alias)] = scientific
+        aliases_by_scientific.setdefault(scientific, []).append(alias)
 
-    return Taxonomy(_Loaded(taxa, by_scientific, by_chinese, by_english, aliases))
+    return Taxonomy(_Loaded(
+        taxa, by_scientific, by_chinese, by_english, aliases,
+        {key: tuple(value) for key, value in aliases_by_scientific.items()},
+    ))
 
 
 class Taxonomy:
@@ -168,6 +178,9 @@ class Taxonomy:
 
     def all_taxa(self) -> Iterable[Taxon]:
         return iter(self._loaded.taxa)
+
+    def aliases_for(self, taxon: Taxon) -> tuple[str, ...]:
+        return self._loaded.aliases_by_scientific.get(taxon.taxonomy_key, ())
 
     def resolve(
         self,

@@ -814,7 +814,7 @@ class ArchiveBrowserWindow(QMainWindow):
                 ("目", taxon.order_label, taxon.order),
                 ("科", taxon.family_label, taxon.family),
                 ("属", taxon.genus_label, taxon.genus),
-                ("种", taxon.display_name, taxon.scientific_name),
+                ("种", entry.species_cn or taxon.display_name, taxon.scientific_name),
             ):
                 if chinese and latin and chinese != latin:
                     details.append(f"{rank}：{chinese} · {latin}")
@@ -1169,15 +1169,16 @@ class ArchiveBrowserWindow(QMainWindow):
         answer = QMessageBox.question(
             self,
             "确认修改分类",
-            f"将这张副本改为「{taxon.display_name}」。\n"
-            "旧副本会保留到「已纠正」目录，可稍后删除。\n"
+            f"将这张副本改为「{getattr(picker, 'selected_name', '') or taxon.display_name}」。\n"
+            "原副本将直接移动到新分类，不再额外复制到「已纠正」。\n"
             "源图和 CSV 不会被修改。",
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
         try:
             outcome = correct_archive_copy(
-                self.library, entry, taxon, target_indices=target_indices
+                self.library, entry, taxon, target_indices=target_indices,
+                new_name=getattr(picker, "selected_name", "") or taxon.display_name,
             )
         except CorrectionError as exc:
             QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))

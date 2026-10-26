@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .archive_index import ArchiveEntry
+from .archiver import sanitize_species_directory
 from .errors import LibraryError
 from .library import ArchiveLibrary, now_iso
 from .metadata import write_species_metadata
@@ -25,7 +26,9 @@ class CorrectionOutcome:
     group_id: str
 
 
-def _new_species_folder(taxon: Taxon) -> str:
+def _new_species_folder(taxon: Taxon, new_name: str | None = None) -> str:
+    if new_name and new_name.strip():
+        return sanitize_species_directory(new_name.strip(), "manual")
     return taxon.name_zh or taxon.name_en or taxon.scientific_name
 
 
@@ -60,16 +63,22 @@ def correct_archive_copy(
     taxon: Taxon,
     *,
     target_indices: set[int] | None = None,
+    new_name: str | None = None,
     reason: str = "manual correction",
 ) -> CorrectionOutcome:
     output_root = library.output_root.resolve()
     old_path = (output_root / entry.relative_path).resolve()
     if not old_path.is_file():
         raise CorrectionError(f"归档副本不存在：{entry.relative_path}")
-    new_folder = _new_species_folder(taxon)
+    new_folder = _new_species_folder(taxon, new_name)
     new_path = _unique_path(output_root / new_folder / _new_filename(entry, new_folder))
     new_relative = new_path.relative_to(output_root).as_posix()
-    if entry.taxonomy is not None and entry.taxonomy.scientific_name == taxon.scientific_name:
+    current_name = entry.species_cn or entry.folder
+    if (
+        entry.taxonomy is not None
+        and entry.taxonomy.scientific_name == taxon.scientific_name
+        and new_folder == current_name
+    ):
         raise CorrectionError("新分类与当前分类相同")
 
     copy_target_indices = set(entry.target_indices)
