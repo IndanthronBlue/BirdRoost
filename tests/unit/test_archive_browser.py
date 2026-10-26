@@ -448,3 +448,21 @@ def test_chinese_prefix_search_matches(qtbot, tmp_path: Path):
 
     assert browser.grid.count() == 1
     assert browser.grid.item(0).data(0x0100) == "黑腹滨鹬/a.jpg"
+
+
+def test_search_is_global_when_tree_has_a_different_branch_selected(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "黑腹滨鹬" / "a.jpg")
+    make_image(output / "灰斑鸻" / "b.jpg")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    black = next(e for e in browser.index.entries if e.species_cn == "黑腹滨鹬")
+    browser.tree.setCurrentItem(browser._tree_items[black.tree_path])
+    assert browser.grid.count() == 1
+
+    browser.search.setText("灰斑鸻")
+    browser.search.returnPressed.emit()
+
+    assert browser.grid.count() == 1
+    assert browser.grid.item(0).data(0x0100) == "灰斑鸻/b.jpg"
+    assert "没有匹配" not in browser.status_label.text()

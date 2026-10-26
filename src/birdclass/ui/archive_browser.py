@@ -520,12 +520,14 @@ class ArchiveBrowserWindow(QMainWindow):
             self._update_grid_metrics()
 
     def _refresh_grid(self) -> None:
-        tree_path = self._selected_tree_path()
+        query = self.search.text().strip()
+        # A non-empty search is global: a species found by the completer must
+        # not be hidden by an unrelated branch that happened to be selected.
+        tree_path = self._selected_tree_path() if not query else None
         entries = self.index.filter_entries(
             tree_path=tree_path,
             batch_id=self.batch_id,
         )
-        query = self.search.text().strip()
         if query:
             entries = [entry for entry in entries if self._entry_matches(entry, query)]
         self.grid.blockSignals(True)
