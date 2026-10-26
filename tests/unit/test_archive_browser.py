@@ -898,3 +898,99 @@ def test_compare_can_pin_first_image_across_species(qtbot, tmp_path: Path):
 
     assert [entry.relative_path for entry in captured] == ["三趾滨鹬/a.jpg", "欧乌鸫/a.jpg"]
     assert browser._compare_pending is None
+
+
+def test_double_click_observation_edits_group(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = add_group(
+        library, "三趾滨鹬/a.jpg", batch_id=new_batch_id(),
+        species_cn="三趾滨鹬", species_latin="Calidris alba",
+        location="南汇", observed_at="2024",
+    )
+    group["observation"].update({"country": "中国", "region": "上海"})
+    library.write_group(group)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    entry = browser.index.entries[0]
+    browser.tree.setCurrentItem(browser._tree_items[entry.tree_path])
+    browser.grid.setCurrentRow(0)
+
+    class FakeDialog:
+        country_text = "中国"
+        region_text = "上海"
+        location_text = "世纪公园"
+        time_text = "2024-03"
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def exec(self):
+            return True
+
+    import pytest
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr("birdclass.ui.archive_browser.ObservationDialog", FakeDialog)
+    try:
+        browser.observation_label.doubleClicked.emit()
+    finally:
+        monkeypatch.undo()
+
+    updated = library.read_group(group["group_id"])
+    assert updated["observation"]["location"] == "世纪公园"
+    assert updated["observation"]["time"] == "2024-03"
+    assert updated["observation"]["country"] == "中国"
+
+
+def test_location_filter_uses_country_region_place(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    for name in ("三趾滨鹬", "欧乌鸫", "黑腹滨鹬"):
+        make_image(output / name / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    shanghai = add_group(library, "三趾滨鹬/a.jpg", batch_id=batch,
+                         species_cn="三趾滨鹬", species_latin="Calidris alba",
+                         location="南汇", observed_at="2024")
+    shanghai["observation"].update({"country": "中国", "region": "上海"})
+    library.write_group(shanghai)
+    spain = add_group(library, "欧乌鸫/a.jpg", batch_id=batch,
+                      species_cn="欧乌鸫", species_latin="Turdus merula",
+                      location="多尼亚那", observed_at="2026-05")
+    spain["observation"].update({"country": "西班牙", "region": ""})
+    library.write_group(spain)
+    other = add_group(library, "黑腹滨鹬/a.jpg", batch_id=batch,
+                      species_cn="黑腹滨鹬", species_latin="Calidris alpina",
+                      location="世纪公园", observed_at="2024")
+    other["observation"].update({"country": "中国", "region": "上海"})
+    library.write_group(other)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.tree.setCurrentItem(browser._tree_items[("动物界",)])
+
+    country_index = next(
+        row for row in range(browser.location_combo.count())
+        if browser.location_combo.itemData(row) == ("中国", "", "")
+    )
+    assert country_index > 0
+    browser.location_combo.setCurrentIndex(country_index)
+    assert browser.grid.count() == 2
+
+    region_index = next(
+        row for row in range(browser.location_combo.count())
+        if browser.location_combo.itemData(row) == ("中国", "上海", "")
+    )
+    assert region_index > 0
+    browser.location_combo.setCurrentIndex(region_index)
+    assert browser.grid.count() == 2
+
+    place_index = next(
+        row for row in range(browser.location_combo.count())
+        if browser.location_combo.itemData(row) == ("中国", "上海", "南汇")
+    )
+    assert place_index > 0
+    browser.location_combo.setCurrentIndex(place_index)
+    assert browser.grid.count() == 1
+    assert browser.grid.item(0).data(0x0100) == "三趾滨鹬/a.jpg"

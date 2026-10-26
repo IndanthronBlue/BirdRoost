@@ -24,6 +24,8 @@ class ArchiveEntry:
     target_indices: tuple[int, ...] = ()
     taxonomy: Taxon | None = None
     special: str = ""
+    observation_country: str = ""
+    observation_region: str = ""
     observation_location: str = ""
     observation_time: str = ""
     status: str = ""
@@ -122,6 +124,8 @@ class ArchiveIndex:
                     target_indices=target_indices,
                     taxonomy=taxon,
                     special=special,
+                    observation_country=str(observation.get("country", "")),
+                    observation_region=str(observation.get("region", "")),
                     observation_location=str(observation.get("location", "")),
                     observation_time=str(observation.get("time", "")),
                     status=str(group.get("status", "")),
@@ -144,6 +148,9 @@ class ArchiveIndex:
         batch_id: str | None = None,
         search: str = "",
         location: str = "",
+        country: str = "",
+        region: str = "",
+        place: str = "",
     ) -> list[ArchiveEntry]:
         needle = search.strip().casefold()
         result = []
@@ -154,6 +161,12 @@ class ArchiveIndex:
                 continue
             if location and entry.observation_location != location:
                 continue
+            if country and entry.observation_country != country:
+                continue
+            if region and entry.observation_region != region:
+                continue
+            if place and entry.observation_location != place:
+                continue
             if needle:
                 haystack = " ".join((
                     entry.species_cn, entry.species_latin, entry.latin_name,
@@ -163,6 +176,47 @@ class ArchiveIndex:
                     continue
             result.append(entry)
         return result
+
+    def location_nodes(self, batch_id: str | None = None) -> list[tuple[tuple[str, str, str], str, int]]:
+        """Return (filter tuple, display label, count) in country/region/place order."""
+        counts: dict[tuple[str, str, str], int] = {}
+        for entry in self.entries:
+            if entry.special:
+                continue
+            if batch_id is not None and entry.batch_id != batch_id:
+                continue
+            if not entry.observation_country:
+                if entry.observation_location:
+                    key = ("", "", entry.observation_location)
+                    counts[key] = counts.get(key, 0) + 1
+                continue
+            country, region, place = (
+                entry.observation_country,
+                entry.observation_region,
+                entry.observation_location,
+            )
+            keys = [(country, "", "")]
+            if region:
+                keys.append((country, region, ""))
+            if place:
+                keys.append((country, region, place))
+            for key in keys:
+                counts[key] = counts.get(key, 0) + 1
+        nodes = []
+        for (country, region, place), count in counts.items():
+            if not country:
+                if place:
+                    nodes.append(((country, region, place), place, count))
+                continue
+            if not region:
+                label = country if not place else f"  {place}"
+            elif not place:
+                label = f"  {region}" if country == "中国" else region
+            else:
+                label = f"    {place}" if country == "中国" else f"  {place}"
+            nodes.append(((country, region, place), label, count))
+        nodes.sort(key=lambda item: (item[0][0], item[0][1], item[0][2]))
+        return nodes
 
     def locations(self, batch_id: str | None = None) -> list[str]:
         cached = self.database.locations(batch_id)

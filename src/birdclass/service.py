@@ -593,6 +593,8 @@ class ClassificationService:
             "status": status,
             "source_relative_path": item.relative_path,
             "observation": {
+                "country": event.observation_country,
+                "region": event.observation_region,
                 "location": observation_location,
                 "time": observation_time,
             },
@@ -1092,6 +1094,8 @@ class ClassificationService:
             area_code=config.area_code,
             observation_location=config.observation_location,
             observation_time=config.observation_time,
+            observation_country=config.observation_country,
+            observation_region=config.observation_region,
             result_id=recognition.result_id if recognition else (previous.result_id if previous else ""),
             species_id=candidate.species_id if candidate else (previous.species_id if previous else ""),
             species_cn=candidate.name_cn if candidate else (previous.species_cn if previous else ""),
@@ -1126,6 +1130,8 @@ class ClassificationService:
             output_dir=Path("."),
             observation_location=event.observation_location,
             observation_time=event.observation_time,
+            observation_country=event.observation_country,
+            observation_region=event.observation_region,
         )
 
     @staticmethod

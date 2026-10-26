@@ -38,6 +38,8 @@ class AppConfig:
     output_dir: Path
     observation_location: str = ""
     observation_time: str = ""
+    observation_country: str = ""
+    observation_region: str = ""
     result_wait_seconds: int = 60
 
 
@@ -229,6 +231,8 @@ class HistoryEvent:
     area_code: str = ""
     observation_location: str = ""
     observation_time: str = ""
+    observation_country: str = ""
+    observation_region: str = ""
     result_id: str = ""
     species_id: str = ""
     species_cn: str = ""

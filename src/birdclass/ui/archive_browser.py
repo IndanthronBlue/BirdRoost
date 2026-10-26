@@ -57,9 +57,18 @@ from ..manual_review import (
 from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
 from .compare_dialog import CompareDialog
+from .observation_dialog import ObservationDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
 from .lightbox import LightboxDialog
 from .species_picker import SpeciesPickerDialog
+
+
+class ClickableLabel(QLabel):
+    doubleClicked = Signal()
+
+    def mouseDoubleClickEvent(self, event) -> None:
+        self.doubleClicked.emit()
+        event.accept()
 
 
 class ArchiveImageGrid(QListWidget):
@@ -363,6 +372,12 @@ class ArchiveBrowserWindow(QMainWindow):
         self.species_label = QLabel("未选择图片")
         self.species_label.setStyleSheet("font-size: 16px; font-weight: 600;")
         self.species_label.setWordWrap(True)
+        self.observation_label = ClickableLabel("")
+        self.observation_label.setWordWrap(True)
+        self.observation_label.setToolTip("双击修改观测国家、地区、地点和观测时间")
+        self.observation_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.observation_label.doubleClicked.connect(self.edit_observation)
+        info_layout.addWidget(self.observation_label)
         self.info_label = QLabel("")
         self.info_label.setWordWrap(True)
         self.info_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -530,14 +545,19 @@ class ArchiveBrowserWindow(QMainWindow):
 
     def _update_location_combo(self) -> None:
         current = self.location_combo.currentData() or ""
-        locations = self.index.locations(self.batch_id)
+        nodes = self.index.location_nodes(self.batch_id)
         self.location_combo.blockSignals(True)
         self.location_combo.clear()
-        self.location_combo.addItem("全部观测地", "")
-        for location in locations:
-            self.location_combo.addItem(location, location)
-        index = self.location_combo.findData(current)
-        self.location_combo.setCurrentIndex(max(0, index))
+        self.location_combo.addItem("全部观测地", ("", "", ""))
+        for key, label, count in nodes:
+            data = key[2] if not key[0] else key
+            self.location_combo.addItem(f"{label}  ({count})", data)
+        index = 0
+        for row in range(self.location_combo.count()):
+            if self.location_combo.itemData(row) == current:
+                index = row
+                break
+        self.location_combo.setCurrentIndex(index)
         self.location_combo.blockSignals(False)
 
     def _on_location_changed(self, _index: int) -> None:
@@ -774,6 +794,11 @@ class ArchiveBrowserWindow(QMainWindow):
         ]
         if entry.taxonomy is not None:
             fields.append(entry.taxonomy.name_en)
+        fields.extend((
+            entry.observation_country,
+            entry.observation_region,
+            entry.observation_location,
+        ))
         fields.append(str(entry.group.get("label", "")))
         if any(needle in field.casefold() for field in fields if field):
             return True
@@ -826,10 +851,17 @@ class ArchiveBrowserWindow(QMainWindow):
         # A non-empty search is global: a species found by the completer must
         # not be hidden by an unrelated branch that happened to be selected.
         tree_path = self._selected_tree_path() if not query else None
+        location_key = self.location_combo.currentData() or ("", "", "")
+        if isinstance(location_key, str):
+            country, region, place = "", "", location_key
+        else:
+            country, region, place = location_key
         entries = self.index.filter_entries(
             tree_path=tree_path,
             batch_id=self.batch_id,
-            location=self.location_combo.currentData() or "",
+            country=country,
+            region=region,
+            place=place,
         )
         if query:
             entries = [entry for entry in entries if self._entry_matches(entry, query)]
@@ -1005,11 +1037,6 @@ class ArchiveBrowserWindow(QMainWindow):
             details.append("分类层级：未匹配 taxonomy")
         if entry.group.get("label"):
             details.append(f"备注：{entry.group['label']}")
-        if entry.observation_location:
-            observed = entry.observation_location
-            if entry.observation_time:
-                observed += f" · {entry.observation_time}"
-            details.append(f"观测地：{observed}")
         if entry.batch_id:
             details.append(f"批次：{entry.batch_id}")
         if entry.group_id:
@@ -1021,6 +1048,17 @@ class ArchiveBrowserWindow(QMainWindow):
             )
         if not loaded:
             details.append("图片无法读取")
+        place = " / ".join(
+            part for part in (
+                entry.observation_country,
+                entry.observation_region,
+                entry.observation_location,
+            ) if part
+        )
+        self.observation_label.setText(
+            f"观测地：{place or '（未填写）'}\n"
+            f"观测时间：{entry.observation_time or '（未填写）'}"
+        )
         self.info_label.setText("\n".join(details))
         self._populate_targets(entry)
         self.correct_button.setVisible(bool(entry.group_id) and not entry.special)
@@ -1142,6 +1180,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self.already_classified_button.setVisible(False)
         self.non_bird_panel.setVisible(False)
         self.manual_panel.setVisible(False)
+        self.observation_label.setText("")
         self.delete_button.setEnabled(False)
         self.box_toggle.setEnabled(False)
         self.status_label.setText("就绪")
@@ -1519,6 +1558,38 @@ class ArchiveBrowserWindow(QMainWindow):
         dialog.destroyed.connect(lambda _obj=None: setattr(self, "_compare", None))
         self._compare = dialog
         dialog.showMaximized()
+
+    def edit_observation(self) -> None:
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        if entry is None or not entry.group_id:
+            QMessageBox.warning(self, "羽栖 BirdRoost", "该图片没有可修改的归档 group。")
+            return
+        observation = entry.group.get("observation") or {}
+        dialog = ObservationDialog(
+            country=entry.observation_country or str(observation.get("country", "")),
+            region=entry.observation_region or str(observation.get("region", "")),
+            location=entry.observation_location,
+            time=entry.observation_time,
+            parent=self,
+        )
+        if not dialog.exec():
+            return
+        group = self.library.read_group(entry.group_id)
+        old = dict(group.get("observation") or {})
+        old.setdefault("legacy_location", old.get("location", ""))
+        old.setdefault("legacy_time", old.get("time", ""))
+        old["country"] = dialog.country_text
+        old["region"] = dialog.region_text
+        old["location"] = dialog.location_text
+        old["time"] = dialog.time_text
+        group["observation"] = old
+        self.library.write_group(group)
+        self.status_label.setText("已修改观测信息")
+        self.refresh()
 
     def open_lightbox(self) -> None:
         entries = []

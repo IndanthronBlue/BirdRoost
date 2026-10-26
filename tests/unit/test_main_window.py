@@ -38,6 +38,8 @@ def fill_required_fields(window: MainWindow, tmp_path: Path) -> None:
     window.api_key.setText("test-key")
     window.source_dir.setText(str(tmp_path / "source"))
     window.output_dir.setText(str(tmp_path / "output"))
+    window.observation_country.setCurrentText("中国")
+    window.observation_region.setCurrentText("云南")
     window.observation_location.setText("云南大理")
     window.observation_time.setText("2026-10-24 1430")
 
@@ -50,6 +52,8 @@ def test_observation_fields_enter_config(qtbot, tmp_path):
 
     config = window._config()
 
+    assert config.observation_country == "中国"
+    assert config.observation_region == "云南"
     assert config.observation_location == "云南大理"
     assert config.observation_time == "2026-10-24 1430"
 
@@ -64,6 +68,11 @@ def test_observation_fields_are_required(qtbot, tmp_path):
     with pytest.raises(ValueError, match="请填写观测地点和观测时间"):
         window._config()
 
+    fill_required_fields(window, tmp_path)
+    window.observation_region.setCurrentText("")
+    with pytest.raises(ValueError, match="省份"):
+        window._config()
+
 
 def test_observation_fields_are_saved_and_restored(qtbot, tmp_path):
     isolated_settings(tmp_path)
@@ -76,6 +85,8 @@ def test_observation_fields_are_saved_and_restored(qtbot, tmp_path):
     second = MainWindow()
     qtbot.addWidget(second)
 
+    assert second.observation_country.currentText() == "中国"
+    assert second.observation_region.currentText() == "云南"
     assert second.observation_location.text() == "云南大理"
     assert second.observation_time.text() == "2026-10-24 1430"
 

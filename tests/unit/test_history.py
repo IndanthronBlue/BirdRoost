@@ -180,7 +180,7 @@ def test_appending_v3_migrates_v2_header_and_preserves_events(tmp_path: Path):
 
 def test_future_schema_is_rejected(tmp_path: Path):
     path = tmp_path / "birdclass_records.csv"
-    event = HistoryEvent(**{**make_event().__dict__, "schema_version": 4})
+    event = HistoryEvent(**{**make_event().__dict__, "schema_version": 5})
     CsvHistory(path).append(event)
 
     with pytest.raises(HistoryError, match="schema"):

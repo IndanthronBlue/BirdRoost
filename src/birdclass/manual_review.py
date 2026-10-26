@@ -217,9 +217,12 @@ def resolve_manual(
                 old = output / str(copy.get("relative_path", ""))
                 if old.is_file():
                     old.unlink(missing_ok=True)
+        existing_observation = group.get("observation") or {}
         group["observation"] = {
-            "location": observation_location or group.get("observation", {}).get("location", ""),
-            "time": observation_time or group.get("observation", {}).get("time", ""),
+            "country": existing_observation.get("country", ""),
+            "region": existing_observation.get("region", ""),
+            "location": observation_location or existing_observation.get("location", ""),
+            "time": observation_time or existing_observation.get("time", ""),
         }
         group["status"] = "review_pending" if remaining_unresolved else "completed"
         group["error_code"] = ""

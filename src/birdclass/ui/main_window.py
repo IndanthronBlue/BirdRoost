@@ -28,6 +28,7 @@ from ..library import ArchiveLibrary
 from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
+from .geo_fields import CHINA_REGIONS, COUNTRIES, configure_geo_combo, is_china
 from .area_search import configure_area_search, resolve_area_code
 from .review_dialog import ReviewDialog
 from .workers import ClassificationWorker, QuotaWorker
@@ -80,12 +81,21 @@ class MainWindow(QMainWindow):
         configure_area_search(self.area)
         self.area.setCurrentIndex(0)
         filter_form.addRow("国家 / 地区", self.area)
+        self.observation_country = QComboBox()
+        configure_geo_combo(self.observation_country, COUNTRIES, "输入或选择国家")
+        self.observation_region = QComboBox()
+        configure_geo_combo(self.observation_region, CHINA_REGIONS, "选择省份/直辖市")
         self.observation_location = QLineEdit()
-        self.observation_location.setPlaceholderText("例如：云南大理")
+        self.observation_location.setPlaceholderText("例如：南汇、多尼亚那")
         self.observation_time = QLineEdit()
-        self.observation_time.setPlaceholderText("例如：2026-10-24 1430")
+        self.observation_time.setPlaceholderText("例如：2026-05")
+        filter_form.addRow("观测国家", self.observation_country)
+        filter_form.addRow("省份/地区", self.observation_region)
         filter_form.addRow("观测地点", self.observation_location)
         filter_form.addRow("观测时间", self.observation_time)
+        self.observation_country.currentTextChanged.connect(self._on_country_changed)
+        self.region_row_label = filter_form.labelForField(self.observation_region)
+        self._on_country_changed(self.observation_country.currentText())
         self.low_threshold = self._threshold(80)
         self.delta_threshold = self._threshold(10)
         filter_form.addRow("低置信度阈值", self.low_threshold)
@@ -152,6 +162,7 @@ class MainWindow(QMainWindow):
 
         self._run_controls = [
             self.api_key, self.query_quota_button, self.animal_class, self.area,
+            self.observation_country, self.observation_region,
             self.observation_location, self.observation_time,
             self.low_threshold, self.delta_threshold, self.result_wait_seconds,
             self.source_dir, self.output_dir,
@@ -248,11 +259,25 @@ class MainWindow(QMainWindow):
         worker.finished.connect(worker.deleteLater)
         worker.start()
 
+    def _on_country_changed(self, text: str) -> None:
+        china = is_china(text)
+        self.observation_region.setVisible(china)
+        if self.region_row_label is not None:
+            self.region_row_label.setVisible(china)
+        if not china:
+            self.observation_region.setCurrentText("")
+
     def _config(self) -> AppConfig:
         if not self.api_key.text().strip():
             raise ValueError("请填写 API Key")
         if not self.source_dir.text().strip() or not self.output_dir.text().strip():
             raise ValueError("请填写待分类目录和分类后目录")
+        country = self.observation_country.currentText().strip()
+        region = self.observation_region.currentText().strip()
+        if not country:
+            raise ValueError("请填写观测国家")
+        if is_china(country) and not region:
+            raise ValueError("选择中国时必须填写省份/地区")
         if not self.observation_location.text().strip() or not self.observation_time.text().strip():
             raise ValueError("请填写观测地点和观测时间")
         return AppConfig(
@@ -265,6 +290,8 @@ class MainWindow(QMainWindow):
             output_dir=Path(self.output_dir.text().strip()).expanduser(),
             observation_location=self.observation_location.text().strip(),
             observation_time=self.observation_time.text().strip(),
+            observation_country=country,
+            observation_region=region if is_china(country) else "",
             result_wait_seconds=self.result_wait_seconds.value(),
         )
 
@@ -428,8 +455,11 @@ class MainWindow(QMainWindow):
         area_index = self.area.findData(self._settings.value("area_code", "WORLD"))
         self.animal_class.setCurrentIndex(max(0, class_index))
         self.area.setCurrentIndex(max(0, area_index))
+        self.observation_country.setCurrentText(str(self._settings.value("observation_country", "中国")))
+        self.observation_region.setCurrentText(str(self._settings.value("observation_region", "")))
         self.observation_location.setText(str(self._settings.value("observation_location", "")))
         self.observation_time.setText(str(self._settings.value("observation_time", "")))
+        self._on_country_changed(self.observation_country.currentText())
         self.low_threshold.setValue(float(self._settings.value("low_threshold", 80)))
         self.delta_threshold.setValue(float(self._settings.value("delta_threshold", 10)))
         self.result_wait_seconds.setValue(int(self._settings.value("result_wait_seconds", 60)))
@@ -443,6 +473,8 @@ class MainWindow(QMainWindow):
     def _save_settings(self) -> None:
         self._settings.setValue("animal_class", self.animal_class.currentData())
         self._settings.setValue("area_code", self.area.currentData())
+        self._settings.setValue("observation_country", self.observation_country.currentText().strip())
+        self._settings.setValue("observation_region", self.observation_region.currentText().strip())
         self._settings.setValue("observation_location", self.observation_location.text().strip())
         self._settings.setValue("observation_time", self.observation_time.text().strip())
         self._settings.setValue("low_threshold", self.low_threshold.value())

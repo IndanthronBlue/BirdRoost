@@ -20,8 +20,9 @@ HEADERS_V1 = [
     "error_message", "updated_at",
 ]
 HEADERS_V2 = [*HEADERS_V1, "detection_payload", "archive_payload"]
-HEADERS = [*HEADERS_V2, "observation_location", "observation_time"]
-CURRENT_SCHEMA_VERSION = 3
+HEADERS_V3 = [*HEADERS_V2, "observation_location", "observation_time"]
+HEADERS = [*HEADERS_V3, "observation_country", "observation_region"]
+CURRENT_SCHEMA_VERSION = 4
 
 
 class CsvHistory:
@@ -37,7 +38,7 @@ class CsvHistory:
         try:
             with self.path.open("r", encoding="utf-8-sig", newline="") as handle:
                 reader = csv.DictReader(handle)
-                if reader.fieldnames not in (HEADERS_V1, HEADERS_V2, HEADERS):
+                if reader.fieldnames not in (HEADERS_V1, HEADERS_V2, HEADERS_V3, HEADERS):
                     raise HistoryError("CSV 表头缺失或与当前版本不一致，请先备份并修复")
                 for line_number, row in enumerate(reader, start=2):
                     try:
@@ -93,6 +94,8 @@ class CsvHistory:
                     version = 1
                 elif reader.fieldnames == HEADERS_V2:
                     version = 2
+                elif reader.fieldnames == HEADERS_V3:
+                    version = 3
                 else:
                     return
                 old_headers = reader.fieldnames
@@ -148,6 +151,8 @@ class CsvHistory:
             "area_code": event.area_code,
             "observation_location": event.observation_location,
             "observation_time": event.observation_time,
+            "observation_country": event.observation_country,
+            "observation_region": event.observation_region,
             "result_id": event.result_id,
             "species_id": event.species_id,
             "species_cn": event.species_cn,
@@ -184,6 +189,8 @@ class CsvHistory:
             area_code=row["area_code"],
             observation_location=row.get("observation_location", ""),
             observation_time=row.get("observation_time", ""),
+            observation_country=row.get("observation_country", ""),
+            observation_region=row.get("observation_region", ""),
             result_id=row["result_id"],
             species_id=row["species_id"],
             species_cn=row["species_cn"],

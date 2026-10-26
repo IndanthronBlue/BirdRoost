@@ -16,7 +16,7 @@ class ArchiveDatabase:
     only used for fast filtering/reporting.
     """
 
-    SCHEMA_VERSION = 1
+    SCHEMA_VERSION = 2
 
     def __init__(self, output_root: Path) -> None:
         self.output_root = output_root
@@ -39,6 +39,8 @@ class ArchiveDatabase:
                     batch_id TEXT,
                     status TEXT,
                     source_relative_path TEXT,
+                    observation_country TEXT,
+                    observation_region TEXT,
                     observation_location TEXT,
                     observation_time TEXT,
                     error_code TEXT,
@@ -65,6 +67,8 @@ class ArchiveDatabase:
                     species_latin TEXT,
                     group_id TEXT,
                     batch_id TEXT,
+                    observation_country TEXT,
+                    observation_region TEXT,
                     observation_location TEXT,
                     observation_time TEXT,
                     status TEXT,
@@ -77,6 +81,18 @@ class ArchiveDatabase:
                 CREATE INDEX IF NOT EXISTS idx_entries_location ON entries(observation_location);
                 CREATE INDEX IF NOT EXISTS idx_groups_batch_status ON groups(batch_id, status);
                 """
+            )
+            for table in ("groups", "entries"):
+                columns = {
+                    row[1] for row in self._connection.execute(f"PRAGMA table_info({table})")
+                }
+                for column in ("observation_country", "observation_region"):
+                    if column not in columns:
+                        self._connection.execute(
+                            f"ALTER TABLE {table} ADD COLUMN {column} TEXT"
+                        )
+            self._connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_entries_country ON entries(observation_country)"
             )
             self._connection.execute(
                 "INSERT OR REPLACE INTO meta(key, value) VALUES('schema_version', ?)",
@@ -103,12 +119,17 @@ class ArchiveDatabase:
             for group in groups.values():
                 observation = group.get("observation") or {}
                 connection.execute(
-                    "INSERT INTO groups VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO groups(group_id, batch_id, status, source_relative_path, "
+                    "observation_country, observation_region, observation_location, "
+                    "observation_time, error_code, error_message, created_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         str(group.get("group_id", "")),
                         str(group.get("batch_id", "")),
                         str(group.get("status", "")),
                         str(group.get("source_relative_path", "")),
+                        str(observation.get("country", "")),
+                        str(observation.get("region", "")),
                         str(observation.get("location", "")),
                         str(observation.get("time", "")),
                         str(group.get("error_code", "")),
@@ -143,7 +164,10 @@ class ArchiveDatabase:
             for entry in entries:
                 observation = entry.group.get("observation") or {}
                 connection.execute(
-                    "INSERT OR REPLACE INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT OR REPLACE INTO entries(relative_path, folder, species_cn, "
+                    "species_latin, group_id, batch_id, observation_country, observation_region, "
+                    "observation_location, observation_time, status, special, error_code, "
+                    "error_message, mtime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         entry.relative_path,
                         entry.folder,
@@ -151,6 +175,8 @@ class ArchiveDatabase:
                         entry.species_latin,
                         entry.group_id,
                         entry.batch_id,
+                        entry.observation_country,
+                        entry.observation_region,
                         entry.observation_location,
                         entry.observation_time,
                         entry.status,
