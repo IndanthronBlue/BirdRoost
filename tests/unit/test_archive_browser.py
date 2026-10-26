@@ -606,3 +606,57 @@ def test_all_archive_page_has_no_confirm_button(qtbot, tmp_path: Path):
     qtbot.addWidget(browser)
 
     assert browser.confirm_button.isVisible() is False
+
+
+def test_pending_panel_manual_archive_and_delete(qtbot, tmp_path: Path, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+
+    output = tmp_path / "output"
+    pending = output / "待复核" / "bird.jpg"
+    pending.parent.mkdir(parents=True)
+    make_image(pending)
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": new_batch_id(),
+        "status": "failed",
+        "source_relative_path": "bird.jpg",
+        "targets": [],
+        "copies": [{
+            "relative_path": "待复核/bird.jpg",
+            "species_cn": "",
+            "species_latin": "",
+            "target_indices": [],
+            "pending": True,
+        }],
+    }
+    library.write_group(group)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    entry = browser.index.entries[0]
+    browser.tree.setCurrentItem(browser._tree_items[entry.tree_path])
+    browser.grid.setCurrentRow(0)
+    assert browser.manual_panel.isHidden() is False
+
+    browser.manual_name.setText("三趾滨鹬")
+    browser.manual_archive_button.click()
+    qtbot.wait(20)
+
+    assert (output / "三趾滨鹬" / "bird.jpg").is_file()
+    assert library.read_group(group["group_id"])["status"] == "completed"
+
+    # Select the new archived image, then delete it with confirmation.
+    browser.refresh()
+    new_entry = next(e for e in browser.index.entries if e.relative_path == "三趾滨鹬/bird.jpg")
+    browser.tree.setCurrentItem(browser._tree_items[new_entry.tree_path])
+    browser.grid.setCurrentRow(0)
+    monkeypatch.setattr(
+        "birdclass.ui.archive_browser.QMessageBox.question",
+        lambda *args, **kwargs: QMessageBox.StandardButton.Yes,
+    )
+    browser.delete_selected()
+
+    assert (output / "已删除").exists()
+    assert not (output / "三趾滨鹬" / "bird.jpg").exists()

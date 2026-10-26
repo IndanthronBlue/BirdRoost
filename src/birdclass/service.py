@@ -315,7 +315,7 @@ class ClassificationService:
                 )
             except (ImageValidationError, ImagePreparationError, RecognitionFailedError) as exc:
                 pending_destination = None
-                if isinstance(exc, SpeciesNotFoundError):
+                if isinstance(exc, RecognitionFailedError):
                     try:
                         pending_destination = archiver.archive_pending(item)
                     except ArchiveError as pending_exc:
@@ -349,7 +349,8 @@ class ClassificationService:
                 self._record_group(
                     library=library, batch_id=batch_id, group_id=group_id,
                     group_ids=batch_groups, item=item, event=failed_event,
-                    status="failed", geometry=geometry,
+                    status="review_pending" if pending_destination else "failed",
+                    geometry=geometry,
                     observation_location=config.observation_location,
                     observation_time=config.observation_time,
                     pending_copies=pending_copies, progress_callback=progress_callback,
@@ -365,17 +366,46 @@ class ClassificationService:
                     upload_was_compressed=upload_was_compressed, upload_bytes=upload_bytes,
                 )
                 raise
-            except ApiTransportError as exc:
+            except (ApiTransportError, ApiProtocolError) as exc:
                 detail = str(exc)
-                if result_id:
-                    detail = f"{detail}（resultid: {result_id}）"
+                if isinstance(exc, ApiTransportError):
+                    if result_id:
+                        detail = f"{detail}（resultid: {result_id}）"
+                    else:
+                        detail = f"{detail}（上传结果未知，重试可能再次消耗额度）"
+                    failure = ApiTransportError(detail)
                 else:
-                    detail = f"{detail}（上传结果未知，重试可能再次消耗额度）"
-                failure = ApiTransportError(detail)
-                self._record_failure(
+                    failure = exc
+                failed_event = self._record_failure(
                     item, config, previous_event, failure, history, summary, progress_callback,
                     result_id=result_id,
                     upload_was_compressed=upload_was_compressed, upload_bytes=upload_bytes,
+                )
+                pending_destination = None
+                try:
+                    pending_destination = archiver.archive_pending(item)
+                except ArchiveError:
+                    pending_destination = None
+                if pending_destination is not None:
+                    summary.deferred += 1
+                if geometry is None:
+                    try:
+                        geometry = ImageGeometry.from_path(
+                            item.absolute_path,
+                            upload_was_compressed=upload_was_compressed,
+                            upload_oriented=upload_was_compressed,
+                        )
+                    except OSError:
+                        geometry = None
+                self._record_group(
+                    library=library, batch_id=batch_id, group_id=group_id,
+                    group_ids=batch_groups, item=item, event=failed_event,
+                    status="review_pending" if pending_destination else "failed",
+                    geometry=geometry,
+                    observation_location=config.observation_location,
+                    observation_time=config.observation_time,
+                    pending_copies=[pending_destination] if pending_destination else [],
+                    progress_callback=progress_callback,
                 )
                 raise failure from exc
         return finish_batch()
@@ -456,6 +486,7 @@ class ClassificationService:
         history.append(failed)
         summary.failed += 1
         self._progress(progress_callback, "failed", failed_item, error=str(exc))
+        return failed
 
     def _record_group(
         self,

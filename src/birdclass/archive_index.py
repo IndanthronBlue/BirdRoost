@@ -9,7 +9,7 @@ from .library import ArchiveLibrary
 from .taxonomy import Taxonomy, Taxon, load_taxonomy
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
-SPECIAL_DIRS = ("待复核", "已纠正")
+SPECIAL_DIRS = ("待复核", "已纠正", "无鸟", "非鸟动物", "风景", "已删除")
 
 
 @dataclass

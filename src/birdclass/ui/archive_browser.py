@@ -46,6 +46,7 @@ from ..archive_index import ArchiveEntry, ArchiveIndex
 from ..correction import CorrectionError, correct_archive_copy
 from ..library import ArchiveLibrary
 from ..library_import import import_csv_to_library
+from ..manual_review import ManualReviewError, delete_archive_photo, resolve_manual
 from .batch_issues import BatchIssuesDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
 from .lightbox import LightboxDialog
@@ -211,6 +212,11 @@ class ArchiveBrowserWindow(QMainWindow):
         self.copy_path_button = QPushButton("复制路径")
         self.copy_path_button.clicked.connect(self.copy_path)
         toolbar.addWidget(self.copy_path_button)
+        self.delete_button = QPushButton("删除照片")
+        self.delete_button.setToolTip("把当前归档副本移到 已删除/")
+        self.delete_button.setEnabled(False)
+        self.delete_button.clicked.connect(self.delete_selected)
+        toolbar.addWidget(self.delete_button)
         self.lightbox_button = QPushButton("全屏")
         self.lightbox_button.clicked.connect(self.open_lightbox)
         toolbar.addWidget(self.lightbox_button)
@@ -336,6 +342,37 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.setVisible(False)
         self.correct_button.clicked.connect(self.correct_selected)
         info_layout.addWidget(self.correct_button)
+
+        self.manual_panel = QWidget()
+        manual_layout = QVBoxLayout(self.manual_panel)
+        manual_layout.setContentsMargins(0, 8, 0, 0)
+        manual_layout.addWidget(QLabel("人工复核"))
+        name_row = QHBoxLayout()
+        self.manual_name = QLineEdit()
+        self.manual_name.setPlaceholderText("人工填写鸟种中文名")
+        self.manual_name.setClearButtonEnabled(True)
+        self.manual_name.textChanged.connect(
+            lambda text: self.manual_archive_button.setEnabled(bool(text.strip()))
+        )
+        name_row.addWidget(self.manual_name, 1)
+        self.manual_archive_button = QPushButton("人工归档")
+        self.manual_archive_button.setEnabled(False)
+        self.manual_archive_button.clicked.connect(self.manual_archive_selected)
+        name_row.addWidget(self.manual_archive_button)
+        manual_layout.addLayout(name_row)
+        action_row = QHBoxLayout()
+        for label, action in (
+            ("无鸟", "no_bird"),
+            ("非鸟动物", "non_bird_animal"),
+            ("风景", "scenery"),
+            ("稍后处理", "defer"),
+        ):
+            button = QPushButton(label)
+            button.clicked.connect(lambda _checked=False, value=action: self.resolve_pending(value))
+            action_row.addWidget(button)
+        manual_layout.addLayout(action_row)
+        self.manual_panel.setVisible(False)
+        info_layout.addWidget(self.manual_panel)
         info_scroll = QScrollArea()
         info_scroll.setWidgetResizable(True)
         info_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
@@ -797,6 +834,18 @@ class ArchiveBrowserWindow(QMainWindow):
         self._populate_targets(entry)
         self.correct_button.setVisible(bool(entry.group_id) and not entry.special)
         self.correct_button.setEnabled(bool(entry.group_id) and not entry.special)
+        self.delete_button.setEnabled(True)
+        is_pending = (
+            bool(entry.group_id)
+            and (entry.status in {"failed", "review_pending"} or entry.special == "待复核")
+            and any(
+                copy.get("pending")
+                or str(copy.get("relative_path", "")).startswith("待复核/")
+                for copy in entry.group.get("copies", [])
+            )
+        )
+        self.manual_panel.setVisible(is_pending)
+        self.manual_name.clear()
         self.status_label.setText(f"{entry.relative_path} · {len(self._entry_boxes(entry))} 个框")
 
     def _target_species(self, entry: ArchiveEntry, target: dict) -> str:
@@ -873,6 +922,8 @@ class ArchiveBrowserWindow(QMainWindow):
         self.target_list.setVisible(False)
         self.target_label.setVisible(False)
         self.correct_button.setVisible(False)
+        self.manual_panel.setVisible(False)
+        self.delete_button.setEnabled(False)
         self.box_toggle.setEnabled(False)
         self.status_label.setText("就绪")
 
@@ -948,6 +999,74 @@ class ArchiveBrowserWindow(QMainWindow):
             self.status_label.setText("该图片没有检测框数据")
             return
         self.status_label.setText("已显示检测框" if checked else "已隐藏检测框")
+
+    def manual_archive_selected(self) -> None:
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        name = self.manual_name.text().strip()
+        if entry is None or not name:
+            return
+        try:
+            new_relative = resolve_manual(self.library, entry, action="manual", name=name)
+        except ManualReviewError as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
+            return
+        self._selected_entry_path = new_relative
+        self.status_label.setText(f"已人工归档：{name}")
+        self.refresh()
+
+    def resolve_pending(self, action: str) -> None:
+        if action == "defer":
+            self.status_label.setText("已保留在待复核")
+            return
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        if entry is None:
+            return
+        labels = {
+            "no_bird": "无鸟",
+            "non_bird_animal": "非鸟动物",
+            "scenery": "风景",
+        }
+        try:
+            resolve_manual(self.library, entry, action=action)
+        except ManualReviewError as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
+            return
+        self._selected_entry_path = ""
+        self.status_label.setText(f"已移到{labels.get(action, action)}")
+        self.refresh()
+
+    def delete_selected(self) -> None:
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        if entry is None:
+            return
+        answer = QMessageBox.question(
+            self,
+            "删除照片",
+            f"将「{entry.relative_path}」移到「已删除/」？\n"
+            "文件不会立即永久删除，之后可从「已删除」节点查看或清理。",
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            new_relative = delete_archive_photo(self.library, entry)
+        except ManualReviewError as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
+            return
+        self._selected_entry_path = ""
+        self.status_label.setText(f"已移入已删除：{new_relative}")
+        self.refresh()
 
     def open_lightbox(self) -> None:
         entries = []
