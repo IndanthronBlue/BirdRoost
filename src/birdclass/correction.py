@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .archive_index import ArchiveEntry
 from .archiver import sanitize_species_directory
+from .manual_review import cleanup_resolved_pending
 from .errors import LibraryError
 from .library import ArchiveLibrary, now_iso
 from .metadata import write_species_metadata
@@ -143,6 +144,7 @@ def correct_archive_copy(
                 selection["selection_mode"] = "manual"
                 target["selection"] = selection
             library.write_group(group)
+            cleanup_resolved_pending(library, group["group_id"])
 
         library.append_correction({
             "corrected_at": now_iso(),

@@ -223,3 +223,53 @@ def migrate_pending_copies(
         "imported_from_csv": "pending migration",
     })
     return result
+
+
+def merge_duplicate_source_groups(output_root: Path) -> int:
+    """Collapse groups that represent the same source image; keep richest."""
+    library = ArchiveLibrary(output_root)
+    groups = library.load_groups()
+    by_source = {}
+    for group in groups:
+        source = str(group.get("source_relative_path", ""))
+        if not source:
+            continue
+        by_source.setdefault(source, []).append(group)
+    removed = 0
+    for source, group_list in by_source.items():
+        if len(group_list) < 2:
+            continue
+        primary = max(
+            group_list,
+            key=lambda group: (
+                len(group.get("targets", [])),
+                len(group.get("copies", [])),
+            ),
+        )
+        copies = primary.setdefault("copies", [])
+        known = {str(copy.get("relative_path", "")) for copy in copies}
+        targets = primary.setdefault("targets", [])
+        target_indices = {int(target.get("target_index", -1)) for target in targets}
+        for duplicate in group_list:
+            if duplicate is primary:
+                continue
+            for copy in duplicate.get("copies", []):
+                path = str(copy.get("relative_path", ""))
+                if path not in known:
+                    copies.append(copy)
+                    known.add(path)
+            for target in duplicate.get("targets", []):
+                index = int(target.get("target_index", -1))
+                if index not in target_indices:
+                    targets.append(target)
+                    target_indices.add(index)
+            if duplicate.get("status") == "review_pending":
+                primary["status"] = "review_pending"
+            try:
+                (library.groups_dir / f"{duplicate['group_id']}.json").unlink()
+                removed += 1
+            except OSError:
+                pass
+        targets.sort(key=lambda target: int(target.get("target_index", 0)))
+        library.write_group(primary)
+    return removed

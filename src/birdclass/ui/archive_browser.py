@@ -49,6 +49,7 @@ from ..library import ArchiveLibrary
 from ..library_import import import_csv_to_library
 from ..manual_review import (
     ManualReviewError,
+    apply_species_to_all_targets,
     delete_archive_photo,
     mark_already_classified,
     resolve_manual,
@@ -355,6 +356,10 @@ class ArchiveBrowserWindow(QMainWindow):
         self.alias_button.setVisible(False)
         self.alias_button.clicked.connect(self.add_alias_for_entry)
         info_layout.addWidget(self.alias_button)
+        self.apply_all_button = QPushButton("同图全部标为当前物种")
+        self.apply_all_button.setVisible(False)
+        self.apply_all_button.clicked.connect(self.apply_all_targets)
+        info_layout.addWidget(self.apply_all_button)
 
         self.manual_panel = QWidget()
         manual_layout = QVBoxLayout(self.manual_panel)
@@ -971,6 +976,14 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.setEnabled(bool(entry.group_id) and not entry.special)
         self.alias_button.setVisible(entry.taxonomy is not None)
         self.alias_button.setEnabled(entry.taxonomy is not None)
+        unresolved = [
+            target for target in entry.group.get("targets", [])
+            if not (target.get("selection") or {}).get("species_cn")
+        ]
+        self.apply_all_button.setVisible(bool(unresolved) and bool(entry.species_cn))
+        self.apply_all_button.setText(
+            f"同图全部标为「{entry.species_cn}」" if entry.species_cn else "同图全部标为当前物种"
+        )
         self.delete_button.setEnabled(True)
         pending_copies = [
             copy for copy in entry.group.get("copies", [])
@@ -1064,6 +1077,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self.target_label.setVisible(False)
         self.correct_button.setVisible(False)
         self.alias_button.setVisible(False)
+        self.apply_all_button.setVisible(False)
         self.manual_panel.setVisible(False)
         self.delete_button.setEnabled(False)
         self.box_toggle.setEnabled(False)
@@ -1186,6 +1200,30 @@ class ArchiveBrowserWindow(QMainWindow):
         self._update_search_suggestions()
         self._refresh_grid()
         self.status_label.setText(f"已添加别名：{dialog.alias}")
+
+    def apply_all_targets(self) -> None:
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        if entry is None or not entry.species_cn:
+            return
+        answer = QMessageBox.question(
+            self,
+            "同图全部目标",
+            f"将本图所有未确认目标都标为「{entry.species_cn}」？\n"
+            "待复核副本会从「待复核」移除。",
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            count = apply_species_to_all_targets(self.library, entry)
+        except ManualReviewError as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
+            return
+        self.status_label.setText(f"已将 {count} 个目标标为 {entry.species_cn}")
+        self.refresh()
 
     def manual_archive_selected(self) -> None:
         entry = next(

@@ -301,3 +301,79 @@ def mark_already_classified(library: ArchiveLibrary, entry: ArchiveEntry) -> Non
         "action": "already_classified",
         "old_relative_paths": [copy.get("relative_path", "") for copy in pending],
     })
+
+
+def _remove_pending_files(output_root: Path, group: dict) -> list[dict]:
+    pending = _pending_copies(group)
+    for copy in pending:
+        old = output_root / str(copy.get("relative_path", ""))
+        if old.is_file():
+            old.unlink(missing_ok=True)
+    group["copies"] = [copy for copy in group.get("copies", []) if copy not in pending]
+    return pending
+
+
+def apply_species_to_all_targets(library: ArchiveLibrary, entry: ArchiveEntry) -> int:
+    """Mark every unresolved target in the group as this copy's species."""
+    if not entry.group_id or not entry.species_cn:
+        raise ManualReviewError("当前副本没有可用的物种名")
+    group = library.read_group(entry.group_id)
+    targets = group.get("targets", [])
+    if not targets:
+        raise ManualReviewError("该 group 没有目标")
+    scientific = entry.species_latin
+    for target in targets:
+        selection = dict(target.get("selection") or {})
+        selection["species_cn"] = entry.species_cn
+        selection["species_latin"] = scientific
+        selection["selection_mode"] = "manual"
+        selection["review_reason"] = "manual_review"
+        target["selection"] = selection
+    copy = next(
+        (value for value in group.get("copies", [])
+         if value.get("species_cn") == entry.species_cn and not value.get("pending")),
+        None,
+    )
+    if copy is not None:
+        copy["target_indices"] = [
+            int(target.get("target_index", 0)) for target in targets
+        ]
+    pending = _remove_pending_files(library.output_root.resolve(), group)
+    group["status"] = "completed" if group.get("copies") else entry.status
+    group["error_code"] = ""
+    group["error_message"] = ""
+    library.write_group(group)
+    library.append_correction({
+        "corrected_at": now_iso(),
+        "group_id": entry.group_id,
+        "action": "apply_species_to_all_targets",
+        "new_species_cn": entry.species_cn,
+        "old_relative_paths": [c.get("relative_path", "") for c in pending],
+    })
+    return len(targets)
+
+
+def cleanup_resolved_pending(library: ArchiveLibrary, group_id: str) -> bool:
+    """Remove 待复核 copies once every target has a species selection."""
+    try:
+        group = library.read_group(group_id)
+    except Exception:
+        return False
+    targets = group.get("targets", [])
+    if not targets or any(
+        not (target.get("selection") or {}).get("species_cn") for target in targets
+    ):
+        return False
+    pending = _pending_copies(group)
+    changed = False
+    if pending:
+        _remove_pending_files(library.output_root.resolve(), group)
+        changed = True
+    if group.get("status") in {"failed", "review_pending"}:
+        group["status"] = "completed" if group.get("copies") else "completed"
+        group["error_code"] = ""
+        group["error_message"] = ""
+        changed = True
+    if changed:
+        library.write_group(group)
+    return changed

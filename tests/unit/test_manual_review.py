@@ -5,7 +5,9 @@ from PIL import Image
 
 from birdclass.archive_index import ArchiveIndex
 from birdclass.library import ArchiveLibrary, new_batch_id, new_group_id
-from birdclass.manual_review import delete_archive_photo, resolve_manual
+from birdclass.manual_review import (
+    apply_species_to_all_targets, delete_archive_photo, resolve_manual,
+)
 
 
 def make_pending_group(tmp_path: Path, status: str = "failed") -> tuple[ArchiveLibrary, object, dict]:
@@ -78,3 +80,42 @@ def test_delete_photo_moves_to_deleted_and_updates_group(tmp_path: Path):
     updated = library.read_group(group["group_id"])
     assert updated["status"] == "deleted"
     assert updated["copies"] == []
+
+
+def test_apply_species_to_all_targets_removes_pending(tmp_path: Path):
+    output = tmp_path / "output"
+    species_copy = output / "弯嘴滨鹬" / "a.jpg"
+    pending_copy = output / "待复核" / "a.jpg"
+    species_copy.parent.mkdir(parents=True)
+    pending_copy.parent.mkdir(parents=True)
+    Image.new("RGB", (40, 30), "green").save(species_copy)
+    Image.new("RGB", (40, 30), "green").save(pending_copy)
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": new_batch_id(),
+        "status": "review_pending",
+        "source_relative_path": "a.jpg",
+        "targets": [
+            {"target_index": 0, "selection": {"species_cn": "弯嘴滨鹬"}},
+            {"target_index": 1, "selection": None},
+            {"target_index": 2, "selection": None},
+        ],
+        "copies": [
+            {"relative_path": "弯嘴滨鹬/a.jpg", "species_cn": "弯嘴滨鹬", "target_indices": [0]},
+            {"relative_path": "待复核/a.jpg", "species_cn": "", "target_indices": [], "pending": True},
+        ],
+    }
+    library.write_group(group)
+    entry = next(e for e in ArchiveIndex(output).refresh() if e.relative_path == "弯嘴滨鹬/a.jpg")
+
+    count = apply_species_to_all_targets(library, entry)
+
+    assert count == 3
+    updated = library.read_group(group["group_id"])
+    assert updated["status"] == "completed"
+    assert all(target["selection"]["species_cn"] == "弯嘴滨鹬" for target in updated["targets"])
+    assert not pending_copy.exists()
+    assert all(not copy.get("pending") for copy in updated["copies"])
