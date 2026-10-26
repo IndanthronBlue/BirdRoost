@@ -92,15 +92,22 @@ def _copy_records(event, destinations: list[str], output_root: Path) -> list[dic
     return records
 
 
-def _target_records(event, geometry: ImageGeometry) -> list[dict]:
+def _target_records(
+    event, geometry: ImageGeometry, copies: list[dict]
+) -> list[dict]:
     if not event.detection_payload:
         return []
     try:
         payload = _json_value(event.detection_payload)
     except (ValueError, TypeError):
         return []
+    copy_by_target: dict[int, dict] = {}
+    for copy in copies:
+        for target_index in copy.get("target_indices", []):
+            copy_by_target[int(target_index)] = copy
     records: list[dict] = []
     for target in payload.get("targets", []):
+        index = int(target.get("target_index", len(records)))
         raw_box = target.get("box")
         box = None
         if raw_box is not None:
@@ -109,12 +116,22 @@ def _target_records(event, geometry: ImageGeometry) -> list[dict]:
                 orientation=geometry.exif_orientation,
                 upload_oriented=geometry.upload_oriented,
             )
+        selection = target.get("selection")
+        if not selection or not selection.get("species_cn"):
+            copy = copy_by_target.get(index)
+            if copy is not None:
+                selection = {
+                    **(selection or {}),
+                    "species_cn": copy.get("species_cn", ""),
+                    "species_latin": copy.get("species_latin", ""),
+                    "selection_mode": "imported",
+                }
         records.append({
-            "target_index": int(target.get("target_index", len(records))),
+            "target_index": index,
             "box": list(box) if box is not None else None,
             "box_upload": list(raw_box) if raw_box is not None else None,
             "candidates": target.get("candidates", []),
-            "selection": target.get("selection"),
+            "selection": selection,
         })
     return records
 
@@ -170,7 +187,7 @@ def import_csv_to_library(csv_path: Path, output_root: Path) -> ImportResult:
                     "time": event.observation_time,
                 },
                 "image": geometry.to_dict(),
-                "targets": _target_records(event, geometry),
+                "targets": _target_records(event, geometry, copies),
                 "copies": copies,
                 "result_id": event.result_id,
                 "imported_from_csv": csv_path.name,

@@ -194,6 +194,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self.target_list = QListWidget()
         self.target_list.setMaximumHeight(110)
         self.target_list.setVisible(False)
+        self.target_list.currentItemChanged.connect(self._on_target_changed)
         detail_layout.addWidget(self.target_list)
         self.correct_button = QPushButton("修改分类…")
         self.correct_button.setVisible(False)
@@ -381,7 +382,9 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = entry.relative_path
         self._show_entry(entry)
 
-    def _entry_boxes(self, entry: ArchiveEntry) -> list[CanvasBox]:
+    def _entry_boxes(
+        self, entry: ArchiveEntry, selected: int | None = None
+    ) -> list[CanvasBox]:
         boxes: list[CanvasBox] = []
         highlight = set(entry.target_indices)
         for target in entry.group.get("targets", []):
@@ -389,7 +392,10 @@ class ArchiveBrowserWindow(QMainWindow):
             if not box:
                 continue
             index = int(target.get("target_index", len(boxes)))
-            highlighted = index in highlight if highlight else True
+            if selected is not None:
+                highlighted = index == selected
+            else:
+                highlighted = index in highlight if highlight else True
             boxes.append(CanvasBox(
                 box=tuple(float(value) for value in box),
                 label=str(index + 1),
@@ -411,6 +417,10 @@ class ArchiveBrowserWindow(QMainWindow):
         if entry.group_id:
             details.append(f"group：{entry.group_id}")
         details.append(f"检测框：{len(self._entry_boxes(entry))}")
+        if entry.group.get("targets"):
+            details.append(
+                f"同图目标：{len(entry.group['targets'])} · 本副本：{len(entry.target_indices)}"
+            )
         if not loaded:
             details.append("图片无法读取")
         self.info_label.setText("\n".join(details))
@@ -419,13 +429,25 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.setEnabled(bool(entry.group_id) and not entry.special)
         self.status_label.setText(f"{entry.relative_path} · {len(self._entry_boxes(entry))} 个框")
 
+    def _target_species(self, entry: ArchiveEntry, target: dict) -> str:
+        selection = target.get("selection") or {}
+        name = selection.get("species_cn") or ""
+        if name:
+            return name
+        index = int(target.get("target_index", -1))
+        for copy in entry.group.get("copies", []):
+            if index in copy.get("target_indices", []):
+                return str(copy.get("species_cn") or "")
+        return entry.species_cn
+
     def _populate_targets(self, entry: ArchiveEntry) -> None:
         self.target_list.blockSignals(True)
         self.target_list.clear()
+        selected_indices = set(entry.target_indices)
         for target in entry.group.get("targets", []):
-            selection = target.get("selection") or {}
             index = int(target.get("target_index", 0))
-            name = selection.get("species_cn") or entry.species_cn
+            selection = target.get("selection") or {}
+            name = self._target_species(entry, target)
             confidence = selection.get("confidence_percent")
             text = f"目标 {index + 1} · {name}"
             if confidence:
@@ -433,7 +455,7 @@ class ArchiveBrowserWindow(QMainWindow):
             item = QListWidgetItem(text)
             item.setData(Qt.ItemDataRole.UserRole, index)
             self.target_list.addItem(item)
-            if index in entry.target_indices:
+            if index in selected_indices:
                 self.target_list.setCurrentItem(item)
         if self.target_list.currentItem() is None and self.target_list.count():
             self.target_list.setCurrentRow(0)
@@ -441,6 +463,7 @@ class ArchiveBrowserWindow(QMainWindow):
         visible = self.target_list.count() > 0
         self.target_label.setVisible(visible)
         self.target_list.setVisible(visible)
+        self._apply_target_highlight(entry)
 
     def _selected_target_index(self) -> int | None:
         item = self.target_list.currentItem()
@@ -448,6 +471,28 @@ class ArchiveBrowserWindow(QMainWindow):
             return None
         value = item.data(Qt.ItemDataRole.UserRole)
         return int(value) if value is not None else None
+
+    def _on_target_changed(self, _current, _previous=None) -> None:
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        if entry is None:
+            return
+        self._apply_target_highlight(entry)
+        selected = self._selected_target_index()
+        if selected is not None and selected not in entry.target_indices and not self.batch_id:
+            self.correct_button.setEnabled(False)
+            self.correct_button.setToolTip("该目标属于同图的其他物种副本，请切换到对应副本再修改")
+        else:
+            self.correct_button.setEnabled(bool(entry.group_id) and not entry.special)
+            self.correct_button.setToolTip("")
+
+    def _apply_target_highlight(self, entry: ArchiveEntry) -> None:
+        selected = self._selected_target_index()
+        self.canvas.set_boxes(self._entry_boxes(entry, selected=selected))
+        self.canvas.set_show_boxes(self.box_toggle.isChecked())
 
     def _clear_detail(self) -> None:
         self._selected_entry_path = ""
@@ -537,6 +582,22 @@ class ArchiveBrowserWindow(QMainWindow):
             if target_index is None:
                 QMessageBox.warning(self, "羽栖 BirdRoost", "请先在目标列表中选择一个目标。")
                 return
+            owner = next(
+                (copy for copy in entry.group.get("copies", [])
+                 if target_index in copy.get("target_indices", [])),
+                None,
+            )
+            owner_path = str((owner or {}).get("relative_path", ""))
+            if owner_path and owner_path != entry.relative_path:
+                owner_entry = next(
+                    (value for value in self.index.entries
+                     if value.relative_path == owner_path),
+                    None,
+                )
+                if owner_entry is None:
+                    QMessageBox.warning(self, "羽栖 BirdRoost", "该目标对应的归档副本不存在。")
+                    return
+                entry = owner_entry
             target_indices = {target_index}
         answer = QMessageBox.question(
             self,

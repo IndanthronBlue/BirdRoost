@@ -343,3 +343,53 @@ def test_tree_language_toggle_and_draggable_splitter(qtbot, tmp_path: Path):
     assert browser.splitter.handleWidth() >= 8
     assert browser.splitter.childrenCollapsible() is False
     assert settings.value("archive_tree_language") == "latin"
+
+
+def test_target_list_shows_all_group_species_and_switches_box_highlight(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "小滨鹬" / "small.jpg")
+    make_image(output / "金眶鸻" / "gold.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": batch,
+        "status": "completed",
+        "targets": [
+            {"target_index": 0, "box": [0.1, 0.1, 0.3, 0.3], "selection": {"species_cn": "金眶鸻"}},
+            {"target_index": 1, "box": [0.4, 0.4, 0.6, 0.6], "selection": {"species_cn": "小滨鹬"}},
+            {"target_index": 2, "box": [0.7, 0.1, 0.9, 0.3], "selection": {"species_cn": "金眶鸻"}},
+        ],
+        "copies": [
+            {"relative_path": "小滨鹬/small.jpg", "species_cn": "小滨鹬", "target_indices": [1]},
+            {"relative_path": "金眶鸻/gold.jpg", "species_cn": "金眶鸻", "target_indices": [0, 2]},
+        ],
+    }
+    library.write_group(group)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    entry = next(e for e in browser.index.entries if e.relative_path == "小滨鹬/small.jpg")
+    browser.tree.setCurrentItem(browser._tree_items[entry.tree_path])
+    for row in range(browser.grid.count()):
+        item = browser.grid.item(row)
+        if item.data(0x0100) == entry.relative_path:
+            browser.grid.setCurrentItem(item)
+            break
+
+    assert [browser.target_list.item(i).text() for i in range(browser.target_list.count())] == [
+        "目标 1 · 金眶鸻",
+        "目标 2 · 小滨鹬",
+        "目标 3 · 金眶鸻",
+    ]
+    assert [(box.label, box.highlighted) for box in browser.canvas._boxes] == [
+        ("1", False), ("2", True), ("3", False)
+    ]
+
+    browser.target_list.setCurrentRow(0)
+
+    assert [(box.label, box.highlighted) for box in browser.canvas._boxes] == [
+        ("1", True), ("2", False), ("3", False)
+    ]
+    assert browser.correct_button.isEnabled() is False
