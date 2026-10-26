@@ -18,7 +18,7 @@ from .image_canvas import ZoomableImageCanvas
 class CompareDialog(QDialog):
     """Two independently zoomable archived images."""
 
-    def __init__(self, entries: list[ArchiveEntry], boxes_provider=None, parent=None) -> None:
+    def __init__(self, entries: list[ArchiveEntry], parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle("羽栖 BirdRoost · 图片比较")
         self.resize(1400, 850)
@@ -43,9 +43,8 @@ class CompareDialog(QDialog):
                 button.clicked.connect(getattr(canvas, slot_name))
                 row.addWidget(button)
             panel_layout.addLayout(row)
-            boxes = boxes_provider(entry) if boxes_provider else []
-            canvas.load_image(entry.absolute_path, boxes=boxes)
-            canvas.set_show_boxes(bool(boxes))
+            canvas.load_image(entry.absolute_path, boxes=[])
+            canvas.set_show_boxes(False)
             panel_layout.addWidget(canvas, 1)
             splitter.addWidget(panel)
         layout.addWidget(splitter, 1)

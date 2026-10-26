@@ -1514,9 +1514,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._compare_entries(pair)
 
     def _compare_entries(self, entries: list[ArchiveEntry]) -> None:
-        dialog = CompareDialog(
-            entries, boxes_provider=lambda entry: self._entry_boxes(entry), parent=self
-        )
+        dialog = CompareDialog(entries, parent=self)
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         dialog.destroyed.connect(lambda _obj=None: setattr(self, "_compare", None))
         self._compare = dialog
