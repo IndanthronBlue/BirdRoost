@@ -26,10 +26,12 @@ class LightboxDialog(QDialog):
         start_index: int,
         *,
         boxes_provider=None,
+        show_boxes: bool = True,
         parent=None,
     ) -> None:
         super().__init__(parent)
         self.entries = entries
+        self.show_boxes = bool(show_boxes)
         self.index = max(0, min(start_index, len(entries) - 1)) if entries else 0
         self._boxes_provider = boxes_provider
         self.setWindowTitle("羽栖 BirdRoost · 全屏预览")
@@ -56,6 +58,11 @@ class LightboxDialog(QDialog):
         self.copy_boxes_button = QPushButton("复制带框图")
         self.copy_boxes_button.clicked.connect(lambda: self.copy(True))
         controls.addWidget(self.copy_boxes_button)
+        self.box_toggle = QPushButton("显示检测框")
+        self.box_toggle.setCheckable(True)
+        self.box_toggle.setChecked(self.show_boxes)
+        self.box_toggle.toggled.connect(self._set_show_boxes)
+        controls.addWidget(self.box_toggle)
         self.fit_button = QPushButton("适应")
         self.fit_button.clicked.connect(self.canvas.fit_to_window)
         controls.addWidget(self.fit_button)
@@ -72,12 +79,16 @@ class LightboxDialog(QDialog):
         entry = self.entries[self.index]
         boxes = self._boxes_provider(entry) if self._boxes_provider else []
         self.canvas.load_image(entry.absolute_path, boxes=boxes)
-        self.canvas.set_show_boxes(bool(boxes))
+        self.canvas.set_show_boxes(bool(boxes) and self.show_boxes)
         self.caption.setText(
             f"{entry.display_name} · {self.index + 1}/{len(self.entries)}\n{entry.relative_path}"
         )
         self.prev_button.setEnabled(self.index > 0)
         self.next_button.setEnabled(self.index < len(self.entries) - 1)
+
+    def _set_show_boxes(self, visible: bool) -> None:
+        self.show_boxes = bool(visible)
+        self.canvas.set_show_boxes(self.show_boxes and self.canvas.has_boxes())
 
     def previous(self) -> None:
         if self.index > 0:
@@ -109,6 +120,10 @@ class LightboxDialog(QDialog):
             return
         if event.key() == Qt.Key.Key_Escape:
             self.accept()
+            return
+        if event.key() == Qt.Key.Key_B:
+            self.box_toggle.toggle()
+            event.accept()
             return
         if event.key() == Qt.Key.Key_F:
             if self.isFullScreen():

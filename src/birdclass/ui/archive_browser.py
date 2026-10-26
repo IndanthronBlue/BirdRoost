@@ -1538,6 +1538,7 @@ class ArchiveBrowserWindow(QMainWindow):
         dialog = LightboxDialog(
             entries, max(0, current),
             boxes_provider=lambda entry: self._entry_boxes(entry),
+            show_boxes=self.box_toggle.isChecked(),
             parent=self,
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
