@@ -648,6 +648,33 @@ class ArchiveBrowserWindow(QMainWindow):
             self._initialized = True
             self.tree.expandToDepth(1)
         self.tree.sortItems(0, Qt.SortOrder.AscendingOrder)
+        self._prune_duplicate_tree_items()
+
+    def _prune_duplicate_tree_items(self) -> None:
+        """Remove stale items left behind by a previous tree rebuild."""
+        seen: set[tuple[str, ...]] = set()
+
+        def prune(item: QTreeWidgetItem) -> bool:
+            data = item.data(0, Qt.ItemDataRole.UserRole)
+            path = tuple(data) if data else ()
+            if (
+                not path
+                or path in seen
+                or path not in self._tree_items
+                or self._tree_items[path] is not item
+            ):
+                return False
+            seen.add(path)
+            for index in range(item.childCount() - 1, -1, -1):
+                child = item.child(index)
+                if not prune(child):
+                    item.takeChild(index)
+            return True
+
+        for index in range(self.tree.topLevelItemCount() - 1, -1, -1):
+            item = self.tree.topLevelItem(index)
+            if not prune(item):
+                self.tree.takeTopLevelItem(index)
 
     def _collect_labels(self, entry: ArchiveEntry, labels: dict[tuple[str, ...], str]) -> None:
         path = entry.tree_path
