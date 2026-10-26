@@ -872,6 +872,8 @@ class ArchiveBrowserWindow(QMainWindow):
                     details.append(f"{rank}：{chinese} · {latin}")
                 else:
                     details.append(f"{rank}：{chinese or latin}")
+            if taxon.name_en:
+                details.append(f"英文名：{taxon.name_en}")
         else:
             details.append("分类层级：未匹配 taxonomy")
         if entry.observation_location:

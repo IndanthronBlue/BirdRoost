@@ -578,6 +578,7 @@ def test_detail_shows_order_family_genus_species(qtbot, tmp_path: Path):
     assert "科：鹬科 · Scolopacidae" in info
     assert "属：滨鹬属 · Calidris" in info
     assert "种：三趾滨鹬 · Calidris alba" in info
+    assert "英文名：Sanderling" in info
 
 
 def test_batch_page_confirm_button_closes_window(qtbot, tmp_path: Path):
