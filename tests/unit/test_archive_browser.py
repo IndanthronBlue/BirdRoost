@@ -516,12 +516,11 @@ def test_location_filter_and_sorting(qtbot, tmp_path: Path):
     browser = ArchiveBrowserWindow(output)
     qtbot.addWidget(browser)
 
-    assert browser.location_combo.findData("云南大理") > 0
-    browser.location_combo.setCurrentIndex(browser.location_combo.findData("云南大理"))
+    browser.location_combo.setCurrentData(("", "", "云南大理"))
     assert browser.grid.count() == 1
     assert browser.grid.item(0).data(0x0100) == "三趾滨鹬/a.jpg"
 
-    browser.location_combo.setCurrentIndex(0)
+    browser.location_combo.setCurrentData(("", "", ""))
     browser.sort_combo.setCurrentIndex(browser.sort_combo.findData("species"))
     paths = [browser.grid.item(i).data(0x0100) for i in range(browser.grid.count())]
     assert paths == sorted(paths, key=lambda value: value.split("/", 1)[0].casefold())
@@ -971,30 +970,15 @@ def test_location_filter_uses_country_region_place(qtbot, tmp_path: Path):
     qtbot.addWidget(browser)
     browser.tree.setCurrentItem(browser._tree_items[("动物界",)])
 
-    country_index = next(
-        row for row in range(browser.location_combo.count())
-        if browser.location_combo.itemData(row) == ("中国", "", "")
-    )
-    assert country_index > 0
-    browser.location_combo.setCurrentIndex(country_index)
+    browser.location_combo.setCurrentData(("中国", "", ""))
     assert browser.grid.count() == 2
     assert not any(path[-1] == "Turdus merula" for path in browser._tree_items)
     assert any(path[-1] == "Calidris alba" for path in browser._tree_items)
 
-    region_index = next(
-        row for row in range(browser.location_combo.count())
-        if browser.location_combo.itemData(row) == ("中国", "上海", "")
-    )
-    assert region_index > 0
-    browser.location_combo.setCurrentIndex(region_index)
+    browser.location_combo.setCurrentData(("中国", "上海", ""))
     assert browser.grid.count() == 2
 
-    place_index = next(
-        row for row in range(browser.location_combo.count())
-        if browser.location_combo.itemData(row) == ("中国", "上海", "南汇")
-    )
-    assert place_index > 0
-    browser.location_combo.setCurrentIndex(place_index)
+    browser.location_combo.setCurrentData(("中国", "上海", "南汇"))
     assert browser.grid.count() == 1
     assert browser.grid.item(0).data(0x0100) == "三趾滨鹬/a.jpg"
 

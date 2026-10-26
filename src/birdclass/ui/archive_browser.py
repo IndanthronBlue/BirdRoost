@@ -58,6 +58,7 @@ from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
 from ..filename_alignment import align_group_copies
 from .compare_dialog import CompareDialog
+from .location_filter import LocationFilterButton
 from .observation_dialog import ObservationDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
 from .lightbox import LightboxDialog
@@ -283,10 +284,8 @@ class ArchiveBrowserWindow(QMainWindow):
 
         filter_row = QHBoxLayout()
         filter_row.addWidget(QLabel("观测地"))
-        self.location_combo = QComboBox()
-        self.location_combo.setMinimumWidth(180)
-        self.location_combo.addItem("全部观测地", "")
-        self.location_combo.currentIndexChanged.connect(self._on_location_changed)
+        self.location_combo = LocationFilterButton()
+        self.location_combo.changed.connect(self._on_location_changed)
         filter_row.addWidget(self.location_combo)
         filter_row.addWidget(QLabel("排序"))
         self.sort_combo = QComboBox()
@@ -557,23 +556,10 @@ class ArchiveBrowserWindow(QMainWindow):
         )
 
     def _update_location_combo(self) -> None:
-        current = self.location_combo.currentData() or ""
-        nodes = self.index.location_nodes(self.batch_id)
-        self.location_combo.blockSignals(True)
-        self.location_combo.clear()
-        self.location_combo.addItem("全部观测地", ("", "", ""))
-        for key, label, count in nodes:
-            data = key[2] if not key[0] else key
-            self.location_combo.addItem(f"{label}  ({count})", data)
-        index = 0
-        for row in range(self.location_combo.count()):
-            if self.location_combo.itemData(row) == current:
-                index = row
-                break
-        self.location_combo.setCurrentIndex(index)
-        self.location_combo.blockSignals(False)
+        current = self.location_combo.currentData()
+        self.location_combo.set_nodes(self.index.location_nodes(self.batch_id), current)
 
-    def _on_location_changed(self, _index: int) -> None:
+    def _on_location_changed(self) -> None:
         expanded = {
             path for path, item in self._tree_items.items() if item.isExpanded()
         }
