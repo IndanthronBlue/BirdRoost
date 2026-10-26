@@ -319,7 +319,7 @@ def test_cleanup_replaced_requires_confirmation_and_deletes(qtbot, tmp_path: Pat
 
 
 def test_tree_language_toggle_and_draggable_splitter(qtbot, tmp_path: Path):
-    from PySide6.QtCore import QSettings
+    from PySide6.QtCore import QSettings, Qt
 
     output = tmp_path / "output"
     make_image(output / "三趾滨鹬" / "a.jpg")
@@ -354,6 +354,9 @@ def test_tree_language_toggle_and_draggable_splitter(qtbot, tmp_path: Path):
     assert browser.splitter.count() == 3
     assert browser.splitter.handleWidth() >= 8
     assert browser.splitter.childrenCollapsible() is False
+    assert browser.detail_splitter.count() == 2
+    assert browser.detail_splitter.handleWidth() >= 8
+    assert browser.detail_splitter.orientation() == Qt.Orientation.Vertical
     assert browser.grid.gridSize().height() >= (
         browser.grid.iconSize().height()
         + 2 * browser.grid.fontMetrics().lineSpacing()

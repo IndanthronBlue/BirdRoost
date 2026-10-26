@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QScrollArea,
     QSplitter,
     QTreeWidget,
     QTreeWidgetItem,
@@ -302,28 +303,49 @@ class ArchiveBrowserWindow(QMainWindow):
         detail = QWidget()
         detail.setMinimumWidth(420)
         detail_layout = QVBoxLayout(detail)
+        self.detail_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.detail_splitter.setChildrenCollapsible(False)
+        self.detail_splitter.setHandleWidth(8)
+        self.detail_splitter.setStyleSheet(
+            "QSplitter::handle { background: palette(mid); }"
+            "QSplitter::handle:vertical { height: 8px; }"
+        )
         self.canvas = ZoomableImageCanvas()
-        detail_layout.addWidget(self.canvas, 1)
+        self.detail_splitter.addWidget(self.canvas)
+        detail_info = QWidget()
+        detail_info.setMinimumHeight(170)
+        info_layout = QVBoxLayout(detail_info)
+        info_layout.setContentsMargins(0, 0, 0, 0)
         self.species_label = QLabel("未选择图片")
         self.species_label.setStyleSheet("font-size: 16px; font-weight: 600;")
         self.species_label.setWordWrap(True)
         self.info_label = QLabel("")
         self.info_label.setWordWrap(True)
         self.info_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        detail_layout.addWidget(self.species_label)
-        detail_layout.addWidget(self.info_label)
+        info_layout.addWidget(self.species_label)
+        info_layout.addWidget(self.info_label)
         self.target_label = QLabel("目标")
         self.target_label.setVisible(False)
-        detail_layout.addWidget(self.target_label)
+        info_layout.addWidget(self.target_label)
         self.target_list = QListWidget()
         self.target_list.setMaximumHeight(110)
         self.target_list.setVisible(False)
         self.target_list.currentItemChanged.connect(self._on_target_changed)
-        detail_layout.addWidget(self.target_list)
+        info_layout.addWidget(self.target_list)
         self.correct_button = QPushButton("修改分类…")
         self.correct_button.setVisible(False)
         self.correct_button.clicked.connect(self.correct_selected)
-        detail_layout.addWidget(self.correct_button)
+        info_layout.addWidget(self.correct_button)
+        info_scroll = QScrollArea()
+        info_scroll.setWidgetResizable(True)
+        info_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        info_scroll.setWidget(detail_info)
+        self.detail_splitter.addWidget(info_scroll)
+        self.detail_splitter.setStretchFactor(0, 3)
+        self.detail_splitter.setStretchFactor(1, 1)
+        self._restore_detail_sizes()
+        self.detail_splitter.splitterMoved.connect(self._save_detail_sizes)
+        detail_layout.addWidget(self.detail_splitter)
         splitter.addWidget(detail)
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
@@ -876,6 +898,23 @@ class ArchiveBrowserWindow(QMainWindow):
 
     def _save_splitter_sizes(self, *_args) -> None:
         self._settings.setValue("archive_splitter_sizes", self.splitter.sizes())
+
+    def _restore_detail_sizes(self) -> None:
+        saved = self._settings.value("archive_detail_sizes")
+        sizes = None
+        if isinstance(saved, (list, tuple)) and len(saved) == 2:
+            sizes = [int(value) for value in saved]
+        elif isinstance(saved, str) and saved:
+            try:
+                parts = [int(value) for value in saved.split(",")]
+                if len(parts) == 2:
+                    sizes = parts
+            except ValueError:
+                sizes = None
+        self.detail_splitter.setSizes(sizes or [460, 380])
+
+    def _save_detail_sizes(self, *_args) -> None:
+        self._settings.setValue("archive_detail_sizes", self.detail_splitter.sizes())
 
     def _on_search_changed(self, text: str) -> None:
         # QCompleter inserts the whole display string on mouse/Enter selection:
