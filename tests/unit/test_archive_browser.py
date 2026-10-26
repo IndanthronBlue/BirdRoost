@@ -866,3 +866,35 @@ def test_grid_arrow_keys_move_selection_and_summary_counts_species(qtbot, tmp_pa
 
     assert browser.grid.currentRow() == 1
     assert "已归档 3 种鸟" in browser.summary_label.text()
+
+
+def test_compare_can_pin_first_image_across_species(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    for name in ("三趾滨鹬", "欧乌鸫"):
+        make_image(output / name / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=batch,
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    add_group(library, "欧乌鸫/a.jpg", batch_id=batch,
+              species_cn="欧乌鸫", species_latin="Turdus merula")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.show()
+    browser.tree.setCurrentItem(browser._tree_items[("动物界",)])
+    browser.grid.setCurrentRow(0)
+
+    captured = []
+    browser._compare_entries = lambda entries: captured.extend(entries)
+
+    browser.open_compare()
+    assert captured == []
+    assert browser._compare_pending.relative_path == "三趾滨鹬/a.jpg"
+
+    browser.grid.clearSelection()
+    browser.grid.setCurrentRow(1)
+    browser.open_compare()
+
+    assert [entry.relative_path for entry in captured] == ["三趾滨鹬/a.jpg", "欧乌鸫/a.jpg"]
+    assert browser._compare_pending is None

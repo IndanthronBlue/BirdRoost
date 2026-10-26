@@ -130,6 +130,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self.index = ArchiveIndex(self.output_root)
         self.library = ArchiveLibrary(self.output_root)
         self._user_aliases: dict[str, str] = {}
+        self._compare_pending: ArchiveEntry | None = None
         self._load_user_aliases()
         self._tree_items: dict[tuple[str, ...], QTreeWidgetItem] = {}
         self._selected_entry_path = ""
@@ -1477,25 +1478,44 @@ class ArchiveBrowserWindow(QMainWindow):
             )
             if entry is not None:
                 entries.append(entry)
-        if len(entries) < 2:
+        if not entries:
             row = self.grid.currentRow()
-            for candidate_row in (row, row - 1, row + 1):
-                if 0 <= candidate_row < self.grid.count():
-                    relative_path = self.grid.item(candidate_row).data(Qt.ItemDataRole.UserRole)
-                    entry = next(
-                        (value for value in self.index.entries
-                         if value.relative_path == relative_path),
-                        None,
-                    )
-                    if entry is not None and entry not in entries:
-                        entries.append(entry)
-                if len(entries) >= 2:
-                    break
-        if len(entries) < 2:
-            self.status_label.setText("请至少选择两张图片再比较")
+            if 0 <= row < self.grid.count():
+                relative_path = self.grid.item(row).data(Qt.ItemDataRole.UserRole)
+                entry = next(
+                    (value for value in self.index.entries
+                     if value.relative_path == relative_path),
+                    None,
+                )
+                if entry is not None:
+                    entries.append(entry)
+        if len(entries) >= 2:
+            self._compare_entries(entries[:2])
             return
+        if not entries:
+            self.status_label.setText("请先选择一张图片")
+            return
+        entry = entries[0]
+        if self._compare_pending is None:
+            self._compare_pending = entry
+            self.compare_button.setText("比较：再选一张…")
+            self.status_label.setText(
+                f"已选择「{entry.display_name}」作为比较第 1 张，请选择第 2 张"
+            )
+            return
+        if self._compare_pending.relative_path == entry.relative_path:
+            self._compare_pending = None
+            self.compare_button.setText("比较")
+            self.status_label.setText("已取消比较")
+            return
+        pair = [self._compare_pending, entry]
+        self._compare_pending = None
+        self.compare_button.setText("比较")
+        self._compare_entries(pair)
+
+    def _compare_entries(self, entries: list[ArchiveEntry]) -> None:
         dialog = CompareDialog(
-            entries[:2], boxes_provider=lambda entry: self._entry_boxes(entry), parent=self
+            entries, boxes_provider=lambda entry: self._entry_boxes(entry), parent=self
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         dialog.destroyed.connect(lambda _obj=None: setattr(self, "_compare", None))
