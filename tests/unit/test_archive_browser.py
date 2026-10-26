@@ -804,3 +804,37 @@ def test_pending_view_stays_after_resolving_one_item(qtbot, tmp_path: Path):
 
     assert browser.tree.currentItem().data(0, 0x0100) == ["待复核"]
     assert browser.grid.count() == 1
+
+
+def test_non_bird_note_is_edited_under_tree_node(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    image = output / "非鸟动物" / "stamp" / "待复核" / "lizard.jpg"
+    image.parent.mkdir(parents=True)
+    make_image(image)
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": new_batch_id(),
+        "status": "non_bird_animal",
+        "source_relative_path": "lizard.jpg",
+        "targets": [],
+        "copies": [{
+            "relative_path": "非鸟动物/stamp/待复核/lizard.jpg",
+            "species_cn": "",
+            "target_indices": [],
+        }],
+    }
+    library.write_group(group)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.tree.setCurrentItem(browser._tree_items[("非鸟动物",)])
+    browser.grid.setCurrentRow(0)
+
+    assert browser.non_bird_panel.isHidden() is False
+    browser.non_bird_note.setText("蜥蜴")
+    browser.save_non_bird_note_button.click()
+
+    assert library.read_group(group["group_id"])["label"] == "蜥蜴"
+    assert "蜥蜴" in browser.grid.item(0).text()

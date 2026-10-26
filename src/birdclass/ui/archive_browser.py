@@ -31,7 +31,6 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QMessageBox,
-    QInputDialog,
     QProgressBar,
     QPushButton,
     QScrollArea,
@@ -361,6 +360,18 @@ class ArchiveBrowserWindow(QMainWindow):
         self.apply_all_button.setVisible(False)
         self.apply_all_button.clicked.connect(self.apply_all_targets)
         info_layout.addWidget(self.apply_all_button)
+        self.non_bird_panel = QWidget()
+        non_bird_layout = QHBoxLayout(self.non_bird_panel)
+        non_bird_layout.setContentsMargins(0, 4, 0, 4)
+        self.non_bird_note = QLineEdit()
+        self.non_bird_note.setPlaceholderText("备注名（如：蜥蜴、岩羊、家猫）")
+        self.non_bird_note.setClearButtonEnabled(True)
+        non_bird_layout.addWidget(self.non_bird_note, 1)
+        self.save_non_bird_note_button = QPushButton("保存备注")
+        self.save_non_bird_note_button.clicked.connect(self.save_non_bird_note)
+        non_bird_layout.addWidget(self.save_non_bird_note_button)
+        self.non_bird_panel.setVisible(False)
+        info_layout.addWidget(self.non_bird_panel)
 
         self.manual_panel = QWidget()
         manual_layout = QVBoxLayout(self.manual_panel)
@@ -729,6 +740,7 @@ class ArchiveBrowserWindow(QMainWindow):
         ]
         if entry.taxonomy is not None:
             fields.append(entry.taxonomy.name_en)
+        fields.append(str(entry.group.get("label", "")))
         if any(needle in field.casefold() for field in fields if field):
             return True
         if entry.taxonomy is not None:
@@ -841,7 +853,9 @@ class ArchiveBrowserWindow(QMainWindow):
 
     @staticmethod
     def _grid_text(entry: ArchiveEntry) -> str:
-        return f"{entry.display_name}\n{Path(entry.relative_path).name}"
+        note = str(entry.group.get("label", "")).strip()
+        title = note if entry.special == "非鸟动物" and note else entry.display_name
+        return f"{title}\n{Path(entry.relative_path).name}"
 
     def _thumbnail_key(self, entry: ArchiveEntry) -> tuple[str, float] | None:
         try:
@@ -987,6 +1001,12 @@ class ArchiveBrowserWindow(QMainWindow):
         self.apply_all_button.setText(
             f"同图全部标为「{entry.species_cn}」" if entry.species_cn else "同图全部标为当前物种"
         )
+        is_non_bird = entry.special == "非鸟动物" and bool(entry.group_id)
+        self.non_bird_panel.setVisible(is_non_bird)
+        if is_non_bird:
+            self.non_bird_note.setText(str(entry.group.get("label", "")))
+        else:
+            self.non_bird_note.clear()
         self.delete_button.setEnabled(True)
         pending_copies = [
             copy for copy in entry.group.get("copies", [])
@@ -1081,6 +1101,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.setVisible(False)
         self.alias_button.setVisible(False)
         self.apply_all_button.setVisible(False)
+        self.non_bird_panel.setVisible(False)
         self.manual_panel.setVisible(False)
         self.delete_button.setEnabled(False)
         self.box_toggle.setEnabled(False)
@@ -1218,6 +1239,29 @@ class ArchiveBrowserWindow(QMainWindow):
         if self.grid.count():
             self.grid.setCurrentRow(0)
 
+    def save_non_bird_note(self) -> None:
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        if entry is None or not entry.group_id:
+            return
+        try:
+            group = self.library.read_group(entry.group_id)
+            group["label"] = self.non_bird_note.text().strip()
+            self.library.write_group(group)
+            entry.group = group
+        except Exception as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", f"保存备注失败：{exc}")
+            return
+        item = self.grid.currentItem()
+        if item is not None:
+            item.setText(self._grid_text(entry))
+        self.status_label.setText(
+            f"已保存备注：{group['label']}" if group["label"] else "已清除备注"
+        )
+
     def apply_all_targets(self) -> None:
         entry = next(
             (value for value in self.index.entries
@@ -1300,19 +1344,11 @@ class ArchiveBrowserWindow(QMainWindow):
             "non_bird_animal": "非鸟动物",
             "scenery": "风景",
         }
-        label = ""
-        if action == "non_bird_animal":
-            label, accepted = QInputDialog.getText(
-                self, "非鸟动物备注", "备注名（如：蜥蜴、岩羊、家猫）："
-            )
-            if not accepted:
-                return
         try:
             resolve_manual(
                 self.library, entry, action=action,
                 observation_location=self.manual_location.text().strip(),
                 observation_time=self.manual_time.text().strip(),
-                label=label,
             )
         except ManualReviewError as exc:
             QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
