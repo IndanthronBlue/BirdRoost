@@ -341,6 +341,17 @@ class MainWindow(QMainWindow):
         if not output:
             self._show_error("请先选择分类后目录")
             return
+        existing = next(
+            (window for window in self._archive_windows if not window._closed),
+            None,
+        )
+        if existing is not None:
+            if batch_id:
+                existing.set_batch_filter(batch_id)
+            existing.show()
+            existing.raise_()
+            existing.activateWindow()
+            return
         window = ArchiveBrowserWindow(
             Path(output), batch_id=batch_id, parent=self, defer_load=True
         )
@@ -349,6 +360,7 @@ class MainWindow(QMainWindow):
             lambda _obj=None, browser=window: self._forget_archive_window(browser)
         )
         self._archive_windows.append(window)
+        self.open_archive_button.setEnabled(False)
         window.show()
         window.raise_()
         QTimer.singleShot(30, window.load_library)
@@ -356,6 +368,7 @@ class MainWindow(QMainWindow):
     def _forget_archive_window(self, window: ArchiveBrowserWindow) -> None:
         if window in self._archive_windows:
             self._archive_windows.remove(window)
+        self.open_archive_button.setEnabled(True)
 
     def _latest_batch_id(self) -> str | None:
         output = self.output_dir.text().strip()

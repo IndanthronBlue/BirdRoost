@@ -291,3 +291,24 @@ def test_classification_success_can_open_latest_batch(qtbot, tmp_path):
     assert window._archive_windows[0].batch_id == batch_id
     for archive_window in list(window._archive_windows):
         archive_window.close()
+
+
+def test_browse_archive_reuses_one_window_and_disables_button(qtbot, tmp_path):
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    fill_required_fields(window, tmp_path)
+    (tmp_path / "output").mkdir()
+
+    window.open_archive_browser()
+    window.open_archive_browser()
+
+    assert len(window._archive_windows) == 1
+    assert window.open_archive_button.isEnabled() is False
+
+    browser = window._archive_windows[0]
+    browser.close()
+    qtbot.wait(20)
+
+    assert window._archive_windows == []
+    assert window.open_archive_button.isEnabled() is True

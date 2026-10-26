@@ -924,6 +924,18 @@ class ArchiveBrowserWindow(QMainWindow):
         self.status_label.setText(f"已删除 {len(files)} 个已纠正副本")
         self.refresh()
 
+    def set_batch_filter(self, batch_id: str | None) -> None:
+        if self._closed:
+            return
+        self.batch_id = batch_id
+        self.clear_batch_button.setVisible(bool(batch_id))
+        self.setWindowTitle(
+            "羽栖 BirdRoost · 批次结果" if batch_id else "羽栖 BirdRoost · 浏览归档"
+        )
+        if batch_id:
+            self.box_toggle.setChecked(True)
+        self.refresh()
+
     def clear_batch_filter(self) -> None:
         self.batch_id = None
         self.clear_batch_button.setVisible(False)
