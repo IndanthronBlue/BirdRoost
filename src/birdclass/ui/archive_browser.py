@@ -733,10 +733,21 @@ class ArchiveBrowserWindow(QMainWindow):
         self.canvas.set_show_boxes(self.box_toggle.isChecked())
         self.box_toggle.setEnabled(self.canvas.has_boxes())
         self.species_label.setText(entry.display_name)
-        details = [
-            f"路径：{entry.relative_path}",
-            f"分类：{entry.latin_name or '未匹配 taxonomy'}",
-        ]
+        details = [f"路径：{entry.relative_path}"]
+        if entry.taxonomy is not None:
+            taxon = entry.taxonomy
+            for rank, chinese, latin in (
+                ("目", taxon.order_label, taxon.order),
+                ("科", taxon.family_label, taxon.family),
+                ("属", taxon.genus_label, taxon.genus),
+                ("种", taxon.display_name, taxon.scientific_name),
+            ):
+                if chinese and latin and chinese != latin:
+                    details.append(f"{rank}：{chinese} · {latin}")
+                else:
+                    details.append(f"{rank}：{chinese or latin}")
+        else:
+            details.append("分类层级：未匹配 taxonomy")
         if entry.observation_location:
             observed = entry.observation_location
             if entry.observation_time:

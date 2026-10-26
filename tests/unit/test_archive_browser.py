@@ -552,3 +552,24 @@ def test_batch_issues_button_and_dialog(qtbot, tmp_path: Path):
     dialog.show()
     assert dialog.windowTitle().startswith("批次失败/待复核")
     dialog.accept()
+
+
+def test_detail_shows_order_family_genus_species(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=new_batch_id(),
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    entry = browser.index.entries[0]
+    browser.tree.setCurrentItem(browser._tree_items[entry.tree_path])
+    browser.grid.setCurrentRow(0)
+
+    info = browser.info_label.text()
+
+    assert "目：鸻形目 · CHARADRIIFORMES" in info
+    assert "科：鹬科 · Scolopacidae" in info
+    assert "属：滨鹬属 · Calidris" in info
+    assert "种：三趾滨鹬 · Calidris alba" in info
