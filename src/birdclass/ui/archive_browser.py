@@ -1088,10 +1088,6 @@ class ArchiveBrowserWindow(QMainWindow):
             details.append("分类层级：未匹配 taxonomy")
         if entry.group.get("label"):
             details.append(f"备注：{entry.group['label']}")
-        if entry.batch_id:
-            details.append(f"批次：{entry.batch_id}")
-        if entry.group_id:
-            details.append(f"group：{entry.group_id}")
         details.append(f"检测框：{len(self._entry_boxes(entry))}")
         if entry.group.get("targets"):
             details.append(
