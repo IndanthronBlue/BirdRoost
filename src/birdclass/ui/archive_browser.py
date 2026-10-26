@@ -540,8 +540,20 @@ class ArchiveBrowserWindow(QMainWindow):
         finally:
             self._refreshing = False
 
+    def _location_key(self) -> tuple[str, str, str]:
+        value = self.location_combo.currentData() or ("", "", "")
+        if isinstance(value, str):
+            return "", "", value
+        return value
+
     def _visible_entries(self) -> list[ArchiveEntry]:
-        return self.index.filter_entries(batch_id=self.batch_id)
+        country, region, place = self._location_key()
+        return self.index.filter_entries(
+            batch_id=self.batch_id,
+            country=country,
+            region=region,
+            place=place,
+        )
 
     def _update_location_combo(self) -> None:
         current = self.location_combo.currentData() or ""
@@ -561,7 +573,22 @@ class ArchiveBrowserWindow(QMainWindow):
         self.location_combo.blockSignals(False)
 
     def _on_location_changed(self, _index: int) -> None:
+        expanded = {
+            path for path, item in self._tree_items.items() if item.isExpanded()
+        }
+        selected_tree = self._selected_tree_path()
+        entries = self._visible_entries()
+        self._rebuild_tree(entries)
+        self._restore_tree_state(expanded)
+        if selected_tree and selected_tree in self._tree_items:
+            self.tree.blockSignals(True)
+            try:
+                self.tree.setCurrentItem(self._tree_items[selected_tree])
+                self.tree.scrollToItem(self._tree_items[selected_tree])
+            finally:
+                self.tree.blockSignals(False)
         self._refresh_grid()
+        self._update_summary()
 
     def _on_sort_changed(self, _index: int) -> None:
         self._refresh_grid()
@@ -851,11 +878,7 @@ class ArchiveBrowserWindow(QMainWindow):
         # A non-empty search is global: a species found by the completer must
         # not be hidden by an unrelated branch that happened to be selected.
         tree_path = self._selected_tree_path() if not query else None
-        location_key = self.location_combo.currentData() or ("", "", "")
-        if isinstance(location_key, str):
-            country, region, place = "", "", location_key
-        else:
-            country, region, place = location_key
+        country, region, place = self._location_key()
         entries = self.index.filter_entries(
             tree_path=tree_path,
             batch_id=self.batch_id,

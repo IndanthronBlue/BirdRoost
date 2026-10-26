@@ -977,6 +977,8 @@ def test_location_filter_uses_country_region_place(qtbot, tmp_path: Path):
     assert country_index > 0
     browser.location_combo.setCurrentIndex(country_index)
     assert browser.grid.count() == 2
+    assert not any(path[-1] == "Turdus merula" for path in browser._tree_items)
+    assert any(path[-1] == "Calidris alba" for path in browser._tree_items)
 
     region_index = next(
         row for row in range(browser.location_combo.count())
