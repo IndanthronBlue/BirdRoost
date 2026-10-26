@@ -7,6 +7,7 @@ from PySide6.QtCore import (
     QFileSystemWatcher,
     QObject,
     QRunnable,
+    QStringListModel,
     QSettings,
     QSize,
     Qt,
@@ -19,6 +20,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
     QComboBox,
+    QCompleter,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -35,6 +37,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from pypinyin import Style, lazy_pinyin
 
 from ..archive_index import ArchiveEntry, ArchiveIndex
 from ..correction import CorrectionError, correct_archive_copy
@@ -93,6 +97,8 @@ class ArchiveBrowserWindow(QMainWindow):
         self._initialized = False
         self._closed = False
         self._updating_batch_combo = False
+        self._pinyin_cache: dict[str, tuple[str, str]] = {}
+        self._search_suggestions: list[str] = []
         self._loading = False
         self._refreshing = False
         self._defer_load = defer_load
@@ -140,9 +146,19 @@ class ArchiveBrowserWindow(QMainWindow):
 
         toolbar = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("搜索中文名、拉丁名、英文名或路径")
+        self.search.setPlaceholderText("搜索中文、拼音首字母、英文、拉丁名或路径")
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._on_search_changed)
+        self.search.returnPressed.connect(self._on_search_return)
+        self.search_completer = QCompleter([], self)
+        self.search_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.search_completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        self.search_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        self.search_completer.setMaxVisibleItems(12)
+        self.search_completer.activated.connect(self._on_completion_activated)
+        self.search_model = QStringListModel([], self)
+        self.search_completer.setModel(self.search_model)
+        self.search.setCompleter(self.search_completer)
         toolbar.addWidget(self.search, 1)
 
         self.language_combo = QComboBox()
@@ -315,6 +331,7 @@ class ArchiveBrowserWindow(QMainWindow):
                 path for path, item in self._tree_items.items() if item.isExpanded()
             }
             self.index.refresh()
+            self._update_search_suggestions()
             self._update_batch_combo()
             entries = self._visible_entries()
             self._rebuild_tree(entries)
@@ -414,6 +431,83 @@ class ArchiveBrowserWindow(QMainWindow):
         data = item.data(0, Qt.ItemDataRole.UserRole)
         return tuple(data) if data else None
 
+    def _pinyin_aliases(self, name: str) -> tuple[str, str]:
+        cached = self._pinyin_cache.get(name)
+        if cached is not None:
+            return cached
+        full = "".join(lazy_pinyin(name)).casefold()
+        initials = "".join(
+            lazy_pinyin(name, style=Style.FIRST_LETTER)
+        ).casefold()
+        self._pinyin_cache[name] = full, initials
+        return full, initials
+
+    def _update_search_suggestions(self) -> None:
+        records: dict[str, tuple[str, str, str, str]] = {}
+        for entry in self.index.entries:
+            name = entry.display_name
+            if not name:
+                continue
+            key = name.casefold()
+            if key in records:
+                continue
+            latin = entry.latin_name
+            english = entry.taxonomy.name_en if entry.taxonomy else ""
+            full, initials = self._pinyin_aliases(name)
+            records[key] = (name, latin, english, initials)
+        suggestions = []
+        for name, latin, english, initials in sorted(records.values(), key=lambda value: value[0].casefold()):
+            parts = [name]
+            if latin and latin != name:
+                parts.append(latin)
+            if english and english not in {name, latin}:
+                parts.append(english)
+            if initials:
+                parts.append(initials)
+            suggestions.append(" · ".join(parts))
+        self._search_suggestions = suggestions
+        self.search_model.setStringList(suggestions)
+
+    def _entry_matches(self, entry: ArchiveEntry, query: str) -> bool:
+        needle = query.casefold()
+        if not needle:
+            return True
+        fields = [
+            entry.species_cn, entry.latin_name, entry.relative_path,
+            entry.display_name,
+        ]
+        if entry.taxonomy is not None:
+            fields.append(entry.taxonomy.name_en)
+        if any(needle in field.casefold() for field in fields if field):
+            return True
+        full, initials = self._pinyin_aliases(entry.display_name)
+        return needle in full or needle in initials
+
+    def _on_completion_activated(self, text: str) -> None:
+        name = text.split(" · ", 1)[0].strip()
+        if name:
+            self.search.setText(name)
+        self.search_completer.popup().hide()
+        self._refresh_grid()
+        if self.grid.count():
+            self.grid.setCurrentRow(0)
+            self.grid.setFocus()
+
+    def _on_search_return(self) -> None:
+        popup = self.search_completer.popup()
+        if popup.isVisible():
+            index = self.search_completer.currentIndex()
+            if index.isValid():
+                self._on_completion_activated(str(index.data()))
+            popup.hide()
+        self._refresh_grid()
+        if self.grid.count():
+            self.grid.setCurrentRow(0)
+            self.grid.setFocus()
+            self.status_label.setText(f"搜索到 {self.grid.count()} 张图片")
+        else:
+            self.status_label.setText("没有匹配的图片")
+
     def _update_grid_metrics(self) -> None:
         line_height = self.grid.fontMetrics().lineSpacing()
         width = max(200, self.grid.iconSize().width() + 40)
@@ -430,8 +524,10 @@ class ArchiveBrowserWindow(QMainWindow):
         entries = self.index.filter_entries(
             tree_path=tree_path,
             batch_id=self.batch_id,
-            search=self.search.text(),
         )
+        query = self.search.text().strip()
+        if query:
+            entries = [entry for entry in entries if self._entry_matches(entry, query)]
         self.grid.blockSignals(True)
         self.grid.clear()
         self._thumbnail_items = {}
@@ -684,7 +780,12 @@ class ArchiveBrowserWindow(QMainWindow):
     def _save_splitter_sizes(self, *_args) -> None:
         self._settings.setValue("archive_splitter_sizes", self.splitter.sizes())
 
-    def _on_search_changed(self, _text: str) -> None:
+    def _on_search_changed(self, text: str) -> None:
+        self.search_completer.setCompletionPrefix(text.strip())
+        if text.strip() and self.search.hasFocus():
+            self.search_completer.complete()
+        elif not text.strip():
+            self.search_completer.popup().hide()
         self._refresh_grid()
 
     def _on_box_toggled(self, checked: bool) -> None:

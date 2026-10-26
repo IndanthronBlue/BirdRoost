@@ -13,6 +13,7 @@ dependencies = [
   "requests>=2.31,<3",
   "Pillow>=10,<14",
   "piexif>=1.1,<2",
+  "pypinyin>=0.50,<1",
 ]
 
 [project.urls]

@@ -418,3 +418,33 @@ def test_deferred_load_shows_waiting_banner(qtbot, tmp_path: Path):
 
     assert browser.loading_widget.isVisible() is False
     assert any(path[-1] == "Calidris alba" for path in browser._tree_items)
+
+
+def test_pinyin_initial_search_and_enter(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "黑腹滨鹬" / "a.jpg")
+    make_image(output / "欧乌鸫" / "b.jpg")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+
+    assert any("hfby" in suggestion for suggestion in browser.search_model.stringList())
+
+    browser.search.setText("hfby")
+    assert browser.grid.count() == 1
+    browser.search.returnPressed.emit()
+
+    assert browser.grid.currentItem() is not None
+    assert "搜索到 1 张图片" in browser.status_label.text()
+
+
+def test_chinese_prefix_search_matches(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "黑腹滨鹬" / "a.jpg")
+    make_image(output / "欧乌鸫" / "b.jpg")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+
+    browser.search.setText("黑腹")
+
+    assert browser.grid.count() == 1
+    assert browser.grid.item(0).data(0x0100) == "黑腹滨鹬/a.jpg"
