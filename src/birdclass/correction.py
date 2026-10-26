@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import shutil
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
 from .archive_index import ArchiveEntry
@@ -11,7 +10,6 @@ from .library import ArchiveLibrary, now_iso
 from .metadata import write_species_metadata
 from .taxonomy import Taxon
 
-REPLACED_DIR = "已纠正"
 
 
 class CorrectionError(Exception):
@@ -56,11 +54,6 @@ def _new_filename(entry: ArchiveEntry, new_folder: str) -> str:
     return f"{replaced}{suffix}"
 
 
-def _replaced_path(output_root: Path, old_relative: str) -> Path:
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    return output_root / REPLACED_DIR / stamp / old_relative
-
-
 def correct_archive_copy(
     library: ArchiveLibrary,
     entry: ArchiveEntry,
@@ -85,14 +78,23 @@ def correct_archive_copy(
 
     try:
         new_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(old_path, new_path)
+        if split:
+            shutil.copy2(old_path, new_path)
+        else:
+            shutil.move(str(old_path), str(new_path))
         write_species_metadata(new_path, new_folder)
     except Exception as exc:
+        if not split and not old_path.exists() and new_path.exists():
+            # The move succeeded but metadata failed: attempt a rollback.
+            try:
+                shutil.move(str(new_path), str(old_path))
+            except OSError:
+                pass
         new_path.unlink(missing_ok=True)
         raise CorrectionError(f"创建纠正副本失败：{exc}") from exc
 
     replaced_relative = ""
-    old_moved = False
+    old_moved = not split
     try:
         group = None
         if entry.group_id:
@@ -133,12 +135,6 @@ def correct_archive_copy(
                 target["selection"] = selection
             library.write_group(group)
 
-        if not split:
-            replaced = _replaced_path(output_root, entry.relative_path)
-            replaced.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(old_path), str(replaced))
-            replaced_relative = replaced.relative_to(output_root).as_posix()
-            old_moved = True
         library.append_correction({
             "corrected_at": now_iso(),
             "group_id": entry.group_id,
@@ -148,7 +144,7 @@ def correct_archive_copy(
             "old_relative_path": entry.relative_path,
             "new_relative_path": new_relative,
             "mode": "split" if split else "move",
-            "old_copy_action": "kept" if split else "moved_to_replaced",
+            "old_copy_action": "kept" if split else "moved",
             "replaced_relative_path": replaced_relative,
             "target_indices": sorted(selected),
             "reason": reason,
@@ -156,12 +152,12 @@ def correct_archive_copy(
     except Exception as exc:
         if old_moved:
             try:
-                replaced = output_root / replaced_relative
                 old_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(replaced), str(old_path))
+                shutil.move(str(new_path), str(old_path))
             except OSError:
                 pass
-        new_path.unlink(missing_ok=True)
+        else:
+            new_path.unlink(missing_ok=True)
         if isinstance(exc, (CorrectionError, LibraryError)):
             raise
         raise CorrectionError(f"更新归档库失败：{exc}") from exc

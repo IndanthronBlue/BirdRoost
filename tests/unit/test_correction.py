@@ -54,14 +54,15 @@ def test_correct_whole_copy_moves_old_to_replaced(tmp_path: Path):
     assert outcome.new_relative_path.startswith("红颈滨鹬/")
     assert (library.output_root / outcome.new_relative_path).is_file()
     assert not (library.output_root / "三趾滨鹬/a.png").exists()
-    assert outcome.replaced_relative_path.startswith("已纠正/")
+    assert outcome.replaced_relative_path == ""
+    assert not (library.output_root / "已纠正").exists()
     updated = library.read_group(group["group_id"])
     assert updated["copies"][0]["relative_path"] == outcome.new_relative_path
     assert updated["copies"][0]["species_cn"] == "红颈滨鹬"
     assert updated["targets"][0]["selection"]["species_latin"] == "Calidris ruficollis"
     records = library.load_corrections()
     assert records[-1]["new_relative_path"] == outcome.new_relative_path
-    assert records[-1]["old_copy_action"] == "moved_to_replaced"
+    assert records[-1]["old_copy_action"] == "moved"
 
 
 def test_correct_single_target_splits_shared_copy(tmp_path: Path):

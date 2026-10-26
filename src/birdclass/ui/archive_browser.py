@@ -1184,7 +1184,9 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self._selected_entry_path = outcome.new_relative_path
         self.status_label.setText(
-            f"已改为 {taxon.display_name}；旧副本：{outcome.replaced_relative_path or '保留'}"
+            f"已改为 {taxon.display_name}；原副本已移动"
+            if not outcome.split else
+            f"已改为 {taxon.display_name}；共享副本已拆分"
         )
         self.refresh()
 

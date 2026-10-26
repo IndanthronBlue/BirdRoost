@@ -13,7 +13,6 @@ from .taxonomy import load_taxonomy
 NO_BIRD_DIR = "无鸟"
 NON_BIRD_DIR = "非鸟动物"
 SCENERY_DIR = "风景"
-REPLACED_DIR = "已纠正"
 SPECIAL_ACTIONS = {
     "no_bird": (NO_BIRD_DIR, "no_bird"),
     "non_bird_animal": (NON_BIRD_DIR, "non_bird_animal"),
@@ -136,9 +135,14 @@ def resolve_manual(
         new_path = _unique_path(output / folder / filename)
         try:
             new_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, new_path)
+            shutil.move(str(source), str(new_path))
             write_species_metadata(new_path, name)
         except Exception as exc:
+            if not source.exists() and new_path.exists():
+                try:
+                    shutil.move(str(new_path), str(source))
+                except OSError:
+                    pass
             new_path.unlink(missing_ok=True)
             raise ManualReviewError(f"创建人工归档副本失败：{exc}") from exc
         new_relative = new_path.relative_to(output).as_posix()
@@ -185,13 +189,13 @@ def resolve_manual(
         group["error_code"] = ""
         group["error_message"] = ""
         library.write_group(group)
-        replaced = output / REPLACED_DIR / stamp
+        # The source pending copy was moved into the species folder. Any
+        # remaining annotated preview is redundant; remove it instead of
+        # creating another copy under 已纠正/.
         for copy in pending:
             old = output / str(copy.get("relative_path", ""))
-            if old.is_file():
-                destination = replaced / str(copy.get("relative_path", ""))
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(old), str(destination))
+            if old != source and old.is_file():
+                old.unlink(missing_ok=True)
         library.append_correction({
             "corrected_at": now_iso(),
             "group_id": entry.group_id,
