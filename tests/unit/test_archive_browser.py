@@ -942,6 +942,7 @@ def test_double_click_observation_edits_group(qtbot, tmp_path: Path):
     assert updated["observation"]["location"] == "世纪公园"
     assert updated["observation"]["time"] == "2024-03"
     assert updated["observation"]["country"] == "中国"
+    assert updated["copies"][0]["relative_path"].startswith("三趾滨鹬/世纪公园_2024-03_三趾滨鹬_")
 
 
 def test_location_filter_uses_country_region_place(qtbot, tmp_path: Path):

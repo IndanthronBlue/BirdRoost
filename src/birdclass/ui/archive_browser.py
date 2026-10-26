@@ -56,6 +56,7 @@ from ..manual_review import (
 )
 from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
+from ..filename_alignment import align_group_copies
 from .compare_dialog import CompareDialog
 from .observation_dialog import ObservationDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
@@ -1626,6 +1627,13 @@ class ArchiveBrowserWindow(QMainWindow):
         old["time"] = dialog.time_text
         group["observation"] = old
         self.library.write_group(group)
+        try:
+            changes = align_group_copies(self.library, group)
+            if changes:
+                self.library.write_group(group)
+        except OSError as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", f"文件重命名失败：{exc}")
+            return
         self.status_label.setText("已修改观测信息")
         self.refresh()
         if selected_tree and selected_tree in self._tree_items:
