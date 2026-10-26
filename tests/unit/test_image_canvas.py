@@ -63,3 +63,25 @@ def test_canvas_fit_actual_and_annotated_render(qtbot):
     assert canvas.transform().m11() == 1.0
     canvas.fit_to_window()
     assert canvas.transform().m11() != 0
+
+
+def test_rebuilding_boxes_removes_stale_items_and_hide_hides_all(qtbot):
+    from PySide6.QtGui import QColor, QImage
+    from PySide6.QtWidgets import QGraphicsRectItem
+
+    image = QImage(100, 80, QImage.Format.Format_RGB32)
+    image.fill(QColor("green"))
+    canvas = ZoomableImageCanvas()
+    qtbot.addWidget(canvas)
+    canvas.set_image(image, boxes=[CanvasBox((0.1, 0.1, 0.2, 0.2), "1", True)])
+    canvas.set_show_boxes(True)
+
+    canvas.set_boxes([CanvasBox((0.6, 0.6, 0.9, 0.9), "2", True)])
+
+    rects = [item for item in canvas._scene.items() if isinstance(item, QGraphicsRectItem)]
+    assert len(rects) == 1
+    assert len(canvas._box_items) == 2
+
+    canvas.set_show_boxes(False)
+    assert all(not item.isVisible() for item in canvas._box_items)
+    assert all(not item.isVisible() for item in rects)

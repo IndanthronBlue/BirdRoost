@@ -65,6 +65,7 @@ class ZoomableImageCanvas(QGraphicsView):
     def set_image(self, image: QImage, boxes: list[CanvasBox] | None = None) -> None:
         self._image = image
         self._boxes = list(boxes or [])
+        self._box_items = []
         self._scene.clear()
         self._pixmap_item = self._scene.addPixmap(QPixmap.fromImage(image))
         self._pixmap_item.setTransformationMode(Qt.TransformationMode.SmoothTransformation)
@@ -86,6 +87,11 @@ class ZoomableImageCanvas(QGraphicsView):
         return bool(self._boxes)
 
     def _rebuild_boxes(self) -> None:
+        for item in self._box_items:
+            try:
+                self._scene.removeItem(item)
+            except RuntimeError:
+                pass
         self._box_items = []
         if self._image is None:
             return
