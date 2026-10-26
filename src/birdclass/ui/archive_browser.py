@@ -1606,11 +1606,32 @@ class ArchiveBrowserWindow(QMainWindow):
             QMessageBox.warning(self, "羽栖 BirdRoost", "该图片没有可修改的归档 group。")
             return
         observation = entry.group.get("observation") or {}
+        counts: dict[tuple[str, str, str, str], int] = {}
+        for value in self.index.entries:
+            if value.special or not value.observation_country:
+                continue
+            key = (
+                value.observation_country,
+                value.observation_region,
+                value.observation_location,
+                value.observation_time,
+            )
+            counts[key] = counts.get(key, 0) + 1
+        options = [
+            (*key, count)
+            for key, count in sorted(
+                counts.items(),
+                key=lambda item: (
+                    item[0][0], item[0][1], item[0][2], item[0][3]
+                ),
+            )
+        ]
         dialog = ObservationDialog(
             country=entry.observation_country or str(observation.get("country", "")),
             region=entry.observation_region or str(observation.get("region", "")),
             location=entry.observation_location,
             time=entry.observation_time,
+            options=options,
             parent=self,
         )
         if not dialog.exec():

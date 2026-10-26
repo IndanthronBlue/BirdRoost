@@ -21,13 +21,33 @@ class ObservationDialog(QDialog):
         region: str = "",
         location: str = "",
         time: str = "",
+        options: list[tuple[str, str, str, str, int]] | None = None,
         parent=None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("修改观测信息")
-        self.resize(440, 260)
+        self.resize(480, 330)
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("双击修改当前照片所属 group 的观测信息。"))
+        layout.addWidget(QLabel("快速选择已有观测信息："))
+        self.preset = QComboBox()
+        self.preset.addItem("选择已有观测信息…", None)
+        for preset_country, preset_region, preset_location, preset_time, count in options or []:
+            if not preset_country:
+                continue
+            parts = [preset_country]
+            if preset_region:
+                parts.append(preset_region)
+            if preset_location:
+                parts.append(preset_location)
+            label = " / ".join(parts)
+            if preset_time:
+                label += f" · {preset_time}"
+            self.preset.addItem(f"{label}  ({count})", (
+                preset_country, preset_region, preset_location, preset_time
+            ))
+        self.preset.currentIndexChanged.connect(self._apply_preset)
+        layout.addWidget(self.preset)
         form = QFormLayout()
         self.country = QComboBox()
         configure_geo_combo(self.country, COUNTRIES, "输入或选择国家")
@@ -53,6 +73,17 @@ class ObservationDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+    def _apply_preset(self, index: int) -> None:
+        value = self.preset.itemData(index)
+        if not isinstance(value, tuple) or len(value) != 4:
+            return
+        country, region, location, time = value
+        self.country.setCurrentText(country)
+        self._on_country_changed(country)
+        self.region.setCurrentText(region)
+        self.location.setText(location)
+        self.time.setText(time)
 
     def _on_country_changed(self, text: str) -> None:
         china = is_china(text)
