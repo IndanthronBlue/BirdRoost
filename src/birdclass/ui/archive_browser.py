@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QFileSystemWatcher, QSize, Qt, QTimer
+from PySide6.QtCore import QFileSystemWatcher, QSettings, QSize, Qt, QTimer
 from PySide6.QtGui import QIcon, QImageReader, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
@@ -42,10 +42,15 @@ class ArchiveBrowserWindow(QMainWindow):
         *,
         batch_id: str | None = None,
         parent: QWidget | None = None,
+        settings: QSettings | None = None,
     ) -> None:
         super().__init__(parent)
         self.output_root = Path(output_root)
         self.batch_id = batch_id
+        self._settings = settings or QSettings("BirdClass", "BirdClass")
+        self.language = str(self._settings.value("archive_tree_language", "zh"))
+        if self.language not in {"zh", "bilingual", "latin"}:
+            self.language = "zh"
         self.index = ArchiveIndex(self.output_root)
         self.library = ArchiveLibrary(self.output_root)
         self._tree_items: dict[tuple[str, ...], QTreeWidgetItem] = {}
@@ -81,6 +86,16 @@ class ArchiveBrowserWindow(QMainWindow):
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._on_search_changed)
         toolbar.addWidget(self.search, 1)
+
+        self.language_combo = QComboBox()
+        self.language_combo.addItem("中文", "zh")
+        self.language_combo.addItem("中英", "bilingual")
+        self.language_combo.addItem("拉丁", "latin")
+        self.language_combo.setToolTip("分类树显示语言；中文缺失时回退拉丁名")
+        self.language_combo.currentIndexChanged.connect(self._on_language_changed)
+        language_index = self.language_combo.findData(self.language)
+        self.language_combo.setCurrentIndex(max(0, language_index))
+        toolbar.addWidget(self.language_combo)
 
         self.batch_combo = QComboBox()
         self.batch_combo.setMinimumWidth(250)
@@ -135,10 +150,17 @@ class ArchiveBrowserWindow(QMainWindow):
         root.addWidget(self.summary_label)
 
         splitter = QSplitter()
+        self.splitter = splitter
+        splitter.setChildrenCollapsible(False)
+        splitter.setHandleWidth(8)
+        splitter.setStyleSheet(
+            "QSplitter::handle { background: palette(mid); }"
+            "QSplitter::handle:horizontal { width: 8px; }"
+        )
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["分类", "数量"])
         self.tree.setColumnWidth(0, 300)
-        self.tree.setMinimumWidth(260)
+        self.tree.setMinimumWidth(220)
         self.tree.itemSelectionChanged.connect(self._on_tree_selection)
         splitter.addWidget(self.tree)
 
@@ -149,10 +171,12 @@ class ArchiveBrowserWindow(QMainWindow):
         self.grid.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.grid.setMovement(QListWidget.Movement.Static)
         self.grid.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        self.grid.setMinimumWidth(300)
         self.grid.currentItemChanged.connect(self._on_grid_selection)
         splitter.addWidget(self.grid)
 
         detail = QWidget()
+        detail.setMinimumWidth(420)
         detail_layout = QVBoxLayout(detail)
         self.canvas = ZoomableImageCanvas()
         detail_layout.addWidget(self.canvas, 1)
@@ -176,7 +200,11 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.clicked.connect(self.correct_selected)
         detail_layout.addWidget(self.correct_button)
         splitter.addWidget(detail)
-        splitter.setSizes([300, 720, 520])
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(2, 2)
+        self._restore_splitter_sizes()
+        splitter.splitterMoved.connect(self._save_splitter_sizes)
         root.addWidget(splitter, 1)
 
         self.status_label = QLabel("就绪")
@@ -237,20 +265,24 @@ class ArchiveBrowserWindow(QMainWindow):
 
     def _collect_labels(self, entry: ArchiveEntry, labels: dict[tuple[str, ...], str]) -> None:
         path = entry.tree_path
-        for index, prefix in enumerate(path):
-            labels.setdefault(prefix, self._node_label(entry, index, prefix))
+        for index, _value in enumerate(path):
+            key = path[:index + 1]
+            labels.setdefault(key, self._node_label(entry, index, key))
 
-    @staticmethod
-    def _join_label(chinese: str, latin: str) -> str:
-        if chinese and latin and chinese != latin:
-            return f"{chinese} {latin}"
+    def _display_label(self, chinese: str, latin: str) -> str:
+        if self.language == "latin":
+            return latin or chinese
+        if self.language == "bilingual":
+            if chinese and latin and chinese != latin:
+                return f"{chinese} {latin}"
+            return chinese or latin
         return chinese or latin
 
     def _node_label(self, entry: ArchiveEntry, index: int, prefix: tuple[str, ...]) -> str:
         if entry.taxonomy is not None:
             if index < len(entry.taxonomy.hierarchy()):
                 _, chinese, latin = entry.taxonomy.hierarchy()[index]
-                return self._join_label(chinese, latin)
+                return self._display_label(chinese, latin)
         if prefix[0] == "未收录" and len(prefix) > 1:
             return prefix[-1]
         return prefix[-1]
@@ -430,6 +462,34 @@ class ArchiveBrowserWindow(QMainWindow):
         self.status_label.setText("就绪")
 
     # ---------- actions ----------
+
+    def _on_language_changed(self, _index: int) -> None:
+        language = self.language_combo.currentData()
+        if language not in {"zh", "bilingual", "latin"} or language == self.language:
+            return
+        self.language = language
+        self._settings.setValue("archive_tree_language", language)
+        self.refresh()
+
+    def _restore_splitter_sizes(self) -> None:
+        saved = self._settings.value("archive_splitter_sizes")
+        sizes = None
+        if isinstance(saved, (list, tuple)) and len(saved) == 3:
+            sizes = [int(value) for value in saved]
+        elif isinstance(saved, str) and saved:
+            try:
+                parts = [int(value) for value in saved.split(",")]
+                if len(parts) == 3:
+                    sizes = parts
+            except ValueError:
+                sizes = None
+        if sizes and all(value >= 150 for value in sizes):
+            self.splitter.setSizes(sizes)
+        else:
+            self.splitter.setSizes([280, 520, 760])
+
+    def _save_splitter_sizes(self, *_args) -> None:
+        self._settings.setValue("archive_splitter_sizes", self.splitter.sizes())
 
     def _on_search_changed(self, _text: str) -> None:
         self._refresh_grid()

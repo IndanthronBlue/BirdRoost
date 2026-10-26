@@ -304,3 +304,42 @@ def test_cleanup_replaced_requires_confirmation_and_deletes(qtbot, tmp_path: Pat
     browser.cleanup_replaced()
 
     assert not (output / "已纠正").exists()
+
+
+def test_tree_language_toggle_and_draggable_splitter(qtbot, tmp_path: Path):
+    from PySide6.QtCore import QSettings
+
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=new_batch_id(),
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    settings = QSettings(str(tmp_path / "archive.ini"), QSettings.Format.IniFormat)
+    browser = ArchiveBrowserWindow(output, settings=settings)
+    qtbot.addWidget(browser)
+    browser.resize(1400, 850)
+    browser.show()
+    qtbot.waitExposed(browser)
+
+    species_path = next(path for path in browser._tree_items if path[-1] == "Calidris alba")
+    order_path = species_path[:4]
+    genus_path = species_path[:6]
+    assert browser._tree_items[order_path].text(0) == "鸻形目"
+    assert browser._tree_items[genus_path].text(0) == "滨鹬属"
+    assert browser._tree_items[species_path].text(0) == "三趾滨鹬"
+
+    browser.language_combo.setCurrentIndex(browser.language_combo.findData("bilingual"))
+    assert "鸻形目 CHARADRIIFORMES" == browser._tree_items[order_path].text(0)
+    assert "滨鹬属 Calidris" == browser._tree_items[genus_path].text(0)
+    assert "三趾滨鹬 Calidris alba" == browser._tree_items[species_path].text(0)
+
+    browser.language_combo.setCurrentIndex(browser.language_combo.findData("latin"))
+    assert browser._tree_items[order_path].text(0) == "CHARADRIIFORMES"
+    assert browser._tree_items[genus_path].text(0) == "Calidris"
+    assert browser._tree_items[species_path].text(0) == "Calidris alba"
+
+    assert browser.splitter.count() == 3
+    assert browser.splitter.handleWidth() >= 8
+    assert browser.splitter.childrenCollapsible() is False
+    assert settings.value("archive_tree_language") == "latin"

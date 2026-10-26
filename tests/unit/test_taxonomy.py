@@ -50,6 +50,7 @@ def test_hierarchy_and_label_fallbacks():
     assert hierarchy[0][1:] == ("动物界", "Animalia")
     assert hierarchy[3][1] == "鸻形目"
     assert hierarchy[4][1] == "鹬科"
+    assert hierarchy[5][1] == "滨鹬属"
     assert hierarchy[6][1] == "三趾滨鹬"
 
 

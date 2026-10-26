@@ -27,6 +27,7 @@ class Taxon:
     name_zh_trad: str
     name_en: str
     genus: str
+    genus_zh: str
     family: str
     order: str
     animal_class: str
@@ -51,7 +52,7 @@ class Taxon:
 
     @property
     def genus_label(self) -> str:
-        return self.genus
+        return self.genus_zh or self.genus
 
     def tree_path(self) -> tuple[str, ...]:
         return (
@@ -117,6 +118,7 @@ def load_taxonomy() -> "Taxonomy":
             name_zh_trad=row.get("name_zh_trad", ""),
             name_en=row.get("name_en", ""),
             genus=row["genus"],
+            genus_zh=row.get("genus_zh", ""),
             family=row["family"],
             order=row["order"],
             animal_class=row["class"],
