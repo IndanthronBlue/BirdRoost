@@ -1326,6 +1326,19 @@ class ArchiveBrowserWindow(QMainWindow):
         self._refresh_grid()
         self.status_label.setText(f"已添加别名：{dialog.alias}")
 
+    def _select_grid_successor(self, successor: str | None, fallback_row: int = 0) -> None:
+        if not self.grid.count():
+            return
+        target = None
+        if successor:
+            for row in range(self.grid.count()):
+                if self.grid.item(row).data(Qt.ItemDataRole.UserRole) == successor:
+                    target = row
+                    break
+        if target is None:
+            target = min(max(0, fallback_row), self.grid.count() - 1)
+        self.grid.setCurrentRow(target)
+
     def _pending_successor(self) -> tuple[str | None, int]:
         paths = [
             self.grid.item(row).data(Qt.ItemDataRole.UserRole)
@@ -1601,6 +1614,8 @@ class ArchiveBrowserWindow(QMainWindow):
         )
         if not dialog.exec():
             return
+        successor, row = self._pending_successor()
+        selected_tree = self._selected_tree_path()
         group = self.library.read_group(entry.group_id)
         old = dict(group.get("observation") or {})
         old.setdefault("legacy_location", old.get("location", ""))
@@ -1613,6 +1628,15 @@ class ArchiveBrowserWindow(QMainWindow):
         self.library.write_group(group)
         self.status_label.setText("已修改观测信息")
         self.refresh()
+        if selected_tree and selected_tree in self._tree_items:
+            self.tree.blockSignals(True)
+            try:
+                self.tree.setCurrentItem(self._tree_items[selected_tree])
+                self.tree.scrollToItem(self._tree_items[selected_tree])
+            finally:
+                self.tree.blockSignals(False)
+            self._refresh_grid()
+        self._select_grid_successor(successor, row)
 
     def open_lightbox(self) -> None:
         entries = []

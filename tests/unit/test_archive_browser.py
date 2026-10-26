@@ -996,3 +996,43 @@ def test_location_filter_uses_country_region_place(qtbot, tmp_path: Path):
     browser.location_combo.setCurrentIndex(place_index)
     assert browser.grid.count() == 1
     assert browser.grid.item(0).data(0x0100) == "三趾滨鹬/a.jpg"
+
+
+def test_edit_observation_selects_next_image(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    for name, latin in (("三趾滨鹬", "Calidris alba"), ("欧乌鸫", "Turdus merula"), ("黑腹滨鹬", "Calidris alpina")):
+        make_image(output / name / "a.jpg")
+        group = add_group(library, f"{name}/a.jpg", batch_id=batch,
+                          species_cn=name, species_latin=latin,
+                          location="南汇", observed_at="2024")
+        group["observation"].update({"country": "中国", "region": "上海"})
+        library.write_group(group)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.tree.setCurrentItem(browser._tree_items[("动物界",)])
+    browser.grid.setCurrentRow(0)
+
+    class FakeDialog:
+        country_text = "中国"
+        region_text = "上海"
+        location_text = "世纪公园"
+        time_text = "2024-03"
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def exec(self):
+            return True
+
+    import pytest
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr("birdclass.ui.archive_browser.ObservationDialog", FakeDialog)
+    try:
+        browser.edit_observation()
+    finally:
+        monkeypatch.undo()
+
+    assert browser.grid.currentRow() == 1
