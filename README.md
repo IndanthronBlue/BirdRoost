@@ -138,6 +138,25 @@ python -m birdclass
 - API Key 默认不写入配置文件或日志。
 - 临时压缩图仅用于上传，任务结束后删除；归档复制件始终来自原图。
 
+## macOS 终端提示
+
+从终端运行 `python -m birdclass` 时，偶尔会看到类似：
+
+```text
+error messaging the mach port for IMKCFRunLoopWakeUpReliable
+TSM AdjustCapsLockLEDForKeyTransitionHandling - _ISSetPhysicalKeyboardCapsLockLED Inhibit
+```
+
+这是 macOS 输入法 InputMethodKit / Text Services Manager 的系统日志，不是 Python 异常，也不是 BirdRoost 的错误；应用会继续运行。只有出现 Python `Traceback` 才是程序错误。
+
+如希望终端安静一些，可以把标准错误重定向到日志文件：
+
+```bash
+python -m birdclass 2>birdroost-stderr.log
+```
+
+不建议全局屏蔽这类系统日志，以免同时隐藏真正的 Python 错误。
+
 ## 开发与测试
 
 安装开发依赖并运行测试：
