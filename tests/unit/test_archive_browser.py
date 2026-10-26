@@ -13,12 +13,14 @@ def make_image(path: Path, size=(80, 60)) -> None:
 
 
 def add_group(library: ArchiveLibrary, relative_path: str, *, batch_id: str,
-              species_cn: str, species_latin: str, box=(0.1, 0.1, 0.5, 0.5)) -> dict:
+              species_cn: str, species_latin: str, box=(0.1, 0.1, 0.5, 0.5),
+              location: str = "", observed_at: str = "") -> dict:
     group = {
         "schema_version": 1,
         "group_id": new_group_id(),
         "batch_id": batch_id,
         "status": "completed",
+        "observation": {"location": location, "time": observed_at},
         "targets": [{
             "target_index": 0,
             "box": list(box),
@@ -97,6 +99,9 @@ def test_browser_refresh_adds_new_species(qtbot, tmp_path: Path):
     browser = ArchiveBrowserWindow(output)
     qtbot.addWidget(browser)
     assert any(path[-1] == "Turdus merula" for path in browser._tree_items)
+    existing_node = browser._tree_items[
+        next(path for path in browser._tree_items if path[-1] == "Turdus merula")
+    ]
 
     make_image(output / "三趾滨鹬" / "b.jpg")
     add_group(library, "三趾滨鹬/b.jpg", batch_id=batch,
@@ -107,6 +112,13 @@ def test_browser_refresh_adds_new_species(qtbot, tmp_path: Path):
     assert browser._tree_items[
         next(path for path in browser._tree_items if path[-1] == "Calidris alba")
     ].text(1) == "1"
+    assert browser._tree_items[
+        next(path for path in browser._tree_items if path[-1] == "Turdus merula")
+    ] is existing_node
+
+    (output / "三趾滨鹬" / "b.jpg").unlink()
+    browser.refresh()
+    assert not any(path[-1] == "Calidris alba" for path in browser._tree_items)
 
 
 def test_browser_batch_filter_and_show_all(qtbot, tmp_path: Path):
@@ -480,3 +492,63 @@ def test_completion_display_text_is_reduced_to_species_name(qtbot, tmp_path: Pat
     assert browser.grid.count() == 1
     assert browser.grid.item(0).data(0x0100) == "红翅凤头鹃/DSC_7699.jpg"
     assert "没有匹配" not in browser.status_label.text()
+
+
+def test_location_filter_and_sorting(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    make_image(output / "欧乌鸫" / "b.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=batch,
+              species_cn="三趾滨鹬", species_latin="Calidris alba",
+              location="云南大理", observed_at="2026-01-02")
+    add_group(library, "欧乌鸫/b.jpg", batch_id=batch,
+              species_cn="欧乌鸫", species_latin="Turdus merula",
+              location="四川成都", observed_at="2026-01-01")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+
+    assert browser.location_combo.findData("云南大理") > 0
+    browser.location_combo.setCurrentIndex(browser.location_combo.findData("云南大理"))
+    assert browser.grid.count() == 1
+    assert browser.grid.item(0).data(0x0100) == "三趾滨鹬/a.jpg"
+
+    browser.location_combo.setCurrentIndex(0)
+    browser.sort_combo.setCurrentIndex(browser.sort_combo.findData("species"))
+    paths = [browser.grid.item(i).data(0x0100) for i in range(browser.grid.count())]
+    assert paths == sorted(paths, key=lambda value: value.split("/", 1)[0].casefold())
+
+
+def test_batch_issues_button_and_dialog(qtbot, tmp_path: Path):
+    from PySide6.QtCore import Qt
+    from birdclass.ui.batch_issues import BatchIssuesDialog
+
+    output = tmp_path / "output"
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    library.write_group({
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": batch,
+        "status": "failed",
+        "source_relative_path": "bad.jpg",
+        "error_code": "ImageValidationError",
+        "error_message": "broken",
+        "targets": [],
+        "copies": [],
+    })
+    browser = ArchiveBrowserWindow(output, batch_id=batch)
+    qtbot.addWidget(browser)
+    assert browser.issues_button.isVisible() or not browser.isVisible()
+    assert "1" in browser.issues_button.text()
+    issues = browser.index.batch_issues(batch)
+    assert issues[0]["status"] == "failed"
+
+    dialog = BatchIssuesDialog(batch, issues)
+    qtbot.addWidget(dialog)
+    dialog.show()
+    assert dialog.windowTitle().startswith("批次失败/待复核")
+    dialog.accept()

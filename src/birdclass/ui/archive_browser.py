@@ -45,7 +45,9 @@ from ..archive_index import ArchiveEntry, ArchiveIndex
 from ..correction import CorrectionError, correct_archive_copy
 from ..library import ArchiveLibrary
 from ..library_import import import_csv_to_library
+from .batch_issues import BatchIssuesDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
+from .lightbox import LightboxDialog
 from .species_picker import SpeciesPickerDialog
 
 
@@ -208,6 +210,9 @@ class ArchiveBrowserWindow(QMainWindow):
         self.copy_path_button = QPushButton("复制路径")
         self.copy_path_button.clicked.connect(self.copy_path)
         toolbar.addWidget(self.copy_path_button)
+        self.lightbox_button = QPushButton("全屏")
+        self.lightbox_button.clicked.connect(self.open_lightbox)
+        toolbar.addWidget(self.lightbox_button)
         self.refresh_button = QPushButton("刷新")
         self.refresh_button.clicked.connect(self.refresh)
         toolbar.addWidget(self.refresh_button)
@@ -220,6 +225,28 @@ class ArchiveBrowserWindow(QMainWindow):
         self.import_button.clicked.connect(self.import_old_csv)
         toolbar.addWidget(self.import_button)
         root.addLayout(toolbar)
+
+        filter_row = QHBoxLayout()
+        filter_row.addWidget(QLabel("观测地"))
+        self.location_combo = QComboBox()
+        self.location_combo.setMinimumWidth(180)
+        self.location_combo.addItem("全部观测地", "")
+        self.location_combo.currentIndexChanged.connect(self._on_location_changed)
+        filter_row.addWidget(self.location_combo)
+        filter_row.addWidget(QLabel("排序"))
+        self.sort_combo = QComboBox()
+        self.sort_combo.addItem("文件名", "filename")
+        self.sort_combo.addItem("观测时间", "observed")
+        self.sort_combo.addItem("修改时间", "mtime")
+        self.sort_combo.addItem("物种名", "species")
+        self.sort_combo.currentIndexChanged.connect(self._on_sort_changed)
+        filter_row.addWidget(self.sort_combo)
+        filter_row.addStretch(1)
+        self.issues_button = QPushButton("失败/待复核")
+        self.issues_button.clicked.connect(self.open_batch_issues)
+        self.issues_button.setVisible(False)
+        filter_row.addWidget(self.issues_button)
+        root.addLayout(filter_row)
 
         self.loading_widget = QWidget()
         loading_layout = QVBoxLayout(self.loading_widget)
@@ -266,6 +293,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._update_grid_metrics()
         self.grid.setMinimumWidth(300)
         self.grid.currentItemChanged.connect(self._on_grid_selection)
+        self.grid.itemDoubleClicked.connect(lambda _item: self.open_lightbox())
         self.grid.verticalScrollBar().valueChanged.connect(
             lambda _value: self._thumbnail_timer.start()
         )
@@ -333,7 +361,12 @@ class ArchiveBrowserWindow(QMainWindow):
             }
             self.index.refresh()
             self._update_search_suggestions()
+            self._update_location_combo()
             self._update_batch_combo()
+            self.issues_button.setVisible(bool(self.batch_id))
+            if self.batch_id:
+                issue_count = len(self.index.batch_issues(self.batch_id))
+                self.issues_button.setText(f"失败/待复核 ({issue_count})")
             entries = self._visible_entries()
             self._rebuild_tree(entries)
             self._restore_tree_state(expanded)
@@ -348,25 +381,68 @@ class ArchiveBrowserWindow(QMainWindow):
     def _visible_entries(self) -> list[ArchiveEntry]:
         return self.index.filter_entries(batch_id=self.batch_id)
 
+    def _update_location_combo(self) -> None:
+        current = self.location_combo.currentData() or ""
+        locations = self.index.locations(self.batch_id)
+        self.location_combo.blockSignals(True)
+        self.location_combo.clear()
+        self.location_combo.addItem("全部观测地", "")
+        for location in locations:
+            self.location_combo.addItem(location, location)
+        index = self.location_combo.findData(current)
+        self.location_combo.setCurrentIndex(max(0, index))
+        self.location_combo.blockSignals(False)
+
+    def _on_location_changed(self, _index: int) -> None:
+        self._refresh_grid()
+
+    def _on_sort_changed(self, _index: int) -> None:
+        self._refresh_grid()
+
+    def _sort_entries(self, entries: list[ArchiveEntry]) -> list[ArchiveEntry]:
+        mode = self.sort_combo.currentData()
+        if mode == "observed":
+            return sorted(entries, key=lambda entry: (entry.observation_time, entry.relative_path))
+        if mode == "mtime":
+            def modified(entry: ArchiveEntry) -> float:
+                try:
+                    return entry.absolute_path.stat().st_mtime
+                except OSError:
+                    return 0.0
+            return sorted(entries, key=lambda entry: (modified(entry), entry.relative_path))
+        if mode == "species":
+            return sorted(entries, key=lambda entry: (entry.display_name.casefold(), entry.relative_path))
+        return sorted(entries, key=lambda entry: entry.relative_path.casefold())
+
     def _rebuild_tree(self, entries: list[ArchiveEntry]) -> None:
-        self.tree.clear()
-        self._tree_items = {}
         counts = self.index.count_by_tree_path(entries)
         labels: dict[tuple[str, ...], str] = {}
         for entry in entries:
             self._collect_labels(entry, labels)
 
+        # Remove nodes that disappeared, deepest first, so unchanged items keep
+        # their identity, expansion state and selection.
+        for path in sorted(list(self._tree_items), key=len, reverse=True):
+            if path in counts:
+                continue
+            item = self._tree_items.pop(path)
+            parent = item.parent()
+            if parent is not None:
+                parent.removeChild(item)
+
         def ensure(path: tuple[str, ...]) -> QTreeWidgetItem:
-            if path in self._tree_items:
-                return self._tree_items[path]
-            parent = ensure(path[:-1]) if len(path) > 1 else None
-            item = QTreeWidgetItem([labels.get(path, path[-1]), ""])
-            item.setData(0, Qt.ItemDataRole.UserRole, list(path))
-            if parent is None:
-                self.tree.addTopLevelItem(item)
+            item = self._tree_items.get(path)
+            if item is None:
+                parent = ensure(path[:-1]) if len(path) > 1 else None
+                item = QTreeWidgetItem([labels.get(path, path[-1]), ""])
+                item.setData(0, Qt.ItemDataRole.UserRole, list(path))
+                if parent is None:
+                    self.tree.addTopLevelItem(item)
+                else:
+                    parent.addChild(item)
+                self._tree_items[path] = item
             else:
-                parent.addChild(item)
-            self._tree_items[path] = item
+                item.setText(0, labels.get(path, path[-1]))
             return item
 
         for path in sorted(counts, key=lambda value: (len(value), value)):
@@ -530,9 +606,11 @@ class ArchiveBrowserWindow(QMainWindow):
         entries = self.index.filter_entries(
             tree_path=tree_path,
             batch_id=self.batch_id,
+            location=self.location_combo.currentData() or "",
         )
         if query:
             entries = [entry for entry in entries if self._entry_matches(entry, query)]
+        entries = self._sort_entries(entries)
         self.grid.blockSignals(True)
         self.grid.clear()
         self._thumbnail_items = {}
@@ -661,6 +739,11 @@ class ArchiveBrowserWindow(QMainWindow):
             f"路径：{entry.relative_path}",
             f"分类：{entry.latin_name or '未匹配 taxonomy'}",
         ]
+        if entry.observation_location:
+            observed = entry.observation_location
+            if entry.observation_time:
+                observed += f" · {entry.observation_time}"
+            details.append(f"观测地：{observed}")
         if entry.batch_id:
             details.append(f"批次：{entry.batch_id}")
         if entry.group_id:
@@ -811,6 +894,31 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self.status_label.setText("已显示检测框" if checked else "已隐藏检测框")
 
+    def open_lightbox(self) -> None:
+        entries = []
+        for row in range(self.grid.count()):
+            relative_path = self.grid.item(row).data(Qt.ItemDataRole.UserRole)
+            entry = next(
+                (value for value in self.index.entries
+                 if value.relative_path == relative_path),
+                None,
+            )
+            if entry is not None:
+                entries.append(entry)
+        if not entries:
+            self.status_label.setText("没有可预览的图片")
+            return
+        current = self.grid.currentRow()
+        dialog = LightboxDialog(
+            entries, max(0, current),
+            boxes_provider=lambda entry: self._entry_boxes(entry),
+            parent=self,
+        )
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        dialog.destroyed.connect(lambda _obj=None: setattr(self, "_lightbox", None))
+        self._lightbox = dialog
+        dialog.showFullScreen()
+
     def copy_image(self, annotated: bool) -> None:
         image = self.canvas.render_image(include_boxes=annotated)
         if image is None or image.isNull():
@@ -898,6 +1006,13 @@ class ArchiveBrowserWindow(QMainWindow):
             message += f"\n有 {len(result.errors)} 条记录解析失败。"
         QMessageBox.information(self, "导入旧 CSV", message)
         self.refresh()
+
+    def open_batch_issues(self) -> None:
+        if not self.batch_id:
+            return
+        issues = self.index.batch_issues(self.batch_id)
+        dialog = BatchIssuesDialog(self.batch_id, issues, self)
+        dialog.exec()
 
     def cleanup_replaced(self) -> None:
         folder = self.output_root / "已纠正"
@@ -1013,6 +1128,10 @@ class ArchiveBrowserWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._closed = True
+        try:
+            self.index.close()
+        except Exception:
+            pass
         self._refresh_timer.stop()
         self._thumbnail_timer.stop()
         try:

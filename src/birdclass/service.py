@@ -567,6 +567,8 @@ class ClassificationService:
             "targets": target_records,
             "copies": copies,
             "result_id": event.result_id,
+            "error_code": event.error_code,
+            "error_message": event.error_message,
         }
         try:
             library.write_group(group)
