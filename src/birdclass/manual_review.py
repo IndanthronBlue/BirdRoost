@@ -273,3 +273,31 @@ def delete_archive_photo(library: ArchiveLibrary, entry: ArchiveEntry) -> str:
         "new_relative_path": destination.relative_to(output).as_posix(),
     })
     return destination.relative_to(output).as_posix()
+
+
+def mark_already_classified(library: ArchiveLibrary, entry: ArchiveEntry) -> None:
+    """Remove pending copies after user confirms the photo was already handled."""
+    group = _ensure_group(library, entry)
+    pending = _pending_copies(group)
+    if not pending:
+        raise ManualReviewError("该 group 没有待复核副本")
+    output = library.output_root.resolve()
+    stamp = _stamp()
+    for copy in pending:
+        old = output / str(copy.get("relative_path", ""))
+        if not old.is_file():
+            continue
+        destination = output / DELETED_DIR / stamp / str(copy.get("relative_path", ""))
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(old), str(destination))
+    group["copies"] = [copy for copy in group.get("copies", []) if copy not in pending]
+    group["status"] = "completed" if group["copies"] else "already_classified"
+    group["error_code"] = ""
+    group["error_message"] = ""
+    library.write_group(group)
+    library.append_correction({
+        "corrected_at": now_iso(),
+        "group_id": entry.group_id,
+        "action": "already_classified",
+        "old_relative_paths": [copy.get("relative_path", "") for copy in pending],
+    })

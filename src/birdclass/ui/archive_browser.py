@@ -47,7 +47,12 @@ from ..archive_index import ArchiveEntry, ArchiveIndex
 from ..correction import CorrectionError, correct_archive_copy
 from ..library import ArchiveLibrary
 from ..library_import import import_csv_to_library
-from ..manual_review import ManualReviewError, delete_archive_photo, resolve_manual
+from ..manual_review import (
+    ManualReviewError,
+    delete_archive_photo,
+    mark_already_classified,
+    resolve_manual,
+)
 from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
@@ -359,9 +364,16 @@ class ArchiveBrowserWindow(QMainWindow):
         self.manual_name = QLineEdit()
         self.manual_name.setPlaceholderText("人工填写鸟种中文名")
         self.manual_name.setClearButtonEnabled(True)
-        self.manual_name.textChanged.connect(
-            lambda text: self.manual_archive_button.setEnabled(bool(text.strip()))
-        )
+        self.manual_completer = QCompleter([], self)
+        self.manual_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.manual_completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        self.manual_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        self.manual_completer.setMaxVisibleItems(12)
+        self.manual_model = QStringListModel([], self)
+        self.manual_completer.setModel(self.manual_model)
+        self.manual_completer.activated.connect(self._on_manual_completion)
+        self.manual_name.setCompleter(self.manual_completer)
+        self.manual_name.textChanged.connect(self._on_manual_name_changed)
         name_row.addWidget(self.manual_name, 1)
         self.manual_archive_button = QPushButton("人工归档")
         self.manual_archive_button.setEnabled(False)
@@ -381,6 +393,7 @@ class ArchiveBrowserWindow(QMainWindow):
             ("无鸟", "no_bird"),
             ("非鸟动物", "non_bird_animal"),
             ("风景", "scenery"),
+            ("已分类", "already_classified"),
             ("稍后处理", "defer"),
         ):
             button = QPushButton(label)
@@ -443,6 +456,7 @@ class ArchiveBrowserWindow(QMainWindow):
             }
             self.index.refresh()
             self._update_search_suggestions()
+            self._update_manual_suggestions()
             self._update_location_combo()
             self._update_batch_combo()
             self.issues_button.setVisible(bool(self.batch_id))
@@ -639,6 +653,65 @@ class ArchiveBrowserWindow(QMainWindow):
             suggestions.append(" · ".join(parts))
         self._search_suggestions = suggestions
         self.search_model.setStringList(suggestions)
+
+    def _update_manual_suggestions(self) -> None:
+        if not hasattr(self, "manual_model"):
+            return
+        records: dict[str, tuple[str, str, str, str, tuple[str, ...]]] = {}
+        for entry in self.index.entries:
+            if entry.taxonomy is None:
+                continue
+            key = entry.taxonomy.scientific_name.casefold()
+            if key in records:
+                continue
+            name = entry.display_name
+            latin = entry.latin_name
+            english = entry.taxonomy.name_en
+            full, initials = self._pinyin_aliases(name)
+            user_aliases = tuple(
+                alias for alias, scientific in self._user_aliases.items()
+                if scientific == entry.taxonomy.scientific_name
+            )
+            records[key] = (name, latin, english, initials, user_aliases)
+        suggestions = []
+        for name, latin, english, initials, aliases in sorted(
+            records.values(), key=lambda value: value[0].casefold()
+        ):
+            parts = [name]
+            if latin and latin != name:
+                parts.append(latin)
+            if english and english not in {name, latin}:
+                parts.append(english)
+            if initials:
+                parts.append(initials)
+            parts.extend(aliases)
+            suggestions.append(" · ".join(parts))
+        self.manual_model.setStringList(suggestions)
+        self._manual_suggestions_loaded = True
+
+    def _on_manual_name_changed(self, text: str) -> None:
+        if " · " in text:
+            name = text.split(" · ", 1)[0].strip()
+            if name:
+                self.manual_name.blockSignals(True)
+                self.manual_name.setText(name)
+                self.manual_name.setCursorPosition(len(name))
+                self.manual_name.blockSignals(False)
+                text = name
+        self.manual_archive_button.setEnabled(bool(text.strip()))
+        self.manual_completer.setCompletionPrefix(text.strip())
+        if text.strip() and self.manual_name.hasFocus():
+            self.manual_completer.complete()
+        elif not text.strip():
+            self.manual_completer.popup().hide()
+
+    def _on_manual_completion(self, value) -> None:
+        text = value.data() if hasattr(value, "data") else str(value)
+        name = str(text).split(" · ", 1)[0].strip()
+        if name:
+            self.manual_name.setText(name)
+            self.manual_name.setCursorPosition(len(name))
+        self.manual_completer.popup().hide()
 
     def _entry_matches(self, entry: ArchiveEntry, query: str) -> bool:
         needle = query.casefold()
@@ -1120,7 +1193,7 @@ class ArchiveBrowserWindow(QMainWindow):
              if value.relative_path == self._selected_entry_path),
             None,
         )
-        name = self.manual_name.text().strip()
+        name = self.manual_name.text().split(" · ", 1)[0].strip()
         if entry is None or not name:
             return
         try:
@@ -1137,6 +1210,23 @@ class ArchiveBrowserWindow(QMainWindow):
         self.refresh()
 
     def resolve_pending(self, action: str) -> None:
+        if action == "already_classified":
+            entry = next(
+                (value for value in self.index.entries
+                 if value.relative_path == self._selected_entry_path),
+                None,
+            )
+            if entry is None:
+                return
+            try:
+                mark_already_classified(self.library, entry)
+            except ManualReviewError as exc:
+                QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
+                return
+            self._selected_entry_path = ""
+            self.status_label.setText("已从待复核移除（可在已删除中找回）")
+            self.refresh()
+            return
         if action == "defer":
             self.status_label.setText("已保留在待复核")
             return

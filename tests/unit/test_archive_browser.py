@@ -719,3 +719,54 @@ def test_user_alias_is_saved_and_searchable(qtbot, tmp_path: Path):
     assert "伊比利亚灰喜鹊" in settings.value("user_taxonomy_aliases")
     browser.search.setText("伊比利亚灰喜鹊")
     assert browser.grid.count() == 1
+
+
+def test_manual_name_completer_contains_pinyin_suggestion(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "黑腹滨鹬" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    add_group(library, "黑腹滨鹬/a.jpg", batch_id=new_batch_id(),
+              species_cn="黑腹滨鹬", species_latin="Calidris alpina")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.show()
+
+    assert any("hfby" in suggestion for suggestion in browser.manual_model.stringList())
+
+
+def test_already_classified_removes_pending_copy(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    pending = output / "待复核" / "bird.jpg"
+    pending.parent.mkdir(parents=True)
+    make_image(pending)
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": new_batch_id(),
+        "status": "failed",
+        "source_relative_path": "bird.jpg",
+        "targets": [],
+        "copies": [{
+            "relative_path": "待复核/bird.jpg",
+            "species_cn": "",
+            "species_latin": "",
+            "target_indices": [],
+            "pending": True,
+        }],
+    }
+    library.write_group(group)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    entry = browser.index.entries[0]
+    browser.tree.setCurrentItem(browser._tree_items[entry.tree_path])
+    browser.grid.setCurrentRow(0)
+
+    browser.resolve_pending("already_classified")
+
+    assert not pending.exists()
+    assert list((output / "已删除").rglob("bird.jpg"))
+    assert library.read_group(group["group_id"])["status"] == "already_classified"
+    assert not any(entry.special == "待复核" for entry in browser.index.entries)
