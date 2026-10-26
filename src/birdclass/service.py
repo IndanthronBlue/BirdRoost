@@ -505,17 +505,27 @@ class ClassificationService:
             target_records.append(record)
 
         copies: list[dict] = []
+        copies_by_path: dict[str, dict] = {}
         if event.archive_payload:
             try:
                 for value in json.loads(event.archive_payload)["selections"]:
                     saved = ArchiveSelection.from_dict(value)
-                    if saved.destination_path:
-                        copies.append({
-                            "relative_path": saved.destination_path,
-                            "species_cn": saved.candidate.name_cn,
-                            "species_latin": saved.candidate.name_latin,
-                            "target_indices": list(saved.source_targets),
-                        })
+                    if not saved.destination_path:
+                        continue
+                    existing = copies_by_path.get(saved.destination_path)
+                    if existing is not None:
+                        existing["target_indices"] = list(dict.fromkeys(
+                            [*existing["target_indices"], *saved.source_targets]
+                        ))
+                        continue
+                    record = {
+                        "relative_path": saved.destination_path,
+                        "species_cn": saved.candidate.name_cn,
+                        "species_latin": saved.candidate.name_latin,
+                        "target_indices": list(saved.source_targets),
+                    }
+                    copies.append(record)
+                    copies_by_path[saved.destination_path] = record
             except (ValueError, KeyError, TypeError, InvalidOperation):
                 pass
         if not copies and event.destination_path:

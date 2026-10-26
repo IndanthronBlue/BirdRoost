@@ -64,11 +64,18 @@ def _copy_records(event, destinations: list[str], output_root: Path) -> list[dic
                 if destination not in destinations:
                     continue
                 candidate = value.get("candidate") or {}
+                target_indices = list(value.get("source_targets", []))
+                if destination in by_path:
+                    existing = by_path[destination]
+                    existing["target_indices"] = list(dict.fromkeys(
+                        [*existing.get("target_indices", []), *target_indices]
+                    ))
+                    continue
                 record = {
                     "relative_path": destination,
                     "species_cn": candidate.get("name_cn") or event.species_cn,
                     "species_latin": candidate.get("name_latin") or event.species_latin,
-                    "target_indices": list(value.get("source_targets", [])),
+                    "target_indices": target_indices,
                 }
                 records.append(record)
                 by_path[destination] = record
@@ -125,10 +132,18 @@ def import_csv_to_library(csv_path: Path, output_root: Path) -> ImportResult:
         for group in library.load_groups()
         for copy in group.get("copies", [])
     }
+    priority = {"failed": 1, "review_pending": 2, "completed": 3}
+    by_path = {}
     for event in events.values():
-        if event.status not in {"completed", "review_pending", "failed"}:
-            result.skipped += 1
+        if event.status not in priority:
             continue
+        current = by_path.get(event.identity.relative_path)
+        if current is None or (
+            priority[event.status], event.updated_at
+        ) > (priority[current.status], current.updated_at):
+            by_path[event.identity.relative_path] = event
+    statuses = {"completed": 0, "deferred": 0, "failed": 0}
+    for relative_path, event in sorted(by_path.items()):
         destinations = _existing_destinations(event, output_root)
         if not destinations or any(destination in existing_copies for destination in destinations):
             result.skipped += 1
@@ -164,6 +179,9 @@ def import_csv_to_library(csv_path: Path, output_root: Path) -> ImportResult:
             existing_copies.update(copy["relative_path"] for copy in copies)
             result.groups.append(group["group_id"])
             result.imported += 1
+            statuses["completed" if event.status == "completed" else (
+                "deferred" if event.status == "review_pending" else "failed"
+            )] += 1
         except (OSError, ValueError, TypeError, KeyError) as exc:
             result.errors.append(f"{event.identity.relative_path}: {exc}")
             result.skipped += 1
@@ -177,9 +195,9 @@ def import_csv_to_library(csv_path: Path, output_root: Path) -> ImportResult:
         "groups": result.groups,
         "summary": {
             "total": result.imported + result.skipped,
-            "completed": result.imported,
-            "failed": 0,
-            "deferred": 0,
+            "completed": statuses["completed"],
+            "failed": statuses["failed"],
+            "deferred": statuses["deferred"],
         },
         "imported_from_csv": str(csv_path),
     })
