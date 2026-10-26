@@ -571,6 +571,14 @@ class ArchiveBrowserWindow(QMainWindow):
             self.tree.setCurrentItem(selected_item)
 
     def _on_tree_selection(self) -> None:
+        if self.search.text().strip():
+            self.search.blockSignals(True)
+            try:
+                self.search.clear()
+                self.search_completer.setCompletionPrefix("")
+                self.search_completer.popup().hide()
+            finally:
+                self.search.blockSignals(False)
         self._refresh_grid()
 
     def _selected_tree_path(self) -> tuple[str, ...] | None:
@@ -705,8 +713,34 @@ class ArchiveBrowserWindow(QMainWindow):
             self.grid.setCurrentItem(selected_item)
         else:
             self._clear_detail()
+        if query and entries:
+            self._sync_tree_to_entries(entries)
         self._update_summary()
         self._thumbnail_timer.start()
+
+    def _sync_tree_to_entries(self, entries: list[ArchiveEntry]) -> None:
+        paths = [entry.tree_path for entry in entries]
+        prefix = paths[0]
+        for path in paths[1:]:
+            common = 0
+            while common < min(len(prefix), len(path)) and prefix[common] == path[common]:
+                common += 1
+            prefix = prefix[:common]
+            if not prefix:
+                return
+        item = self._tree_items.get(prefix)
+        if item is None or item is self.tree.currentItem():
+            return
+        parent = item.parent()
+        while parent is not None:
+            parent.setExpanded(True)
+            parent = parent.parent()
+        self.tree.blockSignals(True)
+        try:
+            self.tree.setCurrentItem(item)
+            self.tree.scrollToItem(item)
+        finally:
+            self.tree.blockSignals(False)
 
     @staticmethod
     def _grid_text(entry: ArchiveEntry) -> str:

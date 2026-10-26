@@ -481,6 +481,8 @@ def test_search_is_global_when_tree_has_a_different_branch_selected(qtbot, tmp_p
     assert browser.grid.count() == 1
     assert browser.grid.item(0).data(0x0100) == "灰斑鸻/b.jpg"
     assert "没有匹配" not in browser.status_label.text()
+    selected_path = browser.tree.currentItem().data(0, 0x0100)
+    assert selected_path[-1] == "Pluvialis squatarola"
 
 
 def test_completion_display_text_is_reduced_to_species_name(qtbot, tmp_path: Path):
