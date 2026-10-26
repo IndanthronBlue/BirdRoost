@@ -438,6 +438,7 @@ class ArchiveBrowserWindow(QMainWindow):
                 item.setData(0, Qt.ItemDataRole.UserRole, list(path))
                 if parent is None:
                     self.tree.addTopLevelItem(item)
+                    item.setExpanded(True)
                 else:
                     parent.addChild(item)
                 self._tree_items[path] = item
@@ -448,9 +449,6 @@ class ArchiveBrowserWindow(QMainWindow):
         for path in sorted(counts, key=lambda value: (len(value), value)):
             item = ensure(path)
             item.setText(1, str(counts[path]))
-        for path, item in self._tree_items.items():
-            if len(path) == 1:
-                item.setExpanded(True)
         if not self._initialized:
             self._initialized = True
             self.tree.expandToDepth(1)

@@ -219,127 +219,476 @@ family,Vangidae,钩嘴鵙科,Catalogue of Life via GBIF; simplified character no
 family,Vireonidae,绿鹃科,Catalogue of Life via GBIF; simplified character normalization
 family,Zeledoniidae,冠鹩鸫科,Catalogue of Life via GBIF; simplified character normalization
 family,Zosteropidae,繡眼科,Catalogue of Life via GBIF; simplified character normalization
-genus,Accipiter,雀鹰屬,Catalogue of Life via GBIF; curated fallback
+genus,Accipiter,雀鹰属,Catalogue of Life via GBIF; curated fallback
 genus,Acrocephalus,苇莺属,Catalogue of Life via GBIF; curated fallback
-genus,Actitis,磯鹬屬,Catalogue of Life via GBIF; curated fallback
-genus,Alcedo,翠鳥屬,Catalogue of Life via GBIF; curated fallback
+genus,Actitis,矶鹬属,Catalogue of Life via GBIF; curated fallback
+genus,Alcedo,翠鳥属,Catalogue of Life via GBIF; curated fallback
 genus,Alectoris,石鸡属,Catalogue of Life via GBIF; curated fallback
 genus,Anarhynchus,弯嘴鸻属,Catalogue of Life via GBIF; curated fallback
-genus,Anas,鸭屬,Catalogue of Life via GBIF; curated fallback
+genus,Anas,鸭属,Catalogue of Life via GBIF; curated fallback
 genus,Apus,雨燕属,Catalogue of Life via GBIF; curated fallback
 genus,Aquila,雕属,Catalogue of Life via GBIF; curated fallback
-genus,Ardea,牛背鹭屬,Catalogue of Life via GBIF; curated fallback
-genus,Ardeola,池鹭屬,Catalogue of Life via GBIF; curated fallback
+genus,Ardea,牛背鹭属,Catalogue of Life via GBIF; curated fallback
+genus,Ardeola,池鹭属,Catalogue of Life via GBIF; curated fallback
 genus,Arenaria,翻石鹬属,Catalogue of Life via GBIF; curated fallback
-genus,Athene,小鸮屬,Catalogue of Life via GBIF; curated fallback
-genus,Aythya,潛鸭屬,Catalogue of Life via GBIF; curated fallback
-genus,Botaurus,葦鳽屬,Catalogue of Life via GBIF; curated fallback
-genus,Burhinus,石鸻屬,Catalogue of Life via GBIF; curated fallback
-genus,Buteo,鵟屬,Catalogue of Life via GBIF; curated fallback
+genus,Athene,小鸮属,Catalogue of Life via GBIF; curated fallback
+genus,Aythya,潛鸭属,Catalogue of Life via GBIF; curated fallback
+genus,Botaurus,葦鳽属,Catalogue of Life via GBIF; curated fallback
+genus,Burhinus,石鸻属,Catalogue of Life via GBIF; curated fallback
+genus,Buteo,鵟属,Catalogue of Life via GBIF; curated fallback
 genus,Calandrella,短趾百灵属,Catalogue of Life via GBIF; curated fallback
-genus,Calidris,濱鹬屬,Catalogue of Life via GBIF; curated fallback
+genus,Calidris,滨鹬属,Catalogue of Life via GBIF; curated fallback
 genus,Calliope,歌鸲属,Catalogue of Life via GBIF; curated fallback
 genus,Caprimulgus,夜鹰属,Catalogue of Life via GBIF; curated fallback
-genus,Cecropis,金腰燕屬,Catalogue of Life via GBIF; curated fallback
+genus,Cecropis,金腰燕属,Catalogue of Life via GBIF; curated fallback
 genus,Cercotrichas,薮鸲属,Catalogue of Life via GBIF; curated fallback
 genus,Cettia,树莺属,Catalogue of Life via GBIF; curated fallback
-genus,Charadrius,鸻屬,Catalogue of Life via GBIF; curated fallback
-genus,Chlidonias,浮鸥屬,Catalogue of Life via GBIF; curated fallback
-genus,Chroicocephalus,彩頭鸥屬,Catalogue of Life via GBIF; curated fallback
-genus,Ciconia,鹳屬,Catalogue of Life via GBIF; curated fallback
+genus,Charadrius,鸻属,Catalogue of Life via GBIF; curated fallback
+genus,Chlidonias,浮鸥属,Catalogue of Life via GBIF; curated fallback
+genus,Chroicocephalus,彩头鸥属,Catalogue of Life via GBIF; curated fallback
+genus,Ciconia,鹳属,Catalogue of Life via GBIF; curated fallback
 genus,Circaetus,短趾雕属,Catalogue of Life via GBIF; curated fallback
 genus,Circus,鹞属,Catalogue of Life via GBIF; curated fallback
-genus,Cisticola,扇尾莺屬,Catalogue of Life via GBIF; curated fallback
+genus,Cisticola,扇尾莺属,Catalogue of Life via GBIF; curated fallback
 genus,Clamator,凤头鹃属,Catalogue of Life via GBIF; curated fallback
 genus,Clanga,乌雕属,Catalogue of Life via GBIF; curated fallback
 genus,Coracias,蓝胸佛法僧,Catalogue of Life via GBIF; curated fallback
-genus,Corvus,鸦屬,Catalogue of Life via GBIF; curated fallback
+genus,Corvus,鸦属,Catalogue of Life via GBIF; curated fallback
 genus,Curruca,林莺属,Catalogue of Life via GBIF; curated fallback
-genus,Cyanistes,藍山雀屬,Catalogue of Life via GBIF; curated fallback
-genus,Cyanopica,灰喜鹊屬,Catalogue of Life via GBIF; curated fallback
+genus,Cyanistes,蓝山雀属,Catalogue of Life via GBIF; curated fallback
+genus,Cyanopica,灰喜鹊属,Catalogue of Life via GBIF; curated fallback
 genus,Cygnus,天鹅属,Catalogue of Life via GBIF; curated fallback
-genus,Delichon,毛腳燕屬,Catalogue of Life via GBIF; curated fallback
+genus,Delichon,毛脚燕属,Catalogue of Life via GBIF; curated fallback
 genus,Egretta,白鹭属,Catalogue of Life via GBIF; curated fallback
-genus,Elanus,黑翅鸢屬,Catalogue of Life via GBIF; curated fallback
-genus,Emberiza,鹀屬,Catalogue of Life via GBIF; curated fallback
-genus,Erithacus,歐亞鸲屬,Catalogue of Life via GBIF; curated fallback
+genus,Elanus,黑翅鸢属,Catalogue of Life via GBIF; curated fallback
+genus,Emberiza,鹀属,Catalogue of Life via GBIF; curated fallback
+genus,Erithacus,歐亞鸲属,Catalogue of Life via GBIF; curated fallback
 genus,Falco,隼属,Catalogue of Life via GBIF; curated fallback
-genus,Ficedula,姬鹟屬,Catalogue of Life via GBIF; curated fallback
-genus,Francolinus,鹧鸪屬,Catalogue of Life via GBIF; curated fallback
-genus,Fulica,骨頂屬,Catalogue of Life via GBIF; curated fallback
-genus,Galerida,鳳頭百靈屬,Catalogue of Life via GBIF; curated fallback
-genus,Gallinago,沙錐屬,Catalogue of Life via GBIF; curated fallback
+genus,Ficedula,姬鹟属,Catalogue of Life via GBIF; curated fallback
+genus,Francolinus,鹧鸪属,Catalogue of Life via GBIF; curated fallback
+genus,Fulica,骨顶属,Catalogue of Life via GBIF; curated fallback
+genus,Galerida,鳳头百靈属,Catalogue of Life via GBIF; curated fallback
+genus,Gallinago,沙錐属,Catalogue of Life via GBIF; curated fallback
 genus,Gallinula,黑水鸡属,Catalogue of Life via GBIF; curated fallback
 genus,Glareola,燕鸻属,Catalogue of Life via GBIF; curated fallback
-genus,Grus,肉垂鹤屬,Catalogue of Life via GBIF; curated fallback
+genus,Grus,肉垂鹤属,Catalogue of Life via GBIF; curated fallback
 genus,Haematopus,蠣鹬科,Catalogue of Life via GBIF; curated fallback
 genus,Halcyon,翡翠属,Catalogue of Life via GBIF; curated fallback
 genus,Hieraaetus,隼雕属,Catalogue of Life via GBIF; curated fallback
 genus,Hierococcyx,鹰鹃属,Catalogue of Life via GBIF; curated fallback
 genus,Himantopus,长脚鹬属,Catalogue of Life via GBIF; curated fallback
 genus,Hippolais,篱莺属,Catalogue of Life via GBIF; curated fallback
-genus,Hirundo,燕屬,Catalogue of Life via GBIF; curated fallback
+genus,Hirundo,燕属,Catalogue of Life via GBIF; curated fallback
 genus,Ichthyaetus,遗鸥属,Catalogue of Life via GBIF; curated fallback
-genus,Jynx,蟻䴕屬,Catalogue of Life via GBIF; curated fallback
-genus,Lanius,伯勞屬,Catalogue of Life via GBIF; curated fallback
-genus,Larus,鸥屬,Catalogue of Life via GBIF; curated fallback
-genus,Larvivora,鸲鳥屬,Catalogue of Life via GBIF; curated fallback
-genus,Limosa,塍鹬屬,Catalogue of Life via GBIF; curated fallback
+genus,Jynx,蟻䴕属,Catalogue of Life via GBIF; curated fallback
+genus,Lanius,伯勞属,Catalogue of Life via GBIF; curated fallback
+genus,Larus,鸥属,Catalogue of Life via GBIF; curated fallback
+genus,Larvivora,鸲鳥属,Catalogue of Life via GBIF; curated fallback
+genus,Limosa,塍鹬属,Catalogue of Life via GBIF; curated fallback
 genus,Linaria,朱顶雀属,Catalogue of Life via GBIF; curated fallback
 genus,Luscinia,歌鸲属,Catalogue of Life via GBIF; curated fallback
-genus,Melanocorypha,百靈屬,Catalogue of Life via GBIF; curated fallback
-genus,Merops,蜂虎屬,Catalogue of Life via GBIF; curated fallback
-genus,Milvus,鸢屬,Catalogue of Life via GBIF; curated fallback
+genus,Melanocorypha,百靈属,Catalogue of Life via GBIF; curated fallback
+genus,Merops,蜂虎属,Catalogue of Life via GBIF; curated fallback
+genus,Milvus,鸢属,Catalogue of Life via GBIF; curated fallback
 genus,Monticola,矶鸫属,Catalogue of Life via GBIF; curated fallback
 genus,Morus,鲣鸟属,Catalogue of Life via GBIF; curated fallback
-genus,Motacilla,鹡鸰屬,Catalogue of Life via GBIF; curated fallback
-genus,Muscicapa,鹟屬,Catalogue of Life via GBIF; curated fallback
+genus,Motacilla,鹡鸰属,Catalogue of Life via GBIF; curated fallback
+genus,Muscicapa,鹟属,Catalogue of Life via GBIF; curated fallback
 genus,Netta,狭嘴潜鸭属,Catalogue of Life via GBIF; curated fallback
-genus,Ninox,鹰鸮屬,Catalogue of Life via GBIF; curated fallback
-genus,Numenius,杓鹬屬,Catalogue of Life via GBIF; curated fallback
-genus,Nycticorax,夜鹭屬,Catalogue of Life via GBIF; curated fallback
+genus,Ninox,鹰鸮属,Catalogue of Life via GBIF; curated fallback
+genus,Numenius,杓鹬属,Catalogue of Life via GBIF; curated fallback
+genus,Nycticorax,夜鹭属,Catalogue of Life via GBIF; curated fallback
 genus,Oenanthe,䳭属,Catalogue of Life via GBIF; curated fallback
 genus,Oriolus,黄鹂属,Catalogue of Life via GBIF; curated fallback
 genus,Otus,角鸮属,Catalogue of Life via GBIF; curated fallback
 genus,Oxyura,硬尾鸭属,Catalogue of Life via GBIF; curated fallback
-genus,Pandion,鹗屬,Catalogue of Life via GBIF; curated fallback
-genus,Parus,山雀屬,Catalogue of Life via GBIF; curated fallback
+genus,Pandion,鹗属,Catalogue of Life via GBIF; curated fallback
+genus,Parus,山雀属,Catalogue of Life via GBIF; curated fallback
 genus,Passer,麻雀属,Catalogue of Life via GBIF; curated fallback
-genus,Pernis,蜂鹰屬,Catalogue of Life via GBIF; curated fallback
+genus,Pernis,蜂鹰属,Catalogue of Life via GBIF; curated fallback
 genus,Phalacrocorax,鸬鶿,Catalogue of Life via GBIF; curated fallback
 genus,Phalaropus,瓣蹼鹬属,Catalogue of Life via GBIF; curated fallback
 genus,Phoenicopterus,火烈鸟,Catalogue of Life via GBIF; curated fallback
-genus,Phoenicurus,紅尾鸲屬,Catalogue of Life via GBIF; curated fallback
+genus,Phoenicurus,红尾鸲属,Catalogue of Life via GBIF; curated fallback
 genus,Phylloscopus,柳莺属,Catalogue of Life via GBIF; curated fallback
 genus,Pica,喜鹊属,Catalogue of Life via GBIF; curated fallback
-genus,Platalea,琵鹭屬,Catalogue of Life via GBIF; curated fallback
-genus,Plegadis,彩䴉屬,Catalogue of Life via GBIF; curated fallback
-genus,Ploceus,織布鳥屬,Catalogue of Life via GBIF; curated fallback
-genus,Pluvialis,斑鸻屬,Catalogue of Life via GBIF; curated fallback
-genus,Podiceps,鸊䴘屬,Catalogue of Life via GBIF; curated fallback
-genus,Porphyrio,紫水雞屬,Catalogue of Life via GBIF; curated fallback
-genus,Porzana,田雞屬,Catalogue of Life via GBIF; curated fallback
+genus,Platalea,琵鹭属,Catalogue of Life via GBIF; curated fallback
+genus,Plegadis,彩䴉属,Catalogue of Life via GBIF; curated fallback
+genus,Ploceus,織布鳥属,Catalogue of Life via GBIF; curated fallback
+genus,Pluvialis,斑鸻属,Catalogue of Life via GBIF; curated fallback
+genus,Podiceps,鸊䴘属,Catalogue of Life via GBIF; curated fallback
+genus,Porphyrio,紫水雞属,Catalogue of Life via GBIF; curated fallback
+genus,Porzana,田雞属,Catalogue of Life via GBIF; curated fallback
 genus,Pterocles,沙鸡科,Catalogue of Life via GBIF; curated fallback
-genus,Pycnonotus,鹎屬,Catalogue of Life via GBIF; curated fallback
-genus,Recurvirostra,反嘴鹬屬,Catalogue of Life via GBIF; curated fallback
+genus,Pycnonotus,鹎属,Catalogue of Life via GBIF; curated fallback
+genus,Recurvirostra,反嘴鹬属,Catalogue of Life via GBIF; curated fallback
 genus,Rhodospiza,沙雀属,Catalogue of Life via GBIF; curated fallback
-genus,Riparia,沙燕屬,Catalogue of Life via GBIF; curated fallback
-genus,Saxicola,石䳭屬,Catalogue of Life via GBIF; curated fallback
-genus,Sitta,鳾屬,Catalogue of Life via GBIF; curated fallback
-genus,Spatula,琵鸭屬,Catalogue of Life via GBIF; curated fallback
-genus,Spilopelia,珠頸斑鳩屬,Catalogue of Life via GBIF; curated fallback
+genus,Riparia,沙燕属,Catalogue of Life via GBIF; curated fallback
+genus,Saxicola,石䳭属,Catalogue of Life via GBIF; curated fallback
+genus,Sitta,鳾属,Catalogue of Life via GBIF; curated fallback
+genus,Spatula,琵鸭属,Catalogue of Life via GBIF; curated fallback
+genus,Spilopelia,珠颈斑鳩属,Catalogue of Life via GBIF; curated fallback
 genus,Sterna,燕鸥属,Catalogue of Life via GBIF; curated fallback
-genus,Sternula,小燕鸥屬,Catalogue of Life via GBIF; curated fallback
-genus,Streptopelia,斑鳩屬,Catalogue of Life via GBIF; curated fallback
-genus,Sturnus,椋鳥屬,Catalogue of Life via GBIF; curated fallback
+genus,Sternula,小燕鸥属,Catalogue of Life via GBIF; curated fallback
+genus,Streptopelia,斑鳩属,Catalogue of Life via GBIF; curated fallback
+genus,Sturnus,椋鳥属,Catalogue of Life via GBIF; curated fallback
 genus,Sylvia,林莺属,Catalogue of Life via GBIF; curated fallback
-genus,Tachybaptus,小䴙鷈屬,Catalogue of Life via GBIF; curated fallback
-genus,Tachyspiza,鹰屬,Catalogue of Life via GBIF; curated fallback
-genus,Thalasseus,鳳頭燕鸥屬,Catalogue of Life via GBIF; curated fallback
+genus,Tachybaptus,小䴙鷈属,Catalogue of Life via GBIF; curated fallback
+genus,Tachyspiza,鹰属,Catalogue of Life via GBIF; curated fallback
+genus,Thalasseus,鳳头燕鸥属,Catalogue of Life via GBIF; curated fallback
 genus,Thinornis,黑头鸻属,Catalogue of Life via GBIF; curated fallback
-genus,Tringa,鹬屬,Catalogue of Life via GBIF; curated fallback
-genus,Upupa,戴勝屬,Catalogue of Life via GBIF; curated fallback
-genus,Vanellus,麥雞屬,Catalogue of Life via GBIF; curated fallback
+genus,Tringa,鹬属,Catalogue of Life via GBIF; curated fallback
+genus,Upupa,戴勝属,Catalogue of Life via GBIF; curated fallback
+genus,Vanellus,麥雞属,Catalogue of Life via GBIF; curated fallback
 genus,Zapornia,田鸡属,Catalogue of Life via GBIF; curated fallback
 family,Glareolidae,燕鸻科,curated Chinese bird family name
 family,Coraciidae,佛法僧科,curated Chinese bird family name
+genus,Abroscopus,擬鹟莺属,Catalogue of Life via GBIF
+genus,Acanthis,朱顶雀属,Catalogue of Life via GBIF
+genus,Acridotheres,八哥属,Catalogue of Life via GBIF
+genus,Actophilornis,非洲雉鸻属,Catalogue of Life via GBIF
+genus,Actinodura,斑翅鹛属,Catalogue of Life via GBIF
+genus,Aegithalos,長尾山雀属,Catalogue of Life via GBIF
+genus,Aegithina,雀鹎属,Catalogue of Life via GBIF
+genus,Aepypodius,肉垂塚雉属,Catalogue of Life via GBIF
+genus,Aerodramus,金絲燕属,Catalogue of Life via GBIF
+genus,Aethopyga,太陽鳥属,Catalogue of Life via GBIF
+genus,Afrotis,黑鸨属,Catalogue of Life via GBIF
+genus,Agamia,栗腹鹭属,Catalogue of Life via GBIF
+genus,Agelaius,黑鹂属,Catalogue of Life via GBIF
+genus,Agropsar,北椋鳥属,Catalogue of Life via GBIF
+genus,Aix,鸳鸯属,Catalogue of Life via GBIF
+genus,Alaemon,擬戴勝百靈属,Catalogue of Life via GBIF
+genus,Alauda,雲雀属,Catalogue of Life via GBIF
+genus,Alca,刀嘴海雀属,Catalogue of Life via GBIF
+genus,Alectura,叢塚雉属,Catalogue of Life via GBIF
+genus,Alisterus,國王鸚鵡書,Catalogue of Life via GBIF
+genus,Alle,侏海雀属,Catalogue of Life via GBIF
+genus,Alopochen,埃及雁属,Catalogue of Life via GBIF
+genus,Amaurornis,苦惡鳥属,Catalogue of Life via GBIF
+genus,Amytornis,草鹩莺属,Catalogue of Life via GBIF
+genus,Anhinga,蛇鹈属,Catalogue of Life via GBIF
+genus,Anous,玄燕鸥属,Catalogue of Life via GBIF
+genus,Anser,雁属,Catalogue of Life via GBIF
+genus,Anthus,鹨属,Catalogue of Life via GBIF
+genus,Anthreptes,食蜜鳥属,Catalogue of Life via GBIF
+genus,Aplonis,輝椋鳥属,Catalogue of Life via GBIF
+genus,Aprosmictus,红翅鸚鵡属,Catalogue of Life via GBIF
+genus,Aptenodytes,王企鵝属,Catalogue of Life via GBIF
+genus,Apteryx,鹬鸵,Catalogue of Life via GBIF
+genus,Ara,金剛鸚鵡属,Catalogue of Life via GBIF
+genus,Arachnothera,捕蛛鳥属,Catalogue of Life via GBIF
+genus,Aratinga,錐尾鸚鵡属,Catalogue of Life via GBIF
+genus,Aramus,秧鹤属,Catalogue of Life via GBIF
+genus,Arborophila,山鹧鸪属,Catalogue of Life via GBIF
+genus,Ardeotis,鹭鸨属,Catalogue of Life via GBIF
+genus,Artamus,燕鵙属,Catalogue of Life via GBIF
+genus,Asio,耳鸮属,Catalogue of Life via GBIF
+genus,Atrichornis,藪鳥属,Catalogue of Life via GBIF
+genus,Balaeniceps,鯨头鹳属,Catalogue of Life via GBIF
+genus,Barnardius,澳環颈鸚鵡属,Catalogue of Life via GBIF
+genus,Batrachostomus,亞洲蟆口鴟属,Catalogue of Life via GBIF
+genus,Bombycilla,太平鸟属,Catalogue of Life via GBIF
+genus,Bonasa,榛雞属,Catalogue of Life via GBIF
+genus,Branta,黑雁属,Catalogue of Life via GBIF
+genus,Bucorvus,地犀鳥科,Catalogue of Life via GBIF
+genus,Bucephala,鹊鸭属,Catalogue of Life via GBIF
+genus,Buceros,角犀鳥属,Catalogue of Life via GBIF
+genus,Butorides,绿鹭属,Catalogue of Life via GBIF
+genus,Cairina,棲鸭属,Catalogue of Life via GBIF
+genus,Cacatua,鳳头鸚鵡属,Catalogue of Life via GBIF
+genus,Calonectris,麗鹱属,Catalogue of Life via GBIF
+genus,Calypte,麗头蜂鳥属,Catalogue of Life via GBIF
+genus,Campephaga,鹃鵙属,Catalogue of Life via GBIF
+genus,Campethera,绿背斑啄木鳥属,Catalogue of Life via GBIF
+genus,Cantorchilus,康托葦鹪鹩属,Catalogue of Life via GBIF
+genus,Cardellina,红臉森莺属,Catalogue of Life via GBIF
+genus,Carpodacus,朱雀属,Catalogue of Life via GBIF
+genus,Casuarius,鹤鸵属,Catalogue of Life via GBIF
+genus,Cathartes,美洲鹫属,Catalogue of Life via GBIF
+genus,Catharus,夜鸫属,Catalogue of Life via GBIF
+genus,Cepphus,海鴿属,Catalogue of Life via GBIF
+genus,Cerorhinca,角嘴海雀属,Catalogue of Life via GBIF
+genus,Certhia,旋木雀属,Catalogue of Life via GBIF
+genus,Ceyx,三趾翠鳥属,Catalogue of Life via GBIF
+genus,Chalcophaps,翠翼鳩属,Catalogue of Life via GBIF
+genus,Chamaea,鹪雀莺,Catalogue of Life via GBIF
+genus,Chenonetta,鬃林鸭属,Catalogue of Life via GBIF
+genus,Chersomanes,釘踝百靈属,Catalogue of Life via GBIF
+genus,Chlamydotis,波斑鸨属,Catalogue of Life via GBIF
+genus,Chlorophonia,绿歌雀属,Catalogue of Life via GBIF
+genus,Cinnyricinclus,白腹紫椋鳥属,Catalogue of Life via GBIF
+genus,Cinclus,河烏属,Catalogue of Life via GBIF
+genus,Cinnyris,花蜜鳥属,Catalogue of Life via GBIF
+genus,Cissa,绿鹊属,Catalogue of Life via GBIF
+genus,Clangula,长尾鸭属,Catalogue of Life via GBIF
+genus,Coccothraustes,錫嘴雀属,Catalogue of Life via GBIF
+genus,Colius,鼠鸟属,Catalogue of Life via GBIF
+genus,Collocalia,侏金絲燕属,Catalogue of Life via GBIF
+genus,Copsychus,鹊鸲属,Catalogue of Life via GBIF
+genus,Coracina,鸦鹃鵙属,Catalogue of Life via GBIF
+genus,Columbina,南美鳩属,Catalogue of Life via GBIF
+genus,Cossypha,歌鵖属,Catalogue of Life via GBIF
+genus,Crecopsis,非洲長脚秧雞属,Catalogue of Life via GBIF
+genus,Creatophora,肉垂椋鳥属,Catalogue of Life via GBIF
+genus,Crossoptilon,马鸡属,Catalogue of Life via GBIF
+genus,Crypsirina,盘尾树鹊属,Catalogue of Life via GBIF
+genus,Cuculus,杜鹃属,Catalogue of Life via GBIF
+genus,Culicicapa,方尾鹟属,Catalogue of Life via GBIF
+genus,Cyanocitta,冠蓝鸦属,Catalogue of Life via GBIF
+genus,Cyanocorax,蓝鸦属,Catalogue of Life via GBIF
+genus,Cyanoptila,白腹蓝鹟属,Catalogue of Life via GBIF
+genus,Dacelo,笑翠鳥属,Catalogue of Life via GBIF
+genus,Daphoenositta,澳鳾属,Catalogue of Life via GBIF
+genus,Dendrocitta,樹鹊属,Catalogue of Life via GBIF
+genus,Dendragapus,蓝松雞属,Catalogue of Life via GBIF
+genus,Dendrocopos,啄木鳥属,Catalogue of Life via GBIF
+genus,Dendrocygna,樹鸭属,Catalogue of Life via GBIF
+genus,Dendropicos,灰啄木鳥属,Catalogue of Life via GBIF
+genus,Dicaeum,啄花鳥属,Catalogue of Life via GBIF
+genus,Dicrurus,卷尾属,Catalogue of Life via GBIF
+genus,Dromaius,鴯鶓属,Catalogue of Life via GBIF
+genus,Dryobates,林啄木鳥属,Catalogue of Life via GBIF
+genus,Dryocopus,黑啄木鳥属,Catalogue of Life via GBIF
+genus,Ectopistes,旅鴿属,Catalogue of Life via GBIF
+genus,Elanoides,燕尾鸢属,Catalogue of Life via GBIF
+genus,Empidonax,纹霸鹟属,Catalogue of Life via GBIF
+genus,Enicurus,燕尾属,Catalogue of Life via GBIF
+genus,Eremopterix,雀百靈属,Catalogue of Life via GBIF
+genus,Erpornis,绿鳳鹛属,Catalogue of Life via GBIF
+genus,Erythropitta,红胸八色鸫属,Catalogue of Life via GBIF
+genus,Erythrura,鸚雀属,Catalogue of Life via GBIF
+genus,Estrilda,梅花雀属,Catalogue of Life via GBIF
+genus,Eudocimus,美洲䴉属,Catalogue of Life via GBIF
+genus,Eudynamys,噪鹃属,Catalogue of Life via GBIF
+genus,Eudyptes,冠企鵝属,Catalogue of Life via GBIF
+genus,Eudyptula,小蓝企鵝属,Catalogue of Life via GBIF
+genus,Eulipoa,摩鹿加塚雉属,Catalogue of Life via GBIF
+genus,Euodice,银嘴文鳥属,Catalogue of Life via GBIF
+genus,Euphagus,鏽色黑鹂属,Catalogue of Life via GBIF
+genus,Eupodotis,蓝鸨属,Catalogue of Life via GBIF
+genus,Eurylaimus,闊嘴鳥属,Catalogue of Life via GBIF
+genus,Fratercula,海鸚属,Catalogue of Life via GBIF
+genus,Fulvetta,褐鹛属,Catalogue of Life via GBIF
+genus,Fringilla,燕雀属,Catalogue of Life via GBIF
+genus,Fregata,軍艦鳥属,Catalogue of Life via GBIF
+genus,Gallirallus,纹秧雞属,Catalogue of Life via GBIF
+genus,Gampsorhynchus,白头鵙鹛属,Catalogue of Life via GBIF
+genus,Garrulus,松鸦属,Catalogue of Life via GBIF
+genus,Geococcyx,走鹃属,Catalogue of Life via GBIF
+genus,Garrulax,噪鹛属,Catalogue of Life via GBIF
+genus,Geothlypis,黄喉地莺属,Catalogue of Life via GBIF
+genus,Geospiza,地雀属,Catalogue of Life via GBIF
+genus,Geronticus,隱䴉属,Catalogue of Life via GBIF
+genus,Gerygone,噪刺莺属,Catalogue of Life via GBIF
+genus,Goura,冠鳩属,Catalogue of Life via GBIF
+genus,Gorsachius,麻鹭属,Catalogue of Life via GBIF
+genus,Gracupica,斑椋鳥属,Catalogue of Life via GBIF
+genus,Grammatoptila,條纹噪鹛属,Catalogue of Life via GBIF
+genus,Gracula,鹩哥属,Catalogue of Life via GBIF
+genus,Grandala,大翅鸲属,Catalogue of Life via GBIF
+genus,Graminicola,大草莺属,Catalogue of Life via GBIF
+genus,Gygis,白玄鸥属,Catalogue of Life via GBIF
+genus,Gypsophila,麥蓝菜属,Catalogue of Life via GBIF
+genus,Haliaeetus,海雕属,Catalogue of Life via GBIF
+genus,Haemorhous,美洲朱雀属,Catalogue of Life via GBIF
+genus,Hemicircus,黑冠啄木鳥属,Catalogue of Life via GBIF
+genus,Hemipus,鹟鵙属,Catalogue of Life via GBIF
+genus,Hemixos,灰短脚鹎属,Catalogue of Life via GBIF
+genus,Hemiprocne,鳳头雨燕属,Catalogue of Life via GBIF
+genus,Heterophasia,奇鹛属,Catalogue of Life via GBIF
+genus,Hirundapus,針尾雨燕属,Catalogue of Life via GBIF
+genus,Histrionicus,丑鸭属,Catalogue of Life via GBIF
+genus,Horornis,樹莺属,Catalogue of Life via GBIF
+genus,Hydrophasianus,水雉属,Catalogue of Life via GBIF
+genus,Hylorchilus,细嘴鹪鹩属,Catalogue of Life via GBIF
+genus,Hypocolius,灰連雀属,Catalogue of Life via GBIF
+genus,Ianthocincla,蓝噪鹛属,Catalogue of Life via GBIF
+genus,Hypothymis,黑枕王鹟属,Catalogue of Life via GBIF
+genus,Ictinaetus,林雕属,Catalogue of Life via GBIF
+genus,Irena,和平鳥属,Catalogue of Life via GBIF
+genus,Ixodia,雪麴属,Catalogue of Life via GBIF
+genus,Ixoreus,地鸫属,Catalogue of Life via GBIF
+genus,Ketupa,魚鸮属,Catalogue of Life via GBIF
+genus,Lamprotornis,麗椋鳥属,Catalogue of Life via GBIF
+genus,Leipoa,眼斑塚雉属,Catalogue of Life via GBIF
+genus,Leptopoecile,雀莺属,Catalogue of Life via GBIF
+genus,Leptoptilos,秃鹳属,Catalogue of Life via GBIF
+genus,Leucogeranus,白鹤属,Catalogue of Life via GBIF
+genus,Leucosticte,嶺雀属,Catalogue of Life via GBIF
+genus,Lichmera,岩吸蜜鳥属,Catalogue of Life via GBIF
+genus,Liocichla,藪鹛属,Catalogue of Life via GBIF
+genus,Lissotis,黑腹鸨属,Catalogue of Life via GBIF
+genus,Locustella,蝗莺属,Catalogue of Life via GBIF
+genus,Lonchura,文鸟属，文鳥属,Catalogue of Life via GBIF
+genus,Lophodytes,棕脇秋沙鸭属,Catalogue of Life via GBIF
+genus,Lophophanes,冠山雀属,Catalogue of Life via GBIF
+genus,Lophotibis,鳳头彩䴉属,Catalogue of Life via GBIF
+genus,Lophotis,冠鸨属,Catalogue of Life via GBIF
+genus,Loxia,交嘴雀属,Catalogue of Life via GBIF
+genus,Macronus,褐纹胸鹛属,Catalogue of Life via GBIF
+genus,Macrocephalon,蘇拉威西塚雉属,Catalogue of Life via GBIF
+genus,Malacocincla,雅鹛属,Catalogue of Life via GBIF
+genus,Malacopteron,樹鹛属,Catalogue of Life via GBIF
+genus,Malurus,細尾鹩莺属,Catalogue of Life via GBIF
+genus,Mareca,亞鸭属,Catalogue of Life via GBIF
+genus,Megadyptes,黄眼企鵝属,Catalogue of Life via GBIF
+genus,Megaceryle,大魚狗属,Catalogue of Life via GBIF
+genus,Megapodius,塚雉属,Catalogue of Life via GBIF
+genus,Meiglyptes,斑啄木鳥属,Catalogue of Life via GBIF
+genus,Melanitta,海番鸭属,Catalogue of Life via GBIF
+genus,Melierax,歌鹰属,Catalogue of Life via GBIF
+genus,Melopsittacus,虎皮鸚鵡,Catalogue of Life via GBIF
+genus,Melospiza,歌帶鹀属,Catalogue of Life via GBIF
+genus,Mergus,秋沙鸭属,Catalogue of Life via GBIF
+genus,Mesembrinibis,绿䴉属,Catalogue of Life via GBIF
+genus,Microhierax,小隼属,Catalogue of Life via GBIF
+genus,Mirafra,歌百靈属,Catalogue of Life via GBIF
+genus,Mniotilta,黑白森莺,Catalogue of Life via GBIF
+genus,Molothrus,牛鹂属,Catalogue of Life via GBIF
+genus,Mulleripicus,灰啄木鸟属,Catalogue of Life via GBIF
+genus,Mycteria,䴉鹳属,Catalogue of Life via GBIF
+genus,Myophonus,嘯鸫属,Catalogue of Life via GBIF
+genus,Neophema,草鸚鵡属,Catalogue of Life via GBIF
+genus,Neotis,黑冠鸨属,Catalogue of Life via GBIF
+genus,Nestor,啄羊鸚鵡属,Catalogue of Life via GBIF
+genus,Nettapus,棉凫属,Catalogue of Life via GBIF
+genus,Niltava,仙鹟属,Catalogue of Life via GBIF
+genus,Nipponia,朱鹮属,Catalogue of Life via GBIF
+genus,Nisaetus,角鹰属,Catalogue of Life via GBIF
+genus,Nucifraga,星鸦属,Catalogue of Life via GBIF
+genus,Nyctanassa,黄顶夜鹭属,Catalogue of Life via GBIF
+genus,Nyctibius,林鴟科,Catalogue of Life via GBIF
+genus,Nyctyornis,夜蜂虎属,Catalogue of Life via GBIF
+genus,Nymphicus,雞尾鸚鵡,Catalogue of Life via GBIF
+genus,Onychoprion,褐背燕鸥属,Catalogue of Life via GBIF
+genus,Orthotomus,縫葉莺属,Catalogue of Life via GBIF
+genus,Otidiphaps,雉鳩属,Catalogue of Life via GBIF
+genus,Otis,鸨属,Catalogue of Life via GBIF
+genus,Paradoxornis,鸦雀属,Catalogue of Life via GBIF
+genus,Pastor,粉红椋鳥属,Catalogue of Life via GBIF
+genus,Patagioenas,美洲鸽属,Catalogue of Life via GBIF
+genus,Pauxi,盔鳳冠雉属,Catalogue of Life via GBIF
+genus,Pavo,孔雀属,Catalogue of Life via GBIF
+genus,Pelecanus,鹈鶘属,Catalogue of Life via GBIF
+genus,Pellorneum,幽鹛属,Catalogue of Life via GBIF
+genus,Penelopides,斑嘴犀鳥属,Catalogue of Life via GBIF
+genus,Periparus,黑冠山雀属,Catalogue of Life via GBIF
+genus,Pericrocotus,山椒鳥属,Catalogue of Life via GBIF
+genus,Phapitreron,褐果鳩属,Catalogue of Life via GBIF
+genus,Phaps,铜翅鸠属,Catalogue of Life via GBIF
+genus,Phasianus,雉属,Catalogue of Life via GBIF
+genus,Pheucticus,白斑翅雀属,Catalogue of Life via GBIF
+genus,Philemon,吮蜜鳥属,Catalogue of Life via GBIF
+genus,Phimosus,裸臉䴉属,Catalogue of Life via GBIF
+genus,Phoebastria,信天翁属,Catalogue of Life via GBIF
+genus,Phylidonyris,澳吸蜜鳥属,Catalogue of Life via GBIF
+genus,Picumnus,姬啄木鳥属,Catalogue of Life via GBIF
+genus,Picus,绿啄木鳥属,Catalogue of Life via GBIF
+genus,Pipilo,唧鹀属,Catalogue of Life via GBIF
+genus,Piranga,麗唐納雀属,Catalogue of Life via GBIF
+genus,Pitta,八色鸫科,Catalogue of Life via GBIF
+genus,Platycercus,玫瑰鸚鵡属,Catalogue of Life via GBIF
+genus,Plectropterus,距翅雁,Catalogue of Life via GBIF
+genus,Poecile,高山山雀属,Catalogue of Life via GBIF
+genus,Polemaetus,猛雕属,Catalogue of Life via GBIF
+genus,Polytelis,超級鸚鵡属,Catalogue of Life via GBIF
+genus,Pomatorhinus,彎嘴鹛属,Catalogue of Life via GBIF
+genus,Prinia,鹪莺属,Catalogue of Life via GBIF
+genus,Prionochilus,鋸齒啄花鳥属,Catalogue of Life via GBIF
+genus,Probosciger,棕树凤头鹦鹉,Catalogue of Life via GBIF
+genus,Progne,崖燕属,Catalogue of Life via GBIF
+genus,Psephotus,面罩鸚鵡属,Catalogue of Life via GBIF
+genus,Psarocolius,拟椋鸟属,Catalogue of Life via GBIF
+genus,Psitteuteles,嬌鸚鵡属,Catalogue of Life via GBIF
+genus,Psittacus,非洲灰鸚鵡,Catalogue of Life via GBIF
+genus,Psittinus,蓝腰鸚鵡属,Catalogue of Life via GBIF
+genus,Pternistis,彩鹧鸪属,Catalogue of Life via GBIF
+genus,Pterodroma,圓尾鹱属,Catalogue of Life via GBIF
+genus,Pteruthius,鵙鹛属,Catalogue of Life via GBIF
+genus,Pterorhinus,草鹛属,Catalogue of Life via GBIF
+genus,Ptilocichla,地鹛属,Catalogue of Life via GBIF
+genus,Ptychoramphus,卡氏海雀属,Catalogue of Life via GBIF
+genus,Ptyonoprogne,岩燕属,Catalogue of Life via GBIF
+genus,Pygoscelis,阿德利企鵝属,Catalogue of Life via GBIF
+genus,Pyrrhula,灰雀属,Catalogue of Life via GBIF
+genus,Quiscalus,擬八哥属,Catalogue of Life via GBIF
+genus,Rallina,斑秧雞属,Catalogue of Life via GBIF
+genus,Rallus,秧雞属,Catalogue of Life via GBIF
+genus,Rhyticeros,皺盔犀鳥属,Catalogue of Life via GBIF
+genus,Rostratula,彩鹬属,Catalogue of Life via GBIF
+genus,Rubigula,黄鹎属,Catalogue of Life via GBIF
+genus,Sagittarius,蛇鹫属,Catalogue of Life via GBIF
+genus,Rynchops,剪嘴鸥属,Catalogue of Life via GBIF
+genus,Sarcoramphus,王鹫,Catalogue of Life via GBIF
+genus,Sarkidiornis,瘤鸭属,Catalogue of Life via GBIF
+genus,Sasia,棕啄木鳥属,Catalogue of Life via GBIF
+genus,Sayornis,菲比霸鹟属,Catalogue of Life via GBIF
+genus,Schoeniparus,烏線雀鹛属,Catalogue of Life via GBIF
+genus,Scissirostrum,雀嘴八哥属,Catalogue of Life via GBIF
+genus,Setophaga,橙尾鸲莺属,Catalogue of Life via GBIF
+genus,Sipodotus,華萊氏鹩莺属,Catalogue of Life via GBIF
+genus,Spelaeornis,鹩鹛属,Catalogue of Life via GBIF
+genus,Sphecotheres,裸眼鹂属,Catalogue of Life via GBIF
+genus,Sphyrapicus,吸汁啄木鳥,Catalogue of Life via GBIF
+genus,Spilornis,蛇雕属,Catalogue of Life via GBIF
+genus,Spizella,樹雀鹀属,Catalogue of Life via GBIF
+genus,Spodiopsar,絲光椋鳥属,Catalogue of Life via GBIF
+genus,Stachyris,穗鹛属,Catalogue of Life via GBIF
+genus,Staphida,栗耳鳳鹛属,Catalogue of Life via GBIF
+genus,Stelgidopteryx,粗翅燕属,Catalogue of Life via GBIF
+genus,Stercorarius,贼鸥属,Catalogue of Life via GBIF
+genus,Stipiturus,鶓鹩莺属,Catalogue of Life via GBIF
+genus,Strigops,鸮鹦鹉,Catalogue of Life via GBIF
+genus,Strix,林鸮属,Catalogue of Life via GBIF
+genus,Struthio,鸵鸟属,Catalogue of Life via GBIF
+genus,Sturnella,草地鹨属,Catalogue of Life via GBIF
+genus,Suthora,漢鸦雀属,Catalogue of Life via GBIF
+genus,Sula,鲣鸟属,Catalogue of Life via GBIF
+genus,Synoicus,鵪鹑属,Catalogue of Life via GBIF
+genus,Synthliboramphus,扁嘴海雀属,Catalogue of Life via GBIF
+genus,Syrigma,嘯鹭属,Catalogue of Life via GBIF
+genus,Sypheotides,姬鸨属,Catalogue of Life via GBIF
+genus,Syrmaticus,長尾雉属,Catalogue of Life via GBIF
+genus,Tachycineta,樹燕属,Catalogue of Life via GBIF
+genus,Taenioptynx,領鵂鶹属,Catalogue of Life via GBIF
+genus,Tachymarptis,高山雨燕属,Catalogue of Life via GBIF
+genus,Tadorna,麻鸭属,Catalogue of Life via GBIF
+genus,Talegalla,營塚雉属,Catalogue of Life via GBIF
+genus,Tarsiger,林鸲属,Catalogue of Life via GBIF
+genus,Tauraco,冠蕉鹃属,Catalogue of Life via GBIF
+genus,Telacanthura,黑刺尾雨燕属,Catalogue of Life via GBIF
+genus,Terathopius,短尾雕属,Catalogue of Life via GBIF
+genus,Terpsiphone,壽帶属,Catalogue of Life via GBIF
+genus,Tetrax,小鸨属,Catalogue of Life via GBIF
+genus,Threskiornis,聖䴉属,Catalogue of Life via GBIF
+genus,Thryomanes,比氏葦鹪鹩属,Catalogue of Life via GBIF
+genus,Thryorchilus,峰鹪鹩属,Catalogue of Life via GBIF
+genus,Thryothorus,葦鹪鹩属,Catalogue of Life via GBIF
+genus,Tigrisoma,虎鹭属,Catalogue of Life via GBIF
+genus,Todiramphus,領翡翠属,Catalogue of Life via GBIF
+genus,Toxostoma,彎嘴嘲鸫属,Catalogue of Life via GBIF
+genus,Treron,绿鳩属,Catalogue of Life via GBIF
+genus,Trichoglossus,麝香吸蜜鸚鵡属,Catalogue of Life via GBIF
+genus,Trochalopteron,圓翅噪鹛属,Catalogue of Life via GBIF
+genus,Turdoides,鸫鹛属,Catalogue of Life via GBIF
+genus,Turdus,鸫属,Catalogue of Life via GBIF
+genus,Turtur,森鳩属,Catalogue of Life via GBIF
+genus,Turnix,三趾鹑属,Catalogue of Life via GBIF
+genus,Tympanuchus,草原松雞属,Catalogue of Life via GBIF
+genus,Uraeginthus,蓝飾雀属,Catalogue of Life via GBIF
+genus,Tyto,草鸮属,Catalogue of Life via GBIF
+genus,Tyrannus,霸鹟属,Catalogue of Life via GBIF
+genus,Urocolius,长尾鼠鸟属,Catalogue of Life via GBIF
+genus,Urocissa,蓝鹊属,Catalogue of Life via GBIF
+genus,Urosphena,樹莺属,Catalogue of Life via GBIF
+genus,Vidua,維達鳥属,Catalogue of Life via GBIF
+genus,Vireo,绿鹃属,Catalogue of Life via GBIF
+genus,Volatinia,蓝黑草鹀,Catalogue of Life via GBIF
+genus,Xenicus,刺鹩,Catalogue of Life via GBIF
+genus,Yuhina,鳳鹛属,Catalogue of Life via GBIF
+genus,Yungipicus,姬啄木属,Catalogue of Life via GBIF
+genus,Zebrilus,波斑鹭属,Catalogue of Life via GBIF
+genus,Zeledonia,冠鹩鸫属,Catalogue of Life via GBIF
+genus,Zosterops,绣眼鸟属,Catalogue of Life via GBIF
+genus,Zenaida,哀鴿属,Catalogue of Life via GBIF
