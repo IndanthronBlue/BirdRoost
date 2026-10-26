@@ -342,6 +342,10 @@ def test_tree_language_toggle_and_draggable_splitter(qtbot, tmp_path: Path):
     assert browser.splitter.count() == 3
     assert browser.splitter.handleWidth() >= 8
     assert browser.splitter.childrenCollapsible() is False
+    assert browser.grid.gridSize().height() >= (
+        browser.grid.iconSize().height()
+        + 2 * browser.grid.fontMetrics().lineSpacing()
+    )
     assert settings.value("archive_tree_language") == "latin"
 
 

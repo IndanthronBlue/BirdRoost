@@ -14,7 +14,7 @@ from PySide6.QtCore import (
     QTimer,
     Signal,
 )
-from PySide6.QtGui import QColor, QIcon, QImage, QImageReader, QPixmap
+from PySide6.QtGui import QColor, QIcon, QImage, QImageReader, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -107,6 +107,12 @@ class ArchiveBrowserWindow(QMainWindow):
         self._thumbnail_timer.timeout.connect(self._schedule_visible_thumbnails)
         placeholder = QPixmap(160, 120)
         placeholder.fill(QColor("#2a332d"))
+        painter = QPainter(placeholder)
+        painter.setPen(QColor("#8d9a90"))
+        painter.drawText(
+            placeholder.rect(), Qt.AlignmentFlag.AlignCenter, "加载中…"
+        )
+        painter.end()
         self._placeholder_icon = QIcon(placeholder)
         self._watcher = QFileSystemWatcher(self)
         self._refresh_timer = QTimer(self)
@@ -233,10 +239,14 @@ class ArchiveBrowserWindow(QMainWindow):
         self.grid = QListWidget()
         self.grid.setViewMode(QListWidget.ViewMode.IconMode)
         self.grid.setIconSize(QSize(160, 120))
-        self.grid.setGridSize(QSize(190, 165))
         self.grid.setResizeMode(QListWidget.ResizeMode.Adjust)
         self.grid.setMovement(QListWidget.Movement.Static)
         self.grid.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
+        self.grid.setWordWrap(False)
+        self.grid.setTextElideMode(Qt.TextElideMode.ElideMiddle)
+        self.grid.setUniformItemSizes(True)
+        self.grid.setSpacing(6)
+        self._update_grid_metrics()
         self.grid.setMinimumWidth(300)
         self.grid.currentItemChanged.connect(self._on_grid_selection)
         self.grid.verticalScrollBar().valueChanged.connect(
@@ -403,6 +413,17 @@ class ArchiveBrowserWindow(QMainWindow):
             return None
         data = item.data(0, Qt.ItemDataRole.UserRole)
         return tuple(data) if data else None
+
+    def _update_grid_metrics(self) -> None:
+        line_height = self.grid.fontMetrics().lineSpacing()
+        width = max(200, self.grid.iconSize().width() + 40)
+        height = self.grid.iconSize().height() + line_height * 2 + 24
+        self.grid.setGridSize(QSize(width, height))
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        if event.type() == event.Type.FontChange:
+            self._update_grid_metrics()
 
     def _refresh_grid(self) -> None:
         tree_path = self._selected_tree_path()
