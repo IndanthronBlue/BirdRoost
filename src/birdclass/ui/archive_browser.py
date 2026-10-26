@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PySide6.QtCore import (
     QFileSystemWatcher,
+    QModelIndex,
     QObject,
     QRunnable,
     QStringListModel,
@@ -483,10 +484,12 @@ class ArchiveBrowserWindow(QMainWindow):
         full, initials = self._pinyin_aliases(entry.display_name)
         return needle in full or needle in initials
 
-    def _on_completion_activated(self, text: str) -> None:
+    def _on_completion_activated(self, value) -> None:
+        text = value.data() if isinstance(value, QModelIndex) else str(value)
         name = text.split(" · ", 1)[0].strip()
-        if name:
+        if name and name != self.search.text():
             self.search.setText(name)
+            self.search.setCursorPosition(len(name))
         self.search_completer.popup().hide()
         self._refresh_grid()
         if self.grid.count():
@@ -783,6 +786,17 @@ class ArchiveBrowserWindow(QMainWindow):
         self._settings.setValue("archive_splitter_sizes", self.splitter.sizes())
 
     def _on_search_changed(self, text: str) -> None:
+        # QCompleter inserts the whole display string on mouse/Enter selection:
+        # "黑腹滨鹬 · Calidris alpina · Dunlin · hfby".  Reduce it to the
+        # searchable Chinese/Latin name before filtering.
+        if " · " in text:
+            name = text.split(" · ", 1)[0].strip()
+            if name and name != text:
+                self.search.blockSignals(True)
+                self.search.setText(name)
+                self.search.setCursorPosition(len(name))
+                self.search.blockSignals(False)
+                text = name
         self.search_completer.setCompletionPrefix(text.strip())
         if text.strip() and self.search.hasFocus():
             self.search_completer.complete()

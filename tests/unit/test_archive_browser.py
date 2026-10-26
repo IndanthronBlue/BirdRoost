@@ -466,3 +466,17 @@ def test_search_is_global_when_tree_has_a_different_branch_selected(qtbot, tmp_p
     assert browser.grid.count() == 1
     assert browser.grid.item(0).data(0x0100) == "灰斑鸻/b.jpg"
     assert "没有匹配" not in browser.status_label.text()
+
+
+def test_completion_display_text_is_reduced_to_species_name(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "红翅凤头鹃" / "DSC_7699.jpg")
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+
+    browser.search.setText("红翅凤头鹃 · Clamator coromandus · Chestnut-winged Cuckoo · hcftj")
+
+    assert browser.search.text() == "红翅凤头鹃"
+    assert browser.grid.count() == 1
+    assert browser.grid.item(0).data(0x0100) == "红翅凤头鹃/DSC_7699.jpg"
+    assert "没有匹配" not in browser.status_label.text()
