@@ -3,8 +3,18 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from PySide6.QtCore import QFileSystemWatcher, QSettings, QSize, Qt, QTimer
-from PySide6.QtGui import QIcon, QImageReader, QPixmap
+from PySide6.QtCore import (
+    QFileSystemWatcher,
+    QObject,
+    QRunnable,
+    QSettings,
+    QSize,
+    Qt,
+    QThreadPool,
+    QTimer,
+    Signal,
+)
+from PySide6.QtGui import QColor, QIcon, QImage, QImageReader, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -17,6 +27,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QSplitter,
     QTreeWidget,
@@ -33,6 +44,29 @@ from .image_canvas import CanvasBox, ZoomableImageCanvas
 from .species_picker import SpeciesPickerDialog
 
 
+class _ThumbnailSignals(QObject):
+    ready = Signal(str, object)
+
+
+class _ThumbnailTask(QRunnable):
+    def __init__(self, key: str, path: Path, size: QSize) -> None:
+        super().__init__()
+        self.key = key
+        self.path = path
+        self.size = size
+        self.signals = _ThumbnailSignals()
+
+    def run(self) -> None:
+        reader = QImageReader(str(self.path))
+        reader.setAutoTransform(True)
+        source_size = reader.size()
+        if source_size.isValid():
+            reader.setScaledSize(
+                source_size.scaled(self.size, Qt.AspectRatioMode.KeepAspectRatio)
+            )
+        self.signals.ready.emit(self.key, reader.read())
+
+
 class ArchiveBrowserWindow(QMainWindow):
     """Read-only archive browser; correction is added by the correction module."""
 
@@ -43,6 +77,7 @@ class ArchiveBrowserWindow(QMainWindow):
         batch_id: str | None = None,
         parent: QWidget | None = None,
         settings: QSettings | None = None,
+        defer_load: bool = False,
     ) -> None:
         super().__init__(parent)
         self.output_root = Path(output_root)
@@ -58,7 +93,21 @@ class ArchiveBrowserWindow(QMainWindow):
         self._initialized = False
         self._closed = False
         self._updating_batch_combo = False
+        self._loading = False
+        self._refreshing = False
+        self._defer_load = defer_load
         self._thumbnail_cache: dict[tuple[str, float], QIcon] = {}
+        self._thumbnail_tasks: dict[tuple[str, float], _ThumbnailTask] = {}
+        self._thumbnail_items: dict[tuple[str, float], QListWidgetItem] = {}
+        self._thumbnail_pool = QThreadPool(self)
+        self._thumbnail_pool.setMaxThreadCount(4)
+        self._thumbnail_timer = QTimer(self)
+        self._thumbnail_timer.setSingleShot(True)
+        self._thumbnail_timer.setInterval(60)
+        self._thumbnail_timer.timeout.connect(self._schedule_visible_thumbnails)
+        placeholder = QPixmap(160, 120)
+        placeholder.fill(QColor("#2a332d"))
+        self._placeholder_icon = QIcon(placeholder)
         self._watcher = QFileSystemWatcher(self)
         self._refresh_timer = QTimer(self)
         self._refresh_timer.setSingleShot(True)
@@ -67,7 +116,10 @@ class ArchiveBrowserWindow(QMainWindow):
         self._watcher.directoryChanged.connect(self._on_watched_change)
         self._build_ui()
         self._setup_watcher()
-        self.refresh()
+        if self._defer_load:
+            self._set_loading(True, "正在读取归档…")
+        else:
+            self.load_library()
 
     # ---------- UI ----------
 
@@ -146,6 +198,20 @@ class ArchiveBrowserWindow(QMainWindow):
         toolbar.addWidget(self.import_button)
         root.addLayout(toolbar)
 
+        self.loading_widget = QWidget()
+        loading_layout = QVBoxLayout(self.loading_widget)
+        loading_layout.setContentsMargins(0, 0, 0, 0)
+        self.loading_label = QLabel("正在读取归档…")
+        self.loading_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.loading_progress = QProgressBar()
+        self.loading_progress.setRange(0, 0)
+        self.loading_progress.setTextVisible(False)
+        self.loading_progress.setMaximumHeight(6)
+        loading_layout.addWidget(self.loading_label)
+        loading_layout.addWidget(self.loading_progress)
+        self.loading_widget.setVisible(False)
+        root.addWidget(self.loading_widget)
+
         self.summary_label = QLabel("正在读取归档…")
         root.addWidget(self.summary_label)
 
@@ -173,6 +239,9 @@ class ArchiveBrowserWindow(QMainWindow):
         self.grid.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
         self.grid.setMinimumWidth(300)
         self.grid.currentItemChanged.connect(self._on_grid_selection)
+        self.grid.verticalScrollBar().valueChanged.connect(
+            lambda _value: self._thumbnail_timer.start()
+        )
         splitter.addWidget(self.grid)
 
         detail = QWidget()
@@ -213,21 +282,40 @@ class ArchiveBrowserWindow(QMainWindow):
 
     # ---------- refresh / tree ----------
 
-    def refresh(self) -> None:
+    def load_library(self) -> None:
         if self._closed:
             return
-        expanded = {
-            path for path, item in self._tree_items.items() if item.isExpanded()
-        }
-        self.index.refresh()
-        self._update_batch_combo()
-        entries = self._visible_entries()
-        self._rebuild_tree(entries)
-        self._restore_tree_state(expanded)
-        self._refresh_grid()
-        self._update_summary()
-        self.cleanup_button.setVisible((self.output_root / "已纠正").exists())
-        self._setup_watcher()
+        self._set_loading(True, "正在读取归档…")
+        try:
+            self.refresh()
+        finally:
+            self._set_loading(False)
+
+    def _set_loading(self, active: bool, text: str = "") -> None:
+        if active:
+            self.loading_label.setText(text)
+        self.loading_widget.setVisible(active)
+
+    def refresh(self) -> None:
+        if self._closed or self._refreshing:
+            return
+        self._refreshing = True
+        try:
+            expanded = {
+                path for path, item in self._tree_items.items() if item.isExpanded()
+            }
+            self.index.refresh()
+            self._update_batch_combo()
+            entries = self._visible_entries()
+            self._rebuild_tree(entries)
+            self._restore_tree_state(expanded)
+            self._refresh_grid()
+            self._update_summary()
+            self.cleanup_button.setVisible((self.output_root / "已纠正").exists())
+            self._setup_watcher()
+            self._thumbnail_timer.start()
+        finally:
+            self._refreshing = False
 
     def _visible_entries(self) -> list[ArchiveEntry]:
         return self.index.filter_entries(batch_id=self.batch_id)
@@ -325,12 +413,17 @@ class ArchiveBrowserWindow(QMainWindow):
         )
         self.grid.blockSignals(True)
         self.grid.clear()
+        self._thumbnail_items = {}
         selected_item = None
         for entry in entries:
-            item = QListWidgetItem(self._thumbnail(entry), self._grid_text(entry))
+            key = self._thumbnail_key(entry)
+            icon = self._thumbnail_cache.get(key, self._placeholder_icon)
+            item = QListWidgetItem(icon, self._grid_text(entry))
             item.setData(Qt.ItemDataRole.UserRole, entry.relative_path)
             item.setToolTip(entry.relative_path)
             self.grid.addItem(item)
+            if key is not None:
+                self._thumbnail_items[key] = item
             if entry.relative_path == self._selected_entry_path:
                 selected_item = item
         self.grid.blockSignals(False)
@@ -341,30 +434,63 @@ class ArchiveBrowserWindow(QMainWindow):
         else:
             self._clear_detail()
         self._update_summary()
+        self._thumbnail_timer.start()
 
     @staticmethod
     def _grid_text(entry: ArchiveEntry) -> str:
         return f"{entry.display_name}\n{Path(entry.relative_path).name}"
 
-    def _thumbnail(self, entry: ArchiveEntry) -> QIcon:
+    def _thumbnail_key(self, entry: ArchiveEntry) -> tuple[str, float] | None:
         try:
-            mtime = entry.absolute_path.stat().st_mtime
+            return entry.relative_path, entry.absolute_path.stat().st_mtime
         except OSError:
-            return QIcon()
-        key = (entry.relative_path, mtime)
-        cached = self._thumbnail_cache.get(key)
-        if cached is not None:
-            return cached
-        reader = QImageReader(str(entry.absolute_path))
-        reader.setAutoTransform(True)
-        size = reader.size()
-        if size.isValid():
-            target = size.scaled(QSize(160, 120), Qt.AspectRatioMode.KeepAspectRatio)
-            reader.setScaledSize(target)
-        image = reader.read()
-        icon = QIcon(QPixmap.fromImage(image)) if not image.isNull() else QIcon()
-        self._thumbnail_cache[key] = icon
-        return icon
+            return None
+
+    def _schedule_visible_thumbnails(self) -> None:
+        if self._closed or not self.grid.count():
+            return
+        viewport = self.grid.viewport().rect()
+        for row in range(self.grid.count()):
+            item = self.grid.item(row)
+            if not self.grid.visualItemRect(item).intersects(viewport):
+                continue
+            relative_path = item.data(Qt.ItemDataRole.UserRole)
+            entry = next(
+                (value for value in self.index.entries
+                 if value.relative_path == relative_path),
+                None,
+            )
+            if entry is not None:
+                self._request_thumbnail(entry, item)
+
+    def _request_thumbnail(self, entry: ArchiveEntry, item: QListWidgetItem) -> None:
+        key = self._thumbnail_key(entry)
+        if key is None or key in self._thumbnail_cache or key in self._thumbnail_tasks:
+            return
+        task = _ThumbnailTask(key[0], entry.absolute_path, QSize(160, 120))
+        task.signals.ready.connect(self._on_thumbnail_ready)
+        self._thumbnail_tasks[key] = task
+        self._thumbnail_pool.start(task)
+
+    def _on_thumbnail_ready(self, key: str, image: QImage) -> None:
+        if self._closed:
+            return
+        for task_key, task in list(self._thumbnail_tasks.items()):
+            if task.key == key:
+                self._thumbnail_tasks.pop(task_key, None)
+                break
+        if image.isNull():
+            return
+        icon = QIcon(QPixmap.fromImage(image))
+        for stored_key, item in list(self._thumbnail_items.items()):
+            if stored_key[0] == key:
+                self._thumbnail_cache[stored_key] = icon
+                item.setIcon(icon)
+                break
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._thumbnail_timer.start()
 
     # ---------- detail ----------
 
@@ -379,6 +505,7 @@ class ArchiveBrowserWindow(QMainWindow):
         )
         if entry is None:
             return
+        self._request_thumbnail(entry, current)
         self._selected_entry_path = entry.relative_path
         self._show_entry(entry)
 
@@ -737,6 +864,11 @@ class ArchiveBrowserWindow(QMainWindow):
     def closeEvent(self, event) -> None:
         self._closed = True
         self._refresh_timer.stop()
+        self._thumbnail_timer.stop()
+        try:
+            self._thumbnail_pool.clear()
+        except RuntimeError:
+            pass
         try:
             self._watcher.deleteLater()
         except RuntimeError:

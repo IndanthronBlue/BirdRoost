@@ -341,7 +341,9 @@ class MainWindow(QMainWindow):
         if not output:
             self._show_error("请先选择分类后目录")
             return
-        window = ArchiveBrowserWindow(Path(output), batch_id=batch_id, parent=self)
+        window = ArchiveBrowserWindow(
+            Path(output), batch_id=batch_id, parent=self, defer_load=True
+        )
         window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         window.destroyed.connect(
             lambda _obj=None, browser=window: self._forget_archive_window(browser)
@@ -349,6 +351,7 @@ class MainWindow(QMainWindow):
         self._archive_windows.append(window)
         window.show()
         window.raise_()
+        QTimer.singleShot(30, window.load_library)
 
     def _forget_archive_window(self, window: ArchiveBrowserWindow) -> None:
         if window in self._archive_windows:

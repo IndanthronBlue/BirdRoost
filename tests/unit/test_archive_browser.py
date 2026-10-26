@@ -393,3 +393,24 @@ def test_target_list_shows_all_group_species_and_switches_box_highlight(qtbot, t
         ("1", True), ("2", False), ("3", False)
     ]
     assert browser.correct_button.isEnabled() is False
+
+
+def test_deferred_load_shows_waiting_banner(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=new_batch_id(),
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    browser = ArchiveBrowserWindow(output, defer_load=True)
+    qtbot.addWidget(browser)
+    browser.show()
+    qtbot.waitExposed(browser)
+
+    assert browser.loading_widget.isVisible() is True
+    assert browser.loading_label.text() == "正在读取归档…"
+
+    browser.load_library()
+
+    assert browser.loading_widget.isVisible() is False
+    assert any(path[-1] == "Calidris alba" for path in browser._tree_items)
