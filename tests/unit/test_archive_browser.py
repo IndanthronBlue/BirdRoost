@@ -681,3 +681,40 @@ def test_orphan_pending_photo_gets_manual_panel_and_location_named_copy(qtbot, t
     browser.manual_archive_button.click()
 
     assert (output / "三趾滨鹬" / "云南大理_260501_orphan.jpg").is_file()
+
+
+def test_user_alias_is_saved_and_searchable(qtbot, tmp_path: Path):
+    from PySide6.QtCore import QSettings
+
+    output = tmp_path / "output"
+    make_image(output / "蓝尾灰喜鹊" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    add_group(library, "蓝尾灰喜鹊/a.jpg", batch_id=new_batch_id(),
+              species_cn="蓝尾灰喜鹊", species_latin="Cyanopica cooki")
+    settings = QSettings(str(tmp_path / "aliases.ini"), QSettings.Format.IniFormat)
+    browser = ArchiveBrowserWindow(output, settings=settings)
+    qtbot.addWidget(browser)
+    entry = browser.index.entries[0]
+    browser.tree.setCurrentItem(browser._tree_items[entry.tree_path])
+    browser.grid.setCurrentRow(0)
+
+    class FakeAliasDialog:
+        def __init__(self, *args, **kwargs):
+            self.alias = "伊比利亚灰喜鹊"
+
+        def exec(self):
+            return True
+
+    monkeypatch_target = "birdclass.ui.archive_browser.AliasDialog"
+    import pytest
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(monkeypatch_target, FakeAliasDialog)
+    try:
+        browser.add_alias_for_entry()
+    finally:
+        monkeypatch.undo()
+
+    assert "伊比利亚灰喜鹊" in settings.value("user_taxonomy_aliases")
+    browser.search.setText("伊比利亚灰喜鹊")
+    assert browser.grid.count() == 1

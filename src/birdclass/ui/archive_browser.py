@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -47,6 +48,7 @@ from ..correction import CorrectionError, correct_archive_copy
 from ..library import ArchiveLibrary
 from ..library_import import import_csv_to_library
 from ..manual_review import ManualReviewError, delete_archive_photo, resolve_manual
+from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
 from .image_canvas import CanvasBox, ZoomableImageCanvas
 from .lightbox import LightboxDialog
@@ -97,6 +99,8 @@ class ArchiveBrowserWindow(QMainWindow):
             self.language = "zh"
         self.index = ArchiveIndex(self.output_root)
         self.library = ArchiveLibrary(self.output_root)
+        self._user_aliases: dict[str, str] = {}
+        self._load_user_aliases()
         self._tree_items: dict[tuple[str, ...], QTreeWidgetItem] = {}
         self._selected_entry_path = ""
         self._initialized = False
@@ -342,6 +346,10 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.setVisible(False)
         self.correct_button.clicked.connect(self.correct_selected)
         info_layout.addWidget(self.correct_button)
+        self.alias_button = QPushButton("添加检索别名…")
+        self.alias_button.setVisible(False)
+        self.alias_button.clicked.connect(self.add_alias_for_entry)
+        info_layout.addWidget(self.alias_button)
 
         self.manual_panel = QWidget()
         manual_layout = QVBoxLayout(self.manual_panel)
@@ -611,9 +619,15 @@ class ArchiveBrowserWindow(QMainWindow):
             latin = entry.latin_name
             english = entry.taxonomy.name_en if entry.taxonomy else ""
             full, initials = self._pinyin_aliases(name)
-            records[key] = (name, latin, english, initials)
+            user_aliases = [
+                alias for alias, scientific in self._user_aliases.items()
+                if entry.taxonomy is not None and scientific == entry.taxonomy.scientific_name
+            ]
+            records[key] = (name, latin, english, initials, tuple(user_aliases))
         suggestions = []
-        for name, latin, english, initials in sorted(records.values(), key=lambda value: value[0].casefold()):
+        for name, latin, english, initials, user_aliases in sorted(
+            records.values(), key=lambda value: value[0].casefold()
+        ):
             parts = [name]
             if latin and latin != name:
                 parts.append(latin)
@@ -621,6 +635,7 @@ class ArchiveBrowserWindow(QMainWindow):
                 parts.append(english)
             if initials:
                 parts.append(initials)
+            parts.extend(user_aliases)
             suggestions.append(" · ".join(parts))
         self._search_suggestions = suggestions
         self.search_model.setStringList(suggestions)
@@ -637,6 +652,9 @@ class ArchiveBrowserWindow(QMainWindow):
             fields.append(entry.taxonomy.name_en)
         if any(needle in field.casefold() for field in fields if field):
             return True
+        if entry.taxonomy is not None:
+            if any(needle in alias.casefold() for alias in self.index.taxonomy.aliases_for(entry.taxonomy)):
+                return True
         full, initials = self._pinyin_aliases(entry.display_name)
         return needle in full or needle in initials
 
@@ -876,6 +894,8 @@ class ArchiveBrowserWindow(QMainWindow):
         self._populate_targets(entry)
         self.correct_button.setVisible(bool(entry.group_id) and not entry.special)
         self.correct_button.setEnabled(bool(entry.group_id) and not entry.special)
+        self.alias_button.setVisible(entry.taxonomy is not None)
+        self.alias_button.setEnabled(entry.taxonomy is not None)
         self.delete_button.setEnabled(True)
         pending_copies = [
             copy for copy in entry.group.get("copies", [])
@@ -968,6 +988,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self.target_list.setVisible(False)
         self.target_label.setVisible(False)
         self.correct_button.setVisible(False)
+        self.alias_button.setVisible(False)
         self.manual_panel.setVisible(False)
         self.delete_button.setEnabled(False)
         self.box_toggle.setEnabled(False)
@@ -1045,6 +1066,51 @@ class ArchiveBrowserWindow(QMainWindow):
             self.status_label.setText("该图片没有检测框数据")
             return
         self.status_label.setText("已显示检测框" if checked else "已隐藏检测框")
+
+    def _load_user_aliases(self) -> None:
+        raw = self._settings.value("user_taxonomy_aliases", "{}")
+        try:
+            mapping = json.loads(str(raw)) if raw else {}
+        except ValueError:
+            mapping = {}
+        if not isinstance(mapping, dict):
+            mapping = {}
+        for alias, scientific_name in mapping.items():
+            try:
+                self.index.taxonomy.add_alias(str(alias), str(scientific_name))
+                self._user_aliases[str(alias)] = str(scientific_name)
+            except ValueError:
+                continue
+
+    def _save_user_aliases(self) -> None:
+        self._settings.setValue(
+            "user_taxonomy_aliases",
+            json.dumps(self._user_aliases, ensure_ascii=False),
+        )
+
+    def add_alias_for_entry(self) -> None:
+        entry = next(
+            (value for value in self.index.entries
+             if value.relative_path == self._selected_entry_path),
+            None,
+        )
+        if entry is None or entry.taxonomy is None:
+            return
+        dialog = AliasDialog(entry.taxonomy, self)
+        if not dialog.exec() or not dialog.alias:
+            return
+        try:
+            entry.taxonomy = self.index.taxonomy.add_alias(
+                dialog.alias, entry.taxonomy.scientific_name
+            )
+        except ValueError as exc:
+            QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
+            return
+        self._user_aliases[dialog.alias] = entry.taxonomy.scientific_name
+        self._save_user_aliases()
+        self._update_search_suggestions()
+        self._refresh_grid()
+        self.status_label.setText(f"已添加别名：{dialog.alias}")
 
     def manual_archive_selected(self) -> None:
         entry = next(

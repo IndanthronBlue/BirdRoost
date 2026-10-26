@@ -182,6 +182,20 @@ class Taxonomy:
     def aliases_for(self, taxon: Taxon) -> tuple[str, ...]:
         return self._loaded.aliases_by_scientific.get(taxon.taxonomy_key, ())
 
+    def add_alias(self, alias: str, scientific_name: str) -> Taxon:
+        scientific = _scientific_key(scientific_name)
+        taxon = self._loaded.by_scientific.get(scientific)
+        alias = " ".join(alias.split())
+        if taxon is None or not alias:
+            raise ValueError("无法为未知物种添加别名")
+        key = _fold(alias)
+        self._loaded.aliases[key] = scientific
+        existing = list(self._loaded.aliases_by_scientific.get(scientific, ()))
+        if alias not in existing:
+            existing.append(alias)
+        self._loaded.aliases_by_scientific[scientific] = tuple(existing)
+        return taxon
+
     def resolve(
         self,
         *,
