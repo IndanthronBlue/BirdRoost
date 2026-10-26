@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .archive_index import ArchiveEntry
 from .archiver import sanitize_species_directory
-from .library import ArchiveLibrary, now_iso
+from .library import ArchiveLibrary, ImageGeometry, new_group_id, now_iso
 from .metadata import write_species_metadata
 from .taxonomy import load_taxonomy
 
@@ -53,12 +53,51 @@ def _stamp() -> str:
     return datetime.now().strftime("%Y%m%d-%H%M%S-%f")
 
 
+def _ensure_group(library: ArchiveLibrary, entry: ArchiveEntry) -> dict:
+    if entry.group_id:
+        return library.read_group(entry.group_id)
+    path = library.output_root / entry.relative_path
+    try:
+        geometry = ImageGeometry.from_path(path)
+    except OSError as exc:
+        raise ManualReviewError(f"无法读取待复核图片：{exc}") from exc
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": "",
+        "created_at": now_iso(),
+        "status": "failed",
+        "source_relative_path": entry.relative_path,
+        "observation": {
+            "location": entry.observation_location,
+            "time": entry.observation_time,
+        },
+        "image": geometry.to_dict(),
+        "targets": [],
+        "copies": [{
+            "relative_path": entry.relative_path,
+            "species_cn": "",
+            "species_latin": "",
+            "target_indices": [],
+            "pending": True,
+        }],
+        "error_code": "",
+        "error_message": "",
+    }
+    library.write_group(group)
+    entry.group_id = group["group_id"]
+    entry.group = group
+    return group
+
+
 def resolve_manual(
     library: ArchiveLibrary,
     entry: ArchiveEntry,
     *,
     action: str,
     name: str = "",
+    observation_location: str = "",
+    observation_time: str = "",
 ) -> str:
     """Resolve a pending/failed group as manual species or no-bird.
 
@@ -66,9 +105,7 @@ def resolve_manual(
     """
     if action != "manual" and action not in SPECIAL_ACTIONS:
         raise ManualReviewError("未知的人工复核操作")
-    if not entry.group_id:
-        raise ManualReviewError("该图片没有归档 group")
-    group = library.read_group(entry.group_id)
+    group = _ensure_group(library, entry)
     copies = group.get("copies", [])
     pending = _pending_copies(group)
     if not pending:
@@ -86,7 +123,17 @@ def resolve_manual(
         if not name:
             raise ManualReviewError("人工鸟名不能为空")
         folder = sanitize_species_directory(name, "manual")
-        new_path = _unique_path(output / folder / source.name)
+        filename = source.name
+        location = " ".join(observation_location.split())
+        observed_at = " ".join(observation_time.split())
+        if location and observed_at:
+            prefix = (
+                f"{sanitize_species_directory(location, '未知地点')}_"
+                f"{sanitize_species_directory(observed_at, '未知时间')}_"
+            )
+            if not filename.startswith(prefix):
+                filename = f"{prefix}{filename}"
+        new_path = _unique_path(output / folder / filename)
         try:
             new_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, new_path)
@@ -130,6 +177,10 @@ def resolve_manual(
             "species_latin": taxon.scientific_name if taxon else "",
             "target_indices": target_indices,
         }]
+        group["observation"] = {
+            "location": observation_location or group.get("observation", {}).get("location", ""),
+            "time": observation_time or group.get("observation", {}).get("time", ""),
+        }
         group["status"] = "completed"
         group["error_code"] = ""
         group["error_message"] = ""
@@ -170,6 +221,10 @@ def resolve_manual(
             status: True,
         })
     group["copies"] = [copy for copy in copies if copy not in pending] + new_copies
+    group["observation"] = {
+        "location": observation_location or group.get("observation", {}).get("location", ""),
+        "time": observation_time or group.get("observation", {}).get("time", ""),
+    }
     group["status"] = status
     group["error_code"] = ""
     group["error_message"] = ""

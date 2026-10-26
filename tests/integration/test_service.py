@@ -362,7 +362,7 @@ def test_defer_skips_only_current_target_and_resumes_remaining_target(tmp_path):
     assert (tmp_path / "output" / "斑鸠" / "原始地点_原始时间_斑鸠_001.jpg").is_file()
     assert (tmp_path / "output" / "家燕" / "原始地点_原始时间_家燕_001.jpg").is_file()
     assert not (tmp_path / "output" / "麻雀").exists()
-    pending_copy = tmp_path / "output" / "待复核" / "birds.jpg"
+    pending_copy = tmp_path / "output" / "待复核" / "原始地点_原始时间_birds.jpg"
     assert pending_copy.is_file()
     history = CsvHistory(source / "birdclass_records.csv")
     history.load()
@@ -392,7 +392,7 @@ def test_defer_skips_only_current_target_and_resumes_remaining_target(tmp_path):
         assert len(list(directory.glob("*.jpg"))) == 1
         assert (directory / f"原始地点_原始时间_{species}_001.jpg").is_file()
     assert not list((tmp_path / "output").rglob("新地点*"))
-    assert (pending_copy.parent / "birds_待确认框.jpg").is_file()
+    assert (pending_copy.parent / "原始地点_原始时间_birds_待确认框.jpg").is_file()
     assert len(list(pending_copy.parent.glob("*.jpg"))) == 2
 
 

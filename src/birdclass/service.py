@@ -180,7 +180,9 @@ class ClassificationService:
                     return finish_batch()
                 if result.action == ReviewAction.DEFER:
                     try:
-                        pending_destination = archiver.archive_pending(item)
+                        pending_destination = archiver.archive_pending(
+                            item, event.observation_location, event.observation_time
+                        )
                     except ArchiveError as exc:
                         self._record_failure(
                             item, self._config_from_event(event), event, exc,
@@ -317,7 +319,7 @@ class ClassificationService:
                 pending_destination = None
                 if isinstance(exc, RecognitionFailedError):
                     try:
-                        pending_destination = archiver.archive_pending(item)
+                        pending_destination = archiver.archive_pending(item, config.observation_location, config.observation_time)
                     except ArchiveError as pending_exc:
                         self._record_failure(
                             item, config, previous_event, pending_exc,
@@ -383,7 +385,7 @@ class ClassificationService:
                 )
                 pending_destination = None
                 try:
-                    pending_destination = archiver.archive_pending(item)
+                    pending_destination = archiver.archive_pending(item, config.observation_location, config.observation_time)
                 except ArchiveError:
                     pending_destination = None
                 if pending_destination is not None:
@@ -748,7 +750,9 @@ class ClassificationService:
                     for target in targets
                     if target.target_index in deferred_set and target.box is not None
                 )
-                pending_destination, annotated = archiver.archive_pending_with_preview(item, boxes)
+                pending_destination, annotated = archiver.archive_pending_with_preview(
+                    item, boxes, observation_location, observation_time
+                )
             except ArchiveError as exc:
                 previous = history.latest_for(item) or event
                 self._record_failure(

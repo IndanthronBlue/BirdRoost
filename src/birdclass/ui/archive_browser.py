@@ -360,6 +360,14 @@ class ArchiveBrowserWindow(QMainWindow):
         self.manual_archive_button.clicked.connect(self.manual_archive_selected)
         name_row.addWidget(self.manual_archive_button)
         manual_layout.addLayout(name_row)
+        observation_row = QHBoxLayout()
+        self.manual_location = QLineEdit()
+        self.manual_location.setPlaceholderText("观测地点")
+        self.manual_time = QLineEdit()
+        self.manual_time.setPlaceholderText("观测时间")
+        observation_row.addWidget(self.manual_location, 1)
+        observation_row.addWidget(self.manual_time, 1)
+        manual_layout.addLayout(observation_row)
         action_row = QHBoxLayout()
         for label, action in (
             ("无鸟", "no_bird"),
@@ -835,17 +843,21 @@ class ArchiveBrowserWindow(QMainWindow):
         self.correct_button.setVisible(bool(entry.group_id) and not entry.special)
         self.correct_button.setEnabled(bool(entry.group_id) and not entry.special)
         self.delete_button.setEnabled(True)
-        is_pending = (
+        pending_copies = [
+            copy for copy in entry.group.get("copies", [])
+            if copy.get("pending")
+            or str(copy.get("relative_path", "")).startswith("待复核/")
+        ]
+        is_pending = entry.special == "待复核" or (
             bool(entry.group_id)
-            and (entry.status in {"failed", "review_pending"} or entry.special == "待复核")
-            and any(
-                copy.get("pending")
-                or str(copy.get("relative_path", "")).startswith("待复核/")
-                for copy in entry.group.get("copies", [])
-            )
+            and entry.status in {"failed", "review_pending"}
+            and bool(pending_copies)
         )
         self.manual_panel.setVisible(is_pending)
         self.manual_name.clear()
+        observation = entry.group.get("observation") or {}
+        self.manual_location.setText(entry.observation_location or str(observation.get("location", "")))
+        self.manual_time.setText(entry.observation_time or str(observation.get("time", "")))
         self.status_label.setText(f"{entry.relative_path} · {len(self._entry_boxes(entry))} 个框")
 
     def _target_species(self, entry: ArchiveEntry, target: dict) -> str:
@@ -1010,7 +1022,11 @@ class ArchiveBrowserWindow(QMainWindow):
         if entry is None or not name:
             return
         try:
-            new_relative = resolve_manual(self.library, entry, action="manual", name=name)
+            new_relative = resolve_manual(
+                self.library, entry, action="manual", name=name,
+                observation_location=self.manual_location.text().strip(),
+                observation_time=self.manual_time.text().strip(),
+            )
         except ManualReviewError as exc:
             QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
             return
@@ -1035,7 +1051,11 @@ class ArchiveBrowserWindow(QMainWindow):
             "scenery": "风景",
         }
         try:
-            resolve_manual(self.library, entry, action=action)
+            resolve_manual(
+                self.library, entry, action=action,
+                observation_location=self.manual_location.text().strip(),
+                observation_time=self.manual_time.text().strip(),
+            )
         except ManualReviewError as exc:
             QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
             return

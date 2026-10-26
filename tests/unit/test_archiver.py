@@ -301,3 +301,22 @@ def test_archive_pending_preview_uses_display_orientation(tmp_path: Path):
         abs(color[0] - 255) < 12 and abs(color[1] - 176) < 12 and abs(color[2] - 32) < 12
         for _, color in colors
     )
+
+
+def test_pending_copy_includes_observation_in_filename(tmp_path: Path):
+    source = tmp_path / "source"
+    source.mkdir()
+    path = source / "bird.jpg"
+    Image.new("RGB", (40, 30), "green").save(path)
+    archiver = FileArchiver(tmp_path / "output")
+
+    original, annotated = archiver.archive_pending_with_preview(
+        item(path, source),
+        ((0, (0.1, 0.1, 0.5, 0.5)),),
+        "云南大理",
+        "260501",
+    )
+
+    assert original == tmp_path / "output" / "待复核" / "云南大理_260501_bird.jpg"
+    assert annotated is not None
+    assert annotated.name == "云南大理_260501_bird_待确认框.jpg"

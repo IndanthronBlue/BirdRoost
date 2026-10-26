@@ -112,19 +112,30 @@ class FileArchiver:
         except OSError as exc:
             raise ArchiveError(f"复制多物种图片失败：{exc}") from exc
 
-    def archive_pending(self, item: ImageItem) -> Path:
-        destination, _ = self.archive_pending_with_preview(item, ())
+    def archive_pending(
+        self,
+        item: ImageItem,
+        observation_location: str = "",
+        observation_time: str = "",
+    ) -> Path:
+        destination, _ = self.archive_pending_with_preview(
+            item, (), observation_location, observation_time
+        )
         return destination
 
     def archive_pending_with_preview(
         self,
         item: ImageItem,
         boxes: tuple[tuple[int, NormalizedBox], ...] = (),
+        observation_location: str = "",
+        observation_time: str = "",
     ) -> tuple[Path, Path | None]:
         directory = self.output_root / "待复核"
         try:
             directory.mkdir(parents=True, exist_ok=True)
-            destination = self._pending_destination(item, directory)
+            destination = self._pending_destination(
+                item, directory, observation_location, observation_time
+            )
             annotated = self._annotate_pending(destination, boxes) if boxes else None
             return destination, annotated
         except ArchiveError:
@@ -132,12 +143,24 @@ class FileArchiver:
         except OSError as exc:
             raise ArchiveError(f"复制待复核图片失败：{exc}") from exc
 
-    def _pending_destination(self, item: ImageItem, directory: Path) -> Path:
+    def _pending_destination(
+        self,
+        item: ImageItem,
+        directory: Path,
+        observation_location: str = "",
+        observation_time: str = "",
+    ) -> Path:
         source = item.absolute_path
+        prefix = ""
+        if observation_location.strip() and observation_time.strip():
+            prefix = (
+                f"{_sanitize_component(observation_location, '未知地点')}_"
+                f"{_sanitize_component(observation_time, '未知时间')}_"
+            )
         number = 1
         while True:
             suffix = "" if number == 1 else f"_{number:03d}"
-            destination = directory / f"{source.stem}{suffix}{source.suffix}"
+            destination = directory / f"{prefix}{source.stem}{suffix}{source.suffix}"
             if destination.exists():
                 if _same_pixels(source, destination):
                     return destination

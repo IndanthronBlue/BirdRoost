@@ -660,3 +660,22 @@ def test_pending_panel_manual_archive_and_delete(qtbot, tmp_path: Path, monkeypa
 
     assert (output / "已删除").exists()
     assert not (output / "三趾滨鹬" / "bird.jpg").exists()
+
+
+def test_orphan_pending_photo_gets_manual_panel_and_location_named_copy(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    pending = output / "待复核" / "orphan.jpg"
+    pending.parent.mkdir(parents=True)
+    make_image(pending)
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.tree.setCurrentItem(next(iter(browser._tree_items.values())))
+    browser.grid.setCurrentRow(0)
+
+    assert browser.manual_panel.isHidden() is False
+    browser.manual_name.setText("三趾滨鹬")
+    browser.manual_location.setText("云南大理")
+    browser.manual_time.setText("260501")
+    browser.manual_archive_button.click()
+
+    assert (output / "三趾滨鹬" / "云南大理_260501_orphan.jpg").is_file()
