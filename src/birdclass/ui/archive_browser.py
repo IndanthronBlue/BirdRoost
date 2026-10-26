@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QMessageBox,
+    QInputDialog,
     QProgressBar,
     QPushButton,
     QScrollArea,
@@ -954,6 +955,8 @@ class ArchiveBrowserWindow(QMainWindow):
                 details.append(f"英文名：{taxon.name_en}")
         else:
             details.append("分类层级：未匹配 taxonomy")
+        if entry.group.get("label"):
+            details.append(f"备注：{entry.group['label']}")
         if entry.observation_location:
             observed = entry.observation_location
             if entry.observation_time:
@@ -1201,6 +1204,20 @@ class ArchiveBrowserWindow(QMainWindow):
         self._refresh_grid()
         self.status_label.setText(f"已添加别名：{dialog.alias}")
 
+    def _restore_pending_view(self) -> None:
+        item = self._tree_items.get(("待复核",))
+        if item is None:
+            return
+        self.tree.blockSignals(True)
+        try:
+            self.tree.setCurrentItem(item)
+            self.tree.scrollToItem(item)
+        finally:
+            self.tree.blockSignals(False)
+        self._refresh_grid()
+        if self.grid.count():
+            self.grid.setCurrentRow(0)
+
     def apply_all_targets(self) -> None:
         entry = next(
             (value for value in self.index.entries
@@ -1224,6 +1241,7 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self.status_label.setText(f"已将 {count} 个目标标为 {entry.species_cn}")
         self.refresh()
+        self._restore_pending_view()
 
     def manual_archive_selected(self) -> None:
         entry = next(
@@ -1246,6 +1264,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = new_relative
         self.status_label.setText(f"已人工归档：{name}")
         self.refresh()
+        self._restore_pending_view()
 
     def resolve_pending(self, action: str) -> None:
         if action == "already_classified":
@@ -1264,6 +1283,7 @@ class ArchiveBrowserWindow(QMainWindow):
             self._selected_entry_path = ""
             self.status_label.setText("已从待复核移除（可在已删除中找回）")
             self.refresh()
+            self._restore_pending_view()
             return
         if action == "defer":
             self.status_label.setText("已保留在待复核")
@@ -1280,11 +1300,19 @@ class ArchiveBrowserWindow(QMainWindow):
             "non_bird_animal": "非鸟动物",
             "scenery": "风景",
         }
+        label = ""
+        if action == "non_bird_animal":
+            label, accepted = QInputDialog.getText(
+                self, "非鸟动物备注", "备注名（如：蜥蜴、岩羊、家猫）："
+            )
+            if not accepted:
+                return
         try:
             resolve_manual(
                 self.library, entry, action=action,
                 observation_location=self.manual_location.text().strip(),
                 observation_time=self.manual_time.text().strip(),
+                label=label,
             )
         except ManualReviewError as exc:
             QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
@@ -1292,6 +1320,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = ""
         self.status_label.setText(f"已移到{labels.get(action, action)}")
         self.refresh()
+        self._restore_pending_view()
 
     def delete_selected(self) -> None:
         entry = next(
@@ -1317,6 +1346,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = ""
         self.status_label.setText(f"已移入已删除：{new_relative}")
         self.refresh()
+        self._restore_pending_view()
 
     def open_lightbox(self) -> None:
         entries = []

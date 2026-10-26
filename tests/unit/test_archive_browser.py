@@ -770,3 +770,37 @@ def test_already_classified_removes_pending_copy(qtbot, tmp_path: Path):
     assert list((output / "已删除").rglob("bird.jpg"))
     assert library.read_group(group["group_id"])["status"] == "already_classified"
     assert not any(entry.special == "待复核" for entry in browser.index.entries)
+
+
+def test_pending_view_stays_after_resolving_one_item(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    library = ArchiveLibrary(output)
+    library.ensure()
+    for index in (1, 2):
+        path = output / "待复核" / f"{index}.jpg"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        make_image(path)
+        library.write_group({
+            "schema_version": 1,
+            "group_id": new_group_id(),
+            "batch_id": new_batch_id(),
+            "status": "failed",
+            "source_relative_path": f"{index}.jpg",
+            "targets": [],
+            "copies": [{
+                "relative_path": f"待复核/{index}.jpg",
+                "species_cn": "",
+                "species_latin": "",
+                "target_indices": [],
+                "pending": True,
+            }],
+        })
+    browser = ArchiveBrowserWindow(output)
+    qtbot.addWidget(browser)
+    browser.tree.setCurrentItem(browser._tree_items[("待复核",)])
+    browser.grid.setCurrentRow(0)
+
+    browser.resolve_pending("no_bird")
+
+    assert browser.tree.currentItem().data(0, 0x0100) == ["待复核"]
+    assert browser.grid.count() == 1

@@ -97,6 +97,7 @@ def resolve_manual(
     name: str = "",
     observation_location: str = "",
     observation_time: str = "",
+    label: str = "",
 ) -> str:
     """Resolve a pending/failed group as manual species or no-bird.
 
@@ -121,37 +122,8 @@ def resolve_manual(
         name = " ".join(name.split())
         if not name:
             raise ManualReviewError("人工鸟名不能为空")
-        folder = sanitize_species_directory(name, "manual")
-        filename = source.name
-        location = " ".join(observation_location.split())
-        observed_at = " ".join(observation_time.split())
-        if location and observed_at:
-            prefix = (
-                f"{sanitize_species_directory(location, '未知地点')}_"
-                f"{sanitize_species_directory(observed_at, '未知时间')}_"
-            )
-            if not filename.startswith(prefix):
-                filename = f"{prefix}{filename}"
-        new_path = _unique_path(output / folder / filename)
-        try:
-            new_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(source), str(new_path))
-            write_species_metadata(new_path, name)
-        except Exception as exc:
-            if not source.exists() and new_path.exists():
-                try:
-                    shutil.move(str(new_path), str(source))
-                except OSError:
-                    pass
-            new_path.unlink(missing_ok=True)
-            raise ManualReviewError(f"创建人工归档副本失败：{exc}") from exc
-        new_relative = new_path.relative_to(output).as_posix()
         taxon = load_taxonomy().resolve(name_zh=name)
-        target_indices = sorted({
-            int(index)
-            for copy in pending
-            for index in copy.get("target_indices", [])
-        })
+        scientific = taxon.scientific_name if taxon else ""
         targets = group.setdefault("targets", [])
         if not targets:
             targets.append({
@@ -161,41 +133,101 @@ def resolve_manual(
                 "candidates": [],
                 "selection": None,
             })
-            target_indices = [0]
-        if not target_indices:
-            target_indices = [int(target.get("target_index", 0)) for target in targets]
-        for target in targets:
-            if int(target.get("target_index", -1)) not in target_indices:
-                continue
-            target["selection"] = {
+        unresolved = [
+            int(target.get("target_index", 0))
+            for target in targets
+            if not (target.get("selection") or {}).get("species_cn")
+        ]
+        pending_indices = sorted({
+            int(index)
+            for copy in pending
+            for index in copy.get("target_indices", [])
+        })
+        target_indices = (
+            sorted(set(pending_indices) & set(unresolved))
+            if pending_indices and unresolved else unresolved
+        )
+        if target_indices:
+            for target in targets:
+                if int(target.get("target_index", -1)) not in target_indices:
+                    continue
+                target["selection"] = {
+                    "species_cn": name,
+                    "species_latin": scientific,
+                    "selection_mode": "manual",
+                    "review_reason": "manual_review",
+                }
+        remaining_unresolved = any(
+            not (target.get("selection") or {}).get("species_cn") for target in targets
+        )
+
+        existing = next(
+            (
+                copy for copy in copies
+                if not copy.get("pending") and (
+                    (scientific and copy.get("species_latin") == scientific)
+                    or copy.get("species_cn") == name
+                    or (taxon is not None and copy.get("species_cn") == taxon.name_zh)
+                )
+            ),
+            None,
+        )
+        if existing is not None:
+            existing["target_indices"] = sorted(dict.fromkeys(
+                [*existing.get("target_indices", []), *target_indices]
+            ))
+            new_relative = str(existing.get("relative_path", ""))
+            group["copies"] = [copy for copy in copies if copy not in pending]
+            for copy in pending:
+                old = output / str(copy.get("relative_path", ""))
+                if old.is_file():
+                    old.unlink(missing_ok=True)
+        else:
+            folder = sanitize_species_directory(name, "manual")
+            filename = source.name
+            location = " ".join(observation_location.split())
+            observed_at = " ".join(observation_time.split())
+            if location and observed_at:
+                prefix = (
+                    f"{sanitize_species_directory(location, '未知地点')}_"
+                    f"{sanitize_species_directory(observed_at, '未知时间')}_"
+                )
+                if not filename.startswith(prefix):
+                    filename = f"{prefix}{filename}"
+            new_path = _unique_path(output / folder / filename)
+            try:
+                new_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(source), str(new_path))
+                write_species_metadata(new_path, name)
+            except Exception as exc:
+                if not source.exists() and new_path.exists():
+                    try:
+                        shutil.move(str(new_path), str(source))
+                    except OSError:
+                        pass
+                new_path.unlink(missing_ok=True)
+                raise ManualReviewError(f"创建人工归档副本失败：{exc}") from exc
+            new_relative = new_path.relative_to(output).as_posix()
+            for copy in pending:
+                old = output / str(copy.get("relative_path", ""))
+                if old != source and old.is_file():
+                    old.unlink(missing_ok=True)
+            group["copies"] = [
+                copy for copy in copies if copy not in pending
+            ] + [{
+                "relative_path": new_relative,
                 "species_cn": name,
-                "species_latin": taxon.scientific_name if taxon else "",
-                "selection_mode": "manual",
-                "review_reason": "manual_review",
-            }
-        group["copies"] = [
-            copy for copy in copies if copy not in pending
-        ] + [{
-            "relative_path": new_relative,
-            "species_cn": name,
-            "species_latin": taxon.scientific_name if taxon else "",
-            "target_indices": target_indices,
-        }]
+                "species_latin": scientific,
+                "target_indices": target_indices,
+            }]
         group["observation"] = {
             "location": observation_location or group.get("observation", {}).get("location", ""),
             "time": observation_time or group.get("observation", {}).get("time", ""),
         }
-        group["status"] = "completed"
+        group["status"] = "review_pending" if remaining_unresolved else "completed"
         group["error_code"] = ""
         group["error_message"] = ""
         library.write_group(group)
-        # The source pending copy was moved into the species folder. Any
-        # remaining annotated preview is redundant; remove it instead of
-        # creating another copy under 已纠正/.
-        for copy in pending:
-            old = output / str(copy.get("relative_path", ""))
-            if old != source and old.is_file():
-                old.unlink(missing_ok=True)
         library.append_correction({
             "corrected_at": now_iso(),
             "group_id": entry.group_id,
@@ -203,12 +235,16 @@ def resolve_manual(
             "new_species_cn": name,
             "old_relative_paths": [copy.get("relative_path", "") for copy in pending],
             "new_relative_path": new_relative,
+            "reused_existing_copy": existing is not None,
+            "target_indices": target_indices,
         })
         return new_relative
 
     # no_bird / non_bird_animal / scenery
     folder, status = SPECIAL_ACTIONS[action]
     special_root = output / folder / stamp
+    if action == "non_bird_animal" and label.strip():
+        special_root = output / folder / sanitize_species_directory(label, "未命名") / stamp
     new_copies = []
     for copy in pending:
         old = output / str(copy.get("relative_path", ""))
@@ -230,6 +266,8 @@ def resolve_manual(
         "time": observation_time or group.get("observation", {}).get("time", ""),
     }
     group["status"] = status
+    if action == "non_bird_animal" and label.strip():
+        group["label"] = label.strip()
     group["error_code"] = ""
     group["error_message"] = ""
     library.write_group(group)

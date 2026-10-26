@@ -119,3 +119,60 @@ def test_apply_species_to_all_targets_removes_pending(tmp_path: Path):
     assert all(target["selection"]["species_cn"] == "弯嘴滨鹬" for target in updated["targets"])
     assert not pending_copy.exists()
     assert all(not copy.get("pending") for copy in updated["copies"])
+
+
+def test_manual_archive_reuses_existing_species_copy_for_remaining_targets(tmp_path: Path):
+    output = tmp_path / "output"
+    black = output / "黑腹滨鹬" / "a.jpg"
+    red = output / "红腹滨鹬" / "a.jpg"
+    pending = output / "待复核" / "a.jpg"
+    for path in (black, red, pending):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.new("RGB", (40, 30), "green").save(path)
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": new_batch_id(),
+        "status": "review_pending",
+        "source_relative_path": "a.jpg",
+        "targets": [
+            {"target_index": 0, "selection": {"species_cn": "黑腹滨鹬", "species_latin": "Calidris alpina"}},
+            {"target_index": 1, "selection": {"species_cn": "红腹滨鹬", "species_latin": "Calidris canutus"}},
+            {"target_index": 2, "selection": None},
+            {"target_index": 3, "selection": None},
+        ],
+        "copies": [
+            {"relative_path": "黑腹滨鹬/a.jpg", "species_cn": "黑腹滨鹬", "species_latin": "Calidris alpina", "target_indices": [0]},
+            {"relative_path": "红腹滨鹬/a.jpg", "species_cn": "红腹滨鹬", "species_latin": "Calidris canutus", "target_indices": [1]},
+            {"relative_path": "待复核/a.jpg", "species_cn": "", "species_latin": "", "target_indices": [], "pending": True},
+        ],
+    }
+    library.write_group(group)
+    entry = next(e for e in ArchiveIndex(output).refresh() if e.relative_path == "黑腹滨鹬/a.jpg")
+
+    new_relative = resolve_manual(library, entry, action="manual", name="黑腹滨鹬")
+
+    assert new_relative == "黑腹滨鹬/a.jpg"
+    assert not pending.exists()
+    assert sorted(path.name for path in (output / "黑腹滨鹬").iterdir()) == ["a.jpg"]
+    updated = library.read_group(group["group_id"])
+    assert updated["status"] == "completed"
+    black_copy = next(c for c in updated["copies"] if c["species_cn"] == "黑腹滨鹬")
+    assert black_copy["target_indices"] == [0, 2, 3]
+    assert [target["selection"]["species_cn"] for target in updated["targets"]] == [
+        "黑腹滨鹬", "红腹滨鹬", "黑腹滨鹬", "黑腹滨鹬"
+    ]
+
+
+def test_non_bird_animal_accepts_note_and_folders_by_note(tmp_path: Path):
+    library, entry, group = make_pending_group(tmp_path / "nonbird")
+
+    resolve_manual(library, entry, action="non_bird_animal", label="蜥蜴")
+
+    moved = list((library.output_root / "非鸟动物" / "蜥蜴").rglob("bird.jpg"))
+    assert moved
+    updated = library.read_group(group["group_id"])
+    assert updated["label"] == "蜥蜴"
+    assert updated["status"] == "non_bird_animal"
