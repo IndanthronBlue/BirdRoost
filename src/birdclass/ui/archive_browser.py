@@ -1236,7 +1236,23 @@ class ArchiveBrowserWindow(QMainWindow):
         self._refresh_grid()
         self.status_label.setText(f"已添加别名：{dialog.alias}")
 
-    def _restore_pending_view(self) -> None:
+    def _pending_successor(self) -> tuple[str | None, int]:
+        paths = [
+            self.grid.item(row).data(Qt.ItemDataRole.UserRole)
+            for row in range(self.grid.count())
+        ]
+        row = self.grid.currentRow()
+        if not paths:
+            return None, 0
+        if row < 0:
+            row = 0
+        if row + 1 < len(paths):
+            return paths[row + 1], row
+        if row - 1 >= 0:
+            return paths[row - 1], row - 1
+        return paths[row], row
+
+    def _restore_pending_view(self, successor: str | None = None, fallback_row: int = 0) -> None:
         item = self._tree_items.get(("待复核",))
         if item is None:
             return
@@ -1247,8 +1263,17 @@ class ArchiveBrowserWindow(QMainWindow):
         finally:
             self.tree.blockSignals(False)
         self._refresh_grid()
-        if self.grid.count():
-            self.grid.setCurrentRow(0)
+        if not self.grid.count():
+            return
+        target = None
+        if successor:
+            for row in range(self.grid.count()):
+                if self.grid.item(row).data(Qt.ItemDataRole.UserRole) == successor:
+                    target = row
+                    break
+        if target is None:
+            target = min(max(0, fallback_row), self.grid.count() - 1)
+        self.grid.setCurrentRow(target)
 
     def save_non_bird_note(self) -> None:
         entry = next(
@@ -1289,6 +1314,7 @@ class ArchiveBrowserWindow(QMainWindow):
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
+        successor, row = self._pending_successor()
         try:
             count = apply_species_to_all_targets(self.library, entry)
         except ManualReviewError as exc:
@@ -1296,7 +1322,7 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self.status_label.setText(f"已将 {count} 个目标标为 {entry.species_cn}")
         self.refresh()
-        self._restore_pending_view()
+        self._restore_pending_view(successor, row)
 
     def manual_archive_selected(self) -> None:
         entry = next(
@@ -1307,6 +1333,7 @@ class ArchiveBrowserWindow(QMainWindow):
         name = self.manual_name.text().split(" · ", 1)[0].strip()
         if entry is None or not name:
             return
+        successor, row = self._pending_successor()
         try:
             new_relative = resolve_manual(
                 self.library, entry, action="manual", name=name,
@@ -1319,7 +1346,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = new_relative
         self.status_label.setText(f"已人工归档：{name}")
         self.refresh()
-        self._restore_pending_view()
+        self._restore_pending_view(successor, row)
 
     def resolve_pending(self, action: str) -> None:
         if action == "already_classified":
@@ -1330,6 +1357,7 @@ class ArchiveBrowserWindow(QMainWindow):
             )
             if entry is None:
                 return
+            successor, row = self._pending_successor()
             try:
                 mark_already_classified(self.library, entry)
             except ManualReviewError as exc:
@@ -1338,7 +1366,7 @@ class ArchiveBrowserWindow(QMainWindow):
             self._selected_entry_path = ""
             self.status_label.setText("已从待复核移除（可在已删除中找回）")
             self.refresh()
-            self._restore_pending_view()
+            self._restore_pending_view(successor, row)
             return
         if action == "defer":
             self.status_label.setText("已保留在待复核")
@@ -1355,6 +1383,7 @@ class ArchiveBrowserWindow(QMainWindow):
             "non_bird_animal": "非鸟动物",
             "scenery": "风景",
         }
+        successor, row = self._pending_successor()
         try:
             resolve_manual(
                 self.library, entry, action=action,
@@ -1367,7 +1396,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = ""
         self.status_label.setText(f"已移到{labels.get(action, action)}")
         self.refresh()
-        self._restore_pending_view()
+        self._restore_pending_view(successor, row)
 
     def delete_selected(self) -> None:
         entry = next(
@@ -1385,6 +1414,7 @@ class ArchiveBrowserWindow(QMainWindow):
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
+        successor, row = self._pending_successor()
         try:
             new_relative = delete_archive_photo(self.library, entry)
         except ManualReviewError as exc:
@@ -1393,7 +1423,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._selected_entry_path = ""
         self.status_label.setText(f"已移入已删除：{new_relative}")
         self.refresh()
-        self._restore_pending_view()
+        self._restore_pending_view(successor, row)
 
     def open_lightbox(self) -> None:
         entries = []

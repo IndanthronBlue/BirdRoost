@@ -804,6 +804,7 @@ def test_pending_view_stays_after_resolving_one_item(qtbot, tmp_path: Path):
 
     assert browser.tree.currentItem().data(0, 0x0100) == ["待复核"]
     assert browser.grid.count() == 1
+    assert browser.grid.currentItem().data(0x0100) == "待复核/2.jpg"
 
 
 def test_non_bird_note_is_edited_under_tree_node(qtbot, tmp_path: Path):
