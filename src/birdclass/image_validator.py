@@ -18,5 +18,9 @@ def validate_image(item: ImageItem) -> tuple[int, int]:
             return width, height
     except ImageValidationError:
         raise
+    except Image.DecompressionBombError as exc:
+        raise ImageValidationError(
+            f"图片像素过大，已跳过（{exc}）。请先将图片缩小到 8192 像素以内再分类"
+        ) from exc
     except (OSError, UnidentifiedImageError) as exc:
         raise ImageValidationError("图片无法解析或已损坏") from exc

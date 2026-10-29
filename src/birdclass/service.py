@@ -8,6 +8,8 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Callable
 
+from PIL import Image
+
 from .api import DongNiaoClient
 from .archiver import FileArchiver
 from .coordinates import upload_box_to_display
@@ -345,7 +347,7 @@ class ClassificationService:
                             upload_was_compressed=upload_was_compressed,
                             upload_oriented=upload_was_compressed,
                         )
-                    except OSError:
+                    except (OSError, Image.DecompressionBombError):
                         geometry = None
                 pending_copies = [pending_destination] if pending_destination is not None else []
                 self._record_group(
@@ -397,7 +399,7 @@ class ClassificationService:
                             upload_was_compressed=upload_was_compressed,
                             upload_oriented=upload_was_compressed,
                         )
-                    except OSError:
+                    except (OSError, Image.DecompressionBombError):
                         geometry = None
                 self._record_group(
                     library=library, batch_id=batch_id, group_id=group_id,
