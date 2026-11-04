@@ -323,3 +323,38 @@ def test_browse_archive_reuses_one_window_and_disables_button(qtbot, tmp_path):
 
     assert window._archive_windows == []
     assert window.open_archive_button.isEnabled() is True
+
+
+def test_remember_api_key_saves_to_keychain_and_restores(qtbot, tmp_path, monkeypatch):
+    isolated_settings(tmp_path)
+    saved = []
+    deleted = []
+    monkeypatch.setattr(
+        "birdclass.ui.main_window.save_api_key",
+        lambda key: saved.append(key) or True,
+    )
+    monkeypatch.setattr(
+        "birdclass.ui.main_window.delete_api_key",
+        lambda: deleted.append(True) or True,
+    )
+    monkeypatch.setattr("birdclass.ui.main_window.load_api_key", lambda: "")
+
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.api_key.setText("secret-key")
+    window.remember_api_key.setChecked(True)
+    window._save_settings()
+    window.close()
+
+    assert saved[-1] == "secret-key"
+    assert QSettings("BirdClass", "BirdClass").value("remember_api_key") in (True, "true")
+
+    monkeypatch.setattr("birdclass.ui.main_window.load_api_key", lambda: "secret-key")
+    restored = MainWindow()
+    qtbot.addWidget(restored)
+
+    assert restored.remember_api_key.isChecked()
+    assert restored.api_key.text() == "secret-key"
+    restored.remember_api_key.setChecked(False)
+    assert deleted
+    restored.close()

@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..library import ArchiveLibrary
+from ..secret_store import delete_api_key, load_api_key, save_api_key
 from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
@@ -56,9 +57,13 @@ class MainWindow(QMainWindow):
         api_form = QFormLayout(api_group)
         self.api_key = QLineEdit()
         self.api_key.setEchoMode(QLineEdit.EchoMode.Password)
-        self.api_key.setPlaceholderText("请输入 API Key（不会保存到磁盘）")
+        self.api_key.setPlaceholderText("请输入 API Key；勾选后保存到 macOS 钥匙串")
         self.api_key.setClearButtonEnabled(True)
         api_form.addRow("API Key", self.api_key)
+        self.remember_api_key = QCheckBox("记住 API Key（保存到 macOS 钥匙串）")
+        api_form.addRow("", self.remember_api_key)
+        self.remember_api_key.toggled.connect(self._on_remember_api_key)
+        self.api_key.editingFinished.connect(self._save_api_key_if_remembered)
         quota_row = QHBoxLayout()
         self.query_quota_button = QPushButton("查询剩余次数")
         self.query_quota_button.clicked.connect(self.query_quota)
@@ -465,6 +470,13 @@ class MainWindow(QMainWindow):
         self.result_wait_seconds.setValue(int(self._settings.value("result_wait_seconds", 60)))
         self.source_dir.setText(str(self._settings.value("source_dir", "")))
         self.output_dir.setText(str(self._settings.value("output_dir", "")))
+        remember = self._settings.value("remember_api_key", False)
+        remember = remember if isinstance(remember, bool) else str(remember).lower() == "true"
+        self.remember_api_key.setChecked(remember)
+        if remember:
+            saved_key = load_api_key()
+            if saved_key:
+                self.api_key.setText(saved_key)
         auto_open = self._settings.value("archive_auto_open", True)
         self.auto_open_archive.setChecked(
             auto_open if isinstance(auto_open, bool) else str(auto_open).lower() != "false"
@@ -483,7 +495,31 @@ class MainWindow(QMainWindow):
         self._settings.setValue("source_dir", self.source_dir.text().strip())
         self._settings.setValue("output_dir", self.output_dir.text().strip())
         self._settings.setValue("archive_auto_open", self.auto_open_archive.isChecked())
+        self._settings.setValue("remember_api_key", self.remember_api_key.isChecked())
+        if self.remember_api_key.isChecked():
+            key = self.api_key.text().strip()
+            if key:
+                save_api_key(key)
+            else:
+                delete_api_key()
+        else:
+            delete_api_key()
         self._settings.sync()
+
+    def _save_api_key_if_remembered(self) -> None:
+        if not self.remember_api_key.isChecked():
+            return
+        key = self.api_key.text().strip()
+        if key:
+            save_api_key(key)
+        else:
+            delete_api_key()
+
+    def _on_remember_api_key(self, checked: bool) -> None:
+        if checked:
+            self._save_api_key_if_remembered()
+        else:
+            delete_api_key()
 
     def closeEvent(self, event) -> None:
         self._save_settings()
