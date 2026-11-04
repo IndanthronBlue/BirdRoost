@@ -197,3 +197,21 @@ QT_QPA_PLATFORM=offscreen pytest -q
 ## License
 
 [MIT](LICENSE) © 2026 Zhang Junqi
+
+## macOS 应用打包
+
+已提供 macOS 打包脚本：
+
+```bash
+./packaging/build_macos.sh
+```
+
+产物位于 `dist/`：
+
+```text
+dist/羽栖 BirdRoost.app
+dist/羽栖 BirdRoost.dmg
+dist/羽栖 BirdRoost-macOS-arm64.zip
+```
+
+当前构建为 Apple silicon（arm64），使用 ad-hoc 签名；分享到其他 Mac 时首次打开需右键 → 打开。详细说明见 [`packaging/README.md`](packaging/README.md)。
