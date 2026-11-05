@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.BirdRoost" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#101512</item>
+        <item name="android:navigationBarColor">#101512</item>
+        <item name="android:windowBackground">#101512</item>
+    </style>
+</resources>
