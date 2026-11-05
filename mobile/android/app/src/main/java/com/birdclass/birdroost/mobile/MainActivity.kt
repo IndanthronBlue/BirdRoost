@@ -41,6 +41,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -54,6 +55,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -72,6 +75,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,6 +83,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -186,6 +191,25 @@ private fun LibraryScreen(state: UiState, vm: MainViewModel, onReload: () -> Uni
     val speciesCounts = remember(items) {
         items.groupingBy { it.speciesCn }.eachCount().toList().sortedByDescending { it.second }
     }
+    val searchOptions = remember(items, speciesCounts) {
+        buildList {
+            speciesCounts.filter { it.first != "未收录" && it.first.isNotBlank() }.forEach { (name, count) ->
+                add(SearchOption(name, "物种 · $count", name))
+            }
+            items.map { it.location.trim() }.filter { it.isNotBlank() }.distinct().forEach {
+                add(SearchOption(it, "地点", it))
+            }
+            items.map { it.time.trim() }.filter { it.isNotBlank() }.distinct().forEach {
+                add(SearchOption(it, "时间", it))
+            }
+            items.map { it.speciesLatin.trim() }.filter { it.isNotBlank() }.distinct().forEach {
+                add(SearchOption(it, "学名", it))
+            }
+            items.map { it.country.trim() }.filter { it.isNotBlank() }.distinct().forEach {
+                add(SearchOption(it, "国家/地区", it))
+            }
+        }.distinctBy { it.value }
+    }
     val filtered = remember(items, query, species, treeFilter) {
         items.filter { item ->
             (treeFilter == null || treeFilter!!.species.contains(item.speciesCn)) &&
@@ -257,11 +281,11 @@ private fun LibraryScreen(state: UiState, vm: MainViewModel, onReload: () -> Uni
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (state.error != null) Text(state.error, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
-            OutlinedTextField(
-                value = query, onValueChange = { query = it },
-                label = { Text("搜索物种、地点、时间") },
+            SearchField(
+                query = query,
+                options = searchOptions,
+                onQueryChange = { query = it },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                singleLine = true,
             )
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp),
@@ -316,6 +340,74 @@ private fun LibraryScreen(state: UiState, vm: MainViewModel, onReload: () -> Uni
     }
     selected?.let { item ->
         PhotoDialog(item, vm.originalUrl(item), onClose = { selected = null })
+    }
+}
+
+private data class SearchOption(val label: String, val type: String, val value: String)
+
+@Composable
+private fun SearchField(
+    query: String,
+    options: List<SearchOption>,
+    onQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var focused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val matches = remember(query, options) {
+        if (query.isBlank()) options.take(10)
+        else options.filter { it.label.contains(query, ignoreCase = true) }
+            .sortedBy { if (it.label.startsWith(query, ignoreCase = true)) 0 else 1 }
+            .take(12)
+    }
+    Box(modifier) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = {
+                onQueryChange(it)
+                expanded = true
+            },
+            label = { Text("搜索物种、地点、时间") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().onFocusChanged {
+                focused = it.isFocused
+                if (it.isFocused) expanded = true
+            },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = {
+                        onQueryChange("")
+                        expanded = true
+                    }) { Icon(Icons.Default.Clear, contentDescription = "清空搜索") }
+                }
+            },
+        )
+        DropdownMenu(
+            expanded = expanded && focused && matches.isNotEmpty(),
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.fillMaxWidth(0.94f).heightIn(max = 360.dp),
+        ) {
+            matches.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(option.label, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(
+                                option.type,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    onClick = {
+                        onQueryChange(option.value)
+                        expanded = false
+                        focusManager.clearFocus()
+                    },
+                )
+            }
+        }
     }
 }
 

@@ -7,6 +7,7 @@
 - 输入只读 COS 配置：Bucket、Region、Prefix、SecretId、SecretKey
 - SecretId/SecretKey 使用 Android Keystore + AES/GCM 加密保存
 - 读取 `users/<prefix>/manifest.json`
+- 搜索联想：物种 / 地点 / 时间 / 学名
 - 分类树抽屉：界/门/纲/目/科/属/种层级
 - 特殊照片单独分组：非鸟动物 / 风景 / 待复核
 - 传统名/别名映射
