@@ -26,6 +26,7 @@ class Taxonomy private constructor(private val paths: Map<String, TaxonomyPath>)
     companion object {
         fun load(context: Context): Taxonomy {
             val result = mutableMapOf<String, TaxonomyPath>()
+            val scientificIndex = mutableMapOf<String, TaxonomyPath>()
             context.assets.open("taxonomy/ioc_15_2_birds.csv").bufferedReader().useLines { lines ->
                 val iterator = lines.iterator()
                 if (!iterator.hasNext()) return@useLines
@@ -57,9 +58,29 @@ class Taxonomy private constructor(private val paths: Map<String, TaxonomyPath>)
                         species = name,
                     )
                     result[name] = path
+                    scientificIndex[value(index("scientific_name"))] = path
                     val traditional = value(traditionalIndex)
                     if (traditional.isNotBlank()) result.putIfAbsent(traditional, path)
                 }
+            }
+            try {
+                context.assets.open("taxonomy/taxonomy_aliases.csv").bufferedReader().useLines { lines ->
+                    val iterator = lines.iterator()
+                    if (!iterator.hasNext()) return@useLines
+                    val header = parseCsvLine(iterator.next())
+                    val aliasIndex = header.indexOf("alias")
+                    val scientificNameIndex = header.indexOf("scientific_name")
+                    while (iterator.hasNext()) {
+                        val row = parseCsvLine(iterator.next())
+                        val alias = row.getOrNull(aliasIndex)?.trim().orEmpty()
+                        val scientific = row.getOrNull(scientificNameIndex)?.trim().orEmpty()
+                        if (alias.isBlank() || scientific.isBlank()) continue
+                        val path = scientificIndex[scientific] ?: continue
+                        result.putIfAbsent(alias, path)
+                    }
+                }
+            } catch (_: Exception) {
+                // Alias data is optional.
             }
             return Taxonomy(result)
         }
@@ -95,6 +116,10 @@ fun buildTaxonomyTree(photos: List<PhotoItem>, taxonomy: Taxonomy): List<TaxonNo
     val root = MutableNode("", "全部图库")
     for (photo in photos) {
         val species = photo.speciesCn.ifBlank { "未分类" }
+        if (photo.special.isNotBlank()) {
+            root.add(listOf("特殊照片", photo.special), species)
+            continue
+        }
         val path = taxonomy.pathFor(species)
         val labels = if (path == null) {
             listOf("未收录", species)

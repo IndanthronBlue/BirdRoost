@@ -14,6 +14,7 @@ data class PhotoItem(
     val location: String,
     val time: String,
     val groupId: String,
+    val special: String,
     val width: Int,
     val height: Int,
 )
@@ -76,6 +77,7 @@ fun parseManifest(text: String): LibraryManifest {
             location = observation.optString("location"),
             time = observation.optString("time"),
             groupId = copy.optString("group_id"),
+            special = copy.optString("special"),
             width = photo.optInt("width", 0),
             height = photo.optInt("height", 0),
         )
