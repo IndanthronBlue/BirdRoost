@@ -25,6 +25,7 @@ class ExportReport:
     groups: int = 0
     copies: int = 0
     thumbnails: int = 0
+    thumbnails_skipped: int = 0
     skipped: int = 0
     errors: list[str] = field(default_factory=list)
 
@@ -36,6 +37,7 @@ class ExportReport:
             "groups": self.groups,
             "copies": self.copies,
             "thumbnails": self.thumbnails,
+            "thumbnails_skipped": self.thumbnails_skipped,
             "skipped": self.skipped,
             "errors": list(self.errors),
         }
@@ -58,7 +60,14 @@ def _image_info(path: Path) -> tuple[int, int, str]:
     return width, height, mime
 
 
-def _thumbnail(source: Path, destination: Path, size: int) -> tuple[int, int] | None:
+def _thumbnail(source: Path, destination: Path, size: int) -> tuple[tuple[int, int], bool] | None:
+    if destination.is_file():
+        try:
+            with Image.open(destination) as existing:
+                if existing.format == "WEBP":
+                    return existing.size, False
+        except (OSError, UnidentifiedImageError, ValueError):
+            pass
     try:
         with Image.open(source) as opened:
             image = ImageOps.exif_transpose(opened)
@@ -66,7 +75,7 @@ def _thumbnail(source: Path, destination: Path, size: int) -> tuple[int, int] | 
             image.thumbnail((size, size), Image.Resampling.LANCZOS)
             destination.parent.mkdir(parents=True, exist_ok=True)
             image.save(destination, format="WEBP", quality=82, method=6)
-            return image.size
+            return image.size, True
     except (OSError, UnidentifiedImageError, ValueError, Image.DecompressionBombError):
         return None
 
@@ -98,6 +107,7 @@ def export_archive(
     errors: list[str] = []
     skipped = 0
     thumbnail_count = 0
+    thumbnail_skipped = 0
 
     for group in sorted(index.groups.values(), key=lambda value: str(value.get("group_id", ""))):
         group_id = str(group.get("group_id", ""))
@@ -156,11 +166,15 @@ def export_archive(
                 if create_thumbnails:
                     for size in thumbnail_sizes:
                         thumb = export_root / "thumbs" / f"{digest}_{size}.webp"
-                        dimensions = _thumbnail(source, thumb, size)
-                        if dimensions is None:
+                        result = _thumbnail(source, thumb, size)
+                        if result is None:
                             errors.append(f"缩略图失败：{relative}@{size}")
                             continue
-                        thumbnail_count += 1
+                        dimensions, created = result
+                        if created:
+                            thumbnail_count += 1
+                        else:
+                            thumbnail_skipped += 1
                         photo["variants"].append({
                             "kind": f"thumb_{size}",
                             "object_key": f"thumbs/{digest}_{size}.webp",
@@ -203,6 +217,7 @@ def export_archive(
             "groups": len(groups),
             "copies": len(copies),
             "thumbnails": thumbnail_count,
+            "thumbnails_skipped": thumbnail_skipped,
             "errors": len(errors),
         },
         "photos": sorted(photos.values(), key=lambda value: value["photo_id"]),
@@ -220,6 +235,7 @@ def export_archive(
         groups=len(groups),
         copies=len(copies),
         thumbnails=thumbnail_count,
+        thumbnails_skipped=thumbnail_skipped,
         skipped=skipped,
         errors=errors,
     )

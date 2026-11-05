@@ -75,3 +75,20 @@ def test_copy_id_is_stable_and_distinguishes_targets():
     other = copy_id("group-1", "三趾滨鹬", [2])
     assert first == second
     assert first != other
+
+
+def test_second_export_skips_existing_thumbnails(tmp_path: Path):
+    source = tmp_path / "source.jpg"
+    Image.new("RGB", (100, 80), "green").save(source)
+    output = tmp_path / "output"
+    library = ArchiveLibrary(output)
+    library.ensure()
+    add_group(library, "三趾滨鹬/a.jpg", "三趾滨鹬", "Calidris alba", source)
+    export_root = tmp_path / "export"
+
+    first = export_archive(output, export_root, thumbnail_sizes=(64,))
+    second = export_archive(output, export_root, thumbnail_sizes=(64,))
+
+    assert first.thumbnails == 1
+    assert second.thumbnails == 0
+    assert second.thumbnails_skipped == 1

@@ -5,7 +5,7 @@ import os
 import threading
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, QThread, Signal, Qt
+from PySide6.QtCore import QSettings, QThread, QTimer, Signal, Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -72,11 +72,22 @@ class _UploadWorker(QThread):
 
 
 class CloudBackupDialog(QDialog):
-    def __init__(self, archive_root: Path, output_root: Path, settings: QSettings, parent=None) -> None:
+    def __init__(
+        self,
+        archive_root: Path,
+        output_root: Path,
+        settings: QSettings,
+        *,
+        auto_generate: bool = False,
+        auto_upload: bool = False,
+        parent=None,
+    ) -> None:
         super().__init__(parent)
         self.archive_root = archive_root
         self.output_root = output_root
         self.settings = settings
+        self._auto_generate = auto_generate
+        self._auto_upload = auto_upload
         self._worker: QThread | None = None
         self.setWindowTitle("羽栖 BirdRoost · 云备份")
         self.resize(720, 620)
@@ -149,6 +160,11 @@ class CloudBackupDialog(QDialog):
 
         self._restore()
         self._refresh_export_default()
+        self._auto_timer = QTimer(self)
+        self._auto_timer.setSingleShot(True)
+        self._auto_timer.timeout.connect(self.generate_export)
+        if self._auto_generate:
+            self._auto_timer.start(50)
 
     def _restore(self) -> None:
         self.export_dir.setText(str(self.settings.value("cloud_export_dir", "")))
@@ -215,6 +231,14 @@ class CloudBackupDialog(QDialog):
             self._append(f"导出有 {len(report.errors)} 个错误")
             for error in report.errors[:20]:
                 self._append(f"  {error}")
+        if self._auto_upload:
+            self._auto_upload = False
+            secret_id = self.secret_id.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_ID", "") or os.environ.get("COS_SECRET_ID", "")
+            secret_key = self.secret_key.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_KEY", "") or os.environ.get("COS_SECRET_KEY", "")
+            if secret_id and secret_key and not report.errors:
+                QTimer.singleShot(0, self.start_upload)
+            else:
+                self._append("导出已生成；请填写 SecretId/SecretKey 后点“开始上传”")
 
     def _export_failed(self, message: str) -> None:
         self._append(f"导出失败：{message}")

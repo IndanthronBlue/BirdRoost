@@ -46,6 +46,10 @@ class MainWindow(QMainWindow):
         self._quota_worker: QuotaWorker | None = None
         self._closing = False
         self._archive_windows: list[ArchiveBrowserWindow] = []
+        self._cloud_prompt_timer = QTimer(self)
+        self._cloud_prompt_timer.setSingleShot(True)
+        self._cloud_prompt_timer.timeout.connect(self._fire_cloud_prompt)
+        self._cloud_prompt_batch_id = ""
         self._build_ui()
         self._restore_settings()
 
@@ -143,6 +147,9 @@ class MainWindow(QMainWindow):
         self.auto_open_archive = QCheckBox("批次完成后打开结果页")
         self.auto_open_archive.setChecked(True)
         archive_row.addWidget(self.auto_open_archive)
+        self.auto_cloud_prompt = QCheckBox("归档后询问云备份")
+        self.auto_cloud_prompt.setChecked(True)
+        archive_row.addWidget(self.auto_cloud_prompt)
         archive_row.addStretch(1)
         path_form.addRow("归档", archive_row)
         root.addWidget(path_group, 2, 0)
@@ -382,20 +389,66 @@ class MainWindow(QMainWindow):
         else:
             self._append_log(f"保留待复核：{context.relative_path}")
 
-    def open_cloud_backup(self) -> None:
+    def open_cloud_backup(self, *, auto_generate: bool = False, auto_upload: bool = False) -> None:
         output = self.output_dir.text().strip()
         if not output:
             self._show_error("请先选择分类后目录")
             return
         dialog = CloudBackupDialog(
-            self.output_dir.text().strip() and Path(output).expanduser(),
+            Path(output).expanduser(),
             Path(output).expanduser(),
             self._settings,
-            self,
+            auto_generate=auto_generate,
+            auto_upload=auto_upload,
+            parent=self,
         )
         dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         self._cloud_backup_dialog = dialog
         dialog.show()
+
+    def _batch_upload_stats(self, batch_id: str) -> tuple[int, int]:
+        output = self.output_dir.text().strip()
+        if not output:
+            return 0, 0
+        try:
+            library = ArchiveLibrary(Path(output).expanduser())
+            batches = library.load_batches()
+            batch = next((value for value in batches if value.get("batch_id") == batch_id), None)
+            if not batch:
+                return 0, 0
+            groups = {str(group.get("group_id", "")): group for group in library.load_groups()}
+            paths: set[str] = set()
+            group_count = 0
+            for group_id in batch.get("groups", []):
+                group = groups.get(str(group_id))
+                if not group:
+                    continue
+                group_count += 1
+                for copy in group.get("copies", []):
+                    relative = str(copy.get("relative_path", ""))
+                    if relative and (Path(output).expanduser() / relative).is_file():
+                        paths.add(relative)
+            return len(paths), group_count
+        except Exception:
+            return 0, 0
+
+    def _prompt_cloud_upload(self, batch_id: str) -> None:
+        photos, groups = self._batch_upload_stats(batch_id)
+        if photos == 0:
+            return
+        box = QMessageBox(self)
+        box.setWindowTitle("羽栖 BirdRoost · 云备份")
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setText(f"本次批次新增 {photos} 张图片、{groups} 个 group。")
+        box.setInformativeText("是否现在把新增内容上传到云端？")
+        upload = box.addButton("上传", QMessageBox.ButtonRole.AcceptRole)
+        later = box.addButton("稍后", QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(later)
+        box.exec()
+        if box.clickedButton() is upload:
+            self.open_cloud_backup(auto_generate=True, auto_upload=True)
+        else:
+            self.status_label.setText("已跳过云备份，可稍后手动上传")
 
     def open_archive_browser(self, batch_id: str | None = None) -> None:
         output = self.output_dir.text().strip()
@@ -457,10 +510,18 @@ class MainWindow(QMainWindow):
         }
         self.status_label.setText(reasons.get(summary.stop_reason, "本批次已结束"))
         self._append_log(self.status_label.text())
-        if self.auto_open_archive.isChecked():
-            batch_id = self._latest_batch_id()
-            if batch_id:
-                QTimer.singleShot(0, lambda: self.open_archive_browser(batch_id))
+        batch_id = self._latest_batch_id()
+        if self.auto_open_archive.isChecked() and batch_id:
+            QTimer.singleShot(0, lambda: self.open_archive_browser(batch_id))
+        if self.auto_cloud_prompt.isChecked() and batch_id:
+            self._cloud_prompt_batch_id = batch_id
+            self._cloud_prompt_timer.start(300)
+
+    def _fire_cloud_prompt(self) -> None:
+        batch_id = self._cloud_prompt_batch_id
+        self._cloud_prompt_batch_id = ""
+        if batch_id:
+            self._prompt_cloud_upload(batch_id)
 
     def _classification_failed(self, message: str) -> None:
         self.status_label.setText("分类中断")
@@ -515,6 +576,10 @@ class MainWindow(QMainWindow):
         self.auto_open_archive.setChecked(
             auto_open if isinstance(auto_open, bool) else str(auto_open).lower() != "false"
         )
+        auto_cloud = self._settings.value("cloud_auto_prompt", True)
+        self.auto_cloud_prompt.setChecked(
+            auto_cloud if isinstance(auto_cloud, bool) else str(auto_cloud).lower() != "false"
+        )
 
     def _save_settings(self) -> None:
         self._settings.setValue("animal_class", self.animal_class.currentData())
@@ -529,6 +594,7 @@ class MainWindow(QMainWindow):
         self._settings.setValue("source_dir", self.source_dir.text().strip())
         self._settings.setValue("output_dir", self.output_dir.text().strip())
         self._settings.setValue("archive_auto_open", self.auto_open_archive.isChecked())
+        self._settings.setValue("cloud_auto_prompt", self.auto_cloud_prompt.isChecked())
         self._settings.setValue("remember_api_key", self.remember_api_key.isChecked())
         if self.remember_api_key.isChecked():
             key = self.api_key.text().strip()
