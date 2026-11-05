@@ -358,3 +358,23 @@ def test_remember_api_key_saves_to_keychain_and_restores(qtbot, tmp_path, monkey
     restored.remember_api_key.setChecked(False)
     assert deleted
     restored.close()
+
+
+def test_explicit_save_key_button_reports_success(qtbot, tmp_path, monkeypatch):
+    isolated_settings(tmp_path)
+    saved = []
+    monkeypatch.setattr(
+        "birdclass.ui.main_window.save_api_key",
+        lambda key: saved.append(key) or True,
+    )
+    monkeypatch.setattr("birdclass.ui.main_window.load_api_key", lambda: "")
+    monkeypatch.setattr("birdclass.ui.main_window.delete_api_key", lambda: True)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.api_key.setText("explicit-key")
+
+    window.save_key_button.click()
+
+    assert saved == ["explicit-key"]
+    assert window.remember_api_key.isChecked()
+    assert "已保存" in window.api_key_status.text()

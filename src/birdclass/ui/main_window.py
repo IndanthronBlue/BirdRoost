@@ -62,6 +62,14 @@ class MainWindow(QMainWindow):
         api_form.addRow("API Key", self.api_key)
         self.remember_api_key = QCheckBox("记住 API Key（保存到 macOS 钥匙串）")
         api_form.addRow("", self.remember_api_key)
+        key_row = QHBoxLayout()
+        self.save_key_button = QPushButton("立即保存到钥匙串")
+        self.save_key_button.clicked.connect(self.save_api_key_now)
+        key_row.addWidget(self.save_key_button)
+        self.api_key_status = QLabel("")
+        self.api_key_status.setWordWrap(True)
+        key_row.addWidget(self.api_key_status, 1)
+        api_form.addRow("", key_row)
         self.remember_api_key.toggled.connect(self._on_remember_api_key)
         self.api_key.editingFinished.connect(self._save_api_key_if_remembered)
         quota_row = QHBoxLayout()
@@ -477,6 +485,9 @@ class MainWindow(QMainWindow):
             saved_key = load_api_key()
             if saved_key:
                 self.api_key.setText(saved_key)
+                self.api_key_status.setText("已从 macOS 钥匙串读取")
+            else:
+                self.api_key_status.setText("未在钥匙串中找到 API Key，请重新输入")
         auto_open = self._settings.value("archive_auto_open", True)
         self.auto_open_archive.setChecked(
             auto_open if isinstance(auto_open, bool) else str(auto_open).lower() != "false"
@@ -507,6 +518,24 @@ class MainWindow(QMainWindow):
             delete_api_key()
         self._settings.sync()
 
+    def save_api_key_now(self) -> None:
+        key = self.api_key.text().strip()
+        if not key:
+            QMessageBox.warning(self, "羽栖 BirdRoost", "请先输入 API Key")
+            return
+        if save_api_key(key):
+            self.remember_api_key.blockSignals(True)
+            self.remember_api_key.setChecked(True)
+            self.remember_api_key.blockSignals(False)
+            self.api_key_status.setText("已保存到 macOS 钥匙串")
+            self.status_label.setText("API Key 已保存到钥匙串")
+        else:
+            self.api_key_status.setText(f"保存失败：{last_error()}")
+            QMessageBox.warning(
+                self, "羽栖 BirdRoost",
+                f"API Key 无法保存到 macOS 钥匙串：{last_error()}",
+            )
+
     def _save_api_key_if_remembered(self) -> None:
         if not self.remember_api_key.isChecked():
             return
@@ -519,6 +548,8 @@ class MainWindow(QMainWindow):
                     self, "羽栖 BirdRoost",
                     f"API Key 无法保存到 macOS 钥匙串：{last_error()}",
                 )
+            else:
+                self.api_key_status.setText("已保存到 macOS 钥匙串")
         else:
             delete_api_key()
 
