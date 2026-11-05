@@ -101,6 +101,9 @@ def add_tombstone(
     species_cn: str,
     target_indices: tuple[int, ...] | list[int],
     local_relative_path: str,
+    photo_id: str = "",
+    original_object_key: str = "",
+    thumbnail_keys: list[str] | None = None,
 ) -> None:
     from .cloud_export import copy_id
 
@@ -111,6 +114,9 @@ def add_tombstone(
         "id": identifier,
         "group_id": group_id,
         "local_relative_path": local_relative_path,
+        "photo_id": photo_id,
+        "original_object_key": original_object_key,
+        "thumbnail_keys": list(thumbnail_keys or []),
         "deleted_at": datetime.now(timezone.utc).isoformat(),
     }
     state.tombstones = [

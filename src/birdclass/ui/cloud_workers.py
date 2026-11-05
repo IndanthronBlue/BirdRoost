@@ -92,3 +92,26 @@ class SyncWorker(QThread):
             ))
         except Exception as exc:
             self.failed.emit(f"{exc.__class__.__name__}: {exc}")
+
+
+class CleanupWorker(QThread):
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, archive_root: Path, export_root: Path, kwargs, *, dry_run: bool, parent=None) -> None:
+        super().__init__(parent)
+        self.archive_root = archive_root
+        self.export_root = export_root
+        self.kwargs = kwargs
+        self.dry_run = dry_run
+
+    def run(self) -> None:
+        try:
+            from ..cloud_cleanup import cleanup_tombstones
+
+            self.done.emit(cleanup_tombstones(
+                self.archive_root, self.export_root,
+                dry_run=self.dry_run, **self.kwargs,
+            ))
+        except Exception as exc:
+            self.failed.emit(f"{exc.__class__.__name__}: {exc}")

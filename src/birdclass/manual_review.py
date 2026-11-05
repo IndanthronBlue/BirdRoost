@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .archive_index import ArchiveEntry
-from .archiver import sanitize_species_directory
+from .archiver import sanitize_species_directory, sha256_file
 from .cloud_state import add_tombstone, mark_dirty
 from .library import ArchiveLibrary, ImageGeometry, new_group_id, now_iso
 from .metadata import write_species_metadata
@@ -292,6 +292,9 @@ def delete_archive_photo(library: ArchiveLibrary, entry: ArchiveEntry) -> str:
     old = (output / entry.relative_path).resolve()
     if not old.is_file():
         raise ManualReviewError(f"归档副本不存在：{entry.relative_path}")
+    digest = sha256_file(old)
+    original_key = f"originals/{digest}{old.suffix.lower()}"
+    thumbnail_keys = [f"thumbs/{digest}_{size}.webp" for size in (256, 512)]
     stamp = _stamp()
     destination = output / DELETED_DIR / stamp / entry.relative_path
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -312,6 +315,9 @@ def delete_archive_photo(library: ArchiveLibrary, entry: ArchiveEntry) -> str:
         species_cn=entry.species_cn,
         target_indices=entry.target_indices,
         local_relative_path=entry.relative_path,
+        photo_id=digest,
+        original_object_key=original_key,
+        thumbnail_keys=thumbnail_keys,
     )
     mark_dirty(library.output_root)
     library.append_correction({

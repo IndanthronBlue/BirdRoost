@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..cloud_backup import build_upload_plan
+from .cloud_cleanup_dialog import CloudCleanupDialog
 from .cloud_workers import ExportWorker, UploadWorker
 from .cos_config_store import config_summary, load_cos_config, resolve_credentials
 
@@ -86,6 +87,10 @@ class CloudBackupDialog(QDialog):
         self.cancel_button.setEnabled(False)
         self.cancel_button.clicked.connect(self.cancel)
         buttons.addWidget(self.cancel_button)
+        self.cleanup_button = QPushButton("清理云端…")
+        self.cleanup_button.setToolTip("删除超过保留期且不再被 manifest 引用的 tombstone 对象")
+        self.cleanup_button.clicked.connect(self.open_cleanup)
+        buttons.addWidget(self.cleanup_button)
         buttons.addStretch(1)
         close = QPushButton("关闭")
         close.clicked.connect(self.close)
@@ -125,6 +130,17 @@ class CloudBackupDialog(QDialog):
         selected = QFileDialog.getExistingDirectory(self, "选择导出目录", self.export_dir.text())
         if selected:
             self.export_dir.setText(selected)
+
+    def open_cleanup(self) -> None:
+        dialog = CloudCleanupDialog(
+            self.archive_root,
+            Path(self.export_dir.text().strip()).expanduser(),
+            self.settings,
+            self,
+        )
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self._cleanup_dialog = dialog
+        dialog.show()
 
     def _cos_config(self):
         return load_cos_config(self.settings)
