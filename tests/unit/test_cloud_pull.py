@@ -155,3 +155,25 @@ def test_pull_refuses_dirty_local_without_changes(tmp_path: Path, monkeypatch):
     assert report.snapshot_path
     assert len(local.load_groups()) == 1
     assert load_state(local.output_root).dirty is True
+
+
+def test_unuploaded_manifest_revision_counts_as_dirty(tmp_path: Path, monkeypatch):
+    _remote_root, manifest, _mapping = make_remote(tmp_path)
+    local = ArchiveLibrary(tmp_path / "local")
+    local.ensure()
+    add_group(local, "三趾滨鹬")
+    state = load_state(local.output_root)
+    state.base_revision = 0
+    state.revision = 1
+    state.dirty = False
+    save_state(local.output_root, state)
+    monkeypatch.setattr("birdclass.cloud_pull.download_manifest", lambda **kwargs: manifest)
+
+    report = pull_from_cos(
+        local.output_root,
+        bucket="bucket-1250000000", region="ap-shanghai", endpoint="",
+        secret_id="id", secret_key="key", prefix="zjq",
+    )
+
+    assert report.action == "conflict"
+    assert report.dirty is True

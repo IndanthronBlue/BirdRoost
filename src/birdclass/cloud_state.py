@@ -75,7 +75,9 @@ def prepare_export_state(archive_root: Path, *, increment: bool = True) -> Cloud
     state = load_state(archive_root)
     if increment:
         state.revision += 1
-    state.dirty = False
+    # Keep dirty until the manifest is actually uploaded. A generated
+    # manifest that only exists locally must not be treated as clean.
+    state.dirty = True
     save_state(archive_root, state)
     return state
 
@@ -90,6 +92,7 @@ def mark_uploaded(archive_root: Path, revision: int) -> None:
     state = load_state(archive_root)
     state.revision = max(state.revision, int(revision))
     state.base_revision = int(revision)
+    state.dirty = False
     state.last_uploaded_at = datetime.now(timezone.utc).isoformat()
     save_state(archive_root, state)
 

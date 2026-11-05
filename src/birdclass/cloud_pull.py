@@ -150,7 +150,8 @@ def pull_from_cos(
     library = ArchiveLibrary(archive_root)
     library.ensure()
     state = load_state(archive_root)
-    report = PullReport(local_revision=state.revision, dirty=state.dirty)
+    local_dirty = state.dirty or state.revision > state.base_revision
+    report = PullReport(local_revision=state.revision, dirty=local_dirty)
     with tempfile.TemporaryDirectory(prefix="birdroost-pull-") as directory:
         manifest_path = Path(directory) / "manifest.json"
         manifest = download_manifest(
@@ -166,7 +167,7 @@ def pull_from_cos(
     if report.remote_revision <= state.base_revision:
         report.action = "up_to_date"
         return report
-    if state.dirty and not force:
+    if local_dirty and not force:
         report.snapshot_path = _snapshot(archive_root, manifest)
         report.action = "conflict"
         report.errors.append("本地有未推送修改，已停止拉取；云端快照已保存")
