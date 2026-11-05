@@ -7,7 +7,12 @@ from pathlib import Path
 from qcloud_cos import CosConfig, CosS3Client
 
 from .archiver import sha256_file
-from .cloud_backup import SCHEMA_VERSION, _remote_revision, normalize_prefix
+from .cloud_backup import (
+    SCHEMA_VERSION,
+    _remote_revision,
+    normalize_prefix,
+    save_conflict_snapshot,
+)
 from .cloud_export import export_archive
 from .cloud_state import mark_uploaded
 
@@ -18,6 +23,7 @@ class SyncReport:
     uploaded: bool = False
     skipped: bool = False
     error: str = ""
+    snapshot_path: str = ""
     export_errors: list[str] = field(default_factory=list)
     message: str = ""
 
@@ -27,6 +33,7 @@ class SyncReport:
             "uploaded": self.uploaded,
             "skipped": self.skipped,
             "error": self.error,
+            "snapshot_path": self.snapshot_path,
             "export_errors": list(self.export_errors),
             "message": self.message,
         }
@@ -81,9 +88,13 @@ def sync_manifest(
     remote_revision = _remote_revision(client, bucket, key)
     base_revision = int(manifest.get("base_revision", 0) or 0)
     if not force and remote_revision is not None and remote_revision > base_revision:
+        report.snapshot_path = save_conflict_snapshot(
+            client, bucket, key, archive_root, remote_revision
+        )
+        snapshot = f"；云端快照：{report.snapshot_path}" if report.snapshot_path else ""
         report.error = (
             f"云端 manifest revision={remote_revision} 高于本地基线={base_revision}；"
-            "请先处理云端冲突"
+            f"请先处理云端冲突{snapshot}"
         )
         return report
     try:

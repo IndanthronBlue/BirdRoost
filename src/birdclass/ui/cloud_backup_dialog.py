@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 
 from ..cloud_backup import build_upload_plan
 from .cloud_cleanup_dialog import CloudCleanupDialog
+from .cloud_conflict_dialog import CloudConflictDialog
 from .cloud_workers import ExportWorker, UploadWorker
 from .cos_config_store import config_summary, load_cos_config, resolve_credentials
 
@@ -273,15 +274,14 @@ class CloudBackupDialog(QDialog):
             self._append(f"  {error}")
         if report.failed:
             if any("revision" in error for error in report.errors):
-                answer = QMessageBox.question(
-                    self, "云端 revision 冲突",
-                    "云端 manifest 已被其他设备更新。\n\n"
-                    "是否用本地 manifest 强制覆盖云端？\n"
-                    "原图不会删除，但其他设备本次 manifest 变更会被覆盖。",
+                dialog = CloudConflictDialog(
+                    Path(self.export_dir.text().strip()) / "manifest.json",
+                    report.snapshot_path,
+                    self,
                 )
-                if answer == QMessageBox.StandardButton.Yes:
+                if dialog.exec() == QDialog.DialogCode.Accepted:
                     self._force_upload_pending = True
-                    self._append("已确认强制覆盖云端 manifest，准备重试…")
+                    self._append("已确认保留本地 manifest 并覆盖云端，准备重试…")
             else:
                 QMessageBox.warning(self, "羽栖 BirdRoost", "部分对象上传失败，详见日志")
         self._worker = None

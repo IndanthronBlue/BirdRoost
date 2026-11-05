@@ -59,6 +59,7 @@ from ..manual_review import (
 from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
 from ..filename_alignment import align_group_copies
+from .cloud_conflict_dialog import CloudConflictDialog
 from .cloud_workers import SyncWorker
 from .compare_dialog import CompareDialog
 from .location_filter import LocationFilterButton
@@ -1671,6 +1672,12 @@ class ArchiveBrowserWindow(QMainWindow):
         self._cloud_sync_timer.stop()
         self._start_cloud_sync()
 
+    def _cloud_export_root(self) -> Path:
+        export_root = Path(str(self._settings.value("cloud_export_dir", ""))).expanduser()
+        if not str(export_root):
+            export_root = self.output_root.parent / f"{self.output_root.name}-cloud-export"
+        return export_root
+
     def _start_cloud_sync(self, force: bool = False) -> None:
         if self._closed:
             return
@@ -1681,9 +1688,7 @@ class ArchiveBrowserWindow(QMainWindow):
         if not config.bucket or not secret_id or not secret_key:
             self._update_cloud_status("云端未配置，仅本地保存")
             return
-        export_root = Path(str(self._settings.value("cloud_export_dir", ""))).expanduser()
-        if not str(export_root):
-            export_root = self.output_root.parent / f"{self.output_root.name}-cloud-export"
+        export_root = self._cloud_export_root()
         worker = SyncWorker(
             self.output_root,
             export_root,
@@ -1712,13 +1717,12 @@ class ArchiveBrowserWindow(QMainWindow):
             self._update_cloud_status("云端同步失败")
             self.status_label.setText(f"云端同步失败：{report.error}")
             if "revision" in report.error:
-                answer = QMessageBox.question(
-                    self, "云端 revision 冲突",
-                    "云端 manifest 已被其他设备更新。\n\n"
-                    "是否用本地 manifest 强制覆盖云端？\n"
-                    "原图不会删除，但其他设备的本次 manifest 变更会被覆盖。",
+                dialog = CloudConflictDialog(
+                    self._cloud_export_root() / "manifest.json",
+                    report.snapshot_path,
+                    self,
                 )
-                if answer == QMessageBox.StandardButton.Yes:
+                if dialog.exec():
                     self._cloud_sync_force_next = True
                     self._update_cloud_status("等待强制覆盖云端…")
                     return

@@ -30,6 +30,7 @@ from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
 from .cloud_backup_dialog import CloudBackupDialog
+from .cloud_cleanup_scheduler import CloudCleanupScheduler
 from .cloud_restore_dialog import CloudRestoreDialog
 from .config_dialog import ConfigDialog
 from .geo_fields import CHINA_REGIONS, COUNTRIES, configure_geo_combo, is_china
@@ -54,6 +55,14 @@ class MainWindow(QMainWindow):
         self._cloud_prompt_batch_id = ""
         self._build_ui()
         self._restore_settings()
+        self._cleanup_scheduler = CloudCleanupScheduler(self._settings, self)
+        self._cleanup_scheduler.finished.connect(self._auto_cleanup_finished)
+        self._cleanup_scheduler.failed.connect(lambda message: self._append_log(f"自动清理失败：{message}"))
+        self._cleanup_timer = QTimer(self)
+        self._cleanup_timer.setInterval(6 * 60 * 60 * 1000)
+        self._cleanup_timer.timeout.connect(self._maybe_auto_cleanup)
+        self._cleanup_timer.start()
+        QTimer.singleShot(10000, self._maybe_auto_cleanup)
 
     def _build_ui(self) -> None:
         central = QWidget()
@@ -594,6 +603,25 @@ class MainWindow(QMainWindow):
         self.stop_button.setEnabled(running)
         self.progress.setVisible(running)
 
+    def _maybe_auto_cleanup(self) -> None:
+        value = self.output_dir.text().strip()
+        if not value:
+            return
+        root = Path(value).expanduser()
+        if not (root / ".birdroost").is_dir():
+            return
+        export = Path(str(self._settings.value("cloud_export_dir", ""))).expanduser()
+        if not str(export):
+            export = root.parent / f"{root.name}-cloud-export"
+        self._cleanup_scheduler.maybe_run(root, export)
+
+    def _auto_cleanup_finished(self, report) -> None:
+        if report.deleted:
+            self._append_log(
+                f"自动清理云端：{report.deleted} 个对象，"
+                f"约 {report.bytes_deleted / 1024 / 1024:.1f} MB"
+            )
+
     def _append_log(self, message: str) -> None:
         self.log.appendPlainText(message)
 
@@ -701,6 +729,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._save_settings()
+        self._cleanup_scheduler.wait(5000)
         if self._closing:
             event.ignore()
             return

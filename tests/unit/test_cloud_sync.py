@@ -86,6 +86,8 @@ def test_manifest_sync_blocks_on_remote_conflict(tmp_path: Path, monkeypatch):
     assert not report.uploaded
     assert "revision" in report.error
     assert fake.uploaded == []
+    assert report.snapshot_path
+    assert Path(report.snapshot_path).is_file()
 
 
 def test_manifest_sync_can_force_override_remote(tmp_path: Path, monkeypatch):

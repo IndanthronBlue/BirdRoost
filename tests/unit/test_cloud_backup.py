@@ -201,6 +201,8 @@ def test_upload_blocks_when_remote_revision_is_ahead(tmp_path: Path, monkeypatch
     assert report.failed == 1
     assert "revision" in report.errors[0]
     assert fake.uploaded == []
+    assert report.snapshot_path
+    assert Path(report.snapshot_path).is_file()
 
 
 def test_force_upload_bypasses_remote_revision_conflict(tmp_path: Path, monkeypatch):
@@ -222,3 +224,26 @@ def test_force_upload_bypasses_remote_revision_conflict(tmp_path: Path, monkeypa
 
     assert report.failed == 0
     assert fake.uploaded
+
+
+def test_upload_uses_remote_object_index_to_skip_head(tmp_path: Path, monkeypatch):
+    export_root = make_export(tmp_path)
+    plan = build_upload_plan(export_root, bucket="bucket-1250000000", region="ap-shanghai", prefix="zjq")
+    indexed = [
+        {"Key": item.key, "Size": item.size}
+        for item in plan.items if item.kind != "manifest"
+    ]
+
+    class IndexClient(FakeClient):
+        def list_objects(self, **kwargs):
+            return {"Contents": indexed, "IsTruncated": "false"}
+
+    fake = IndexClient()
+    monkeypatch.setattr("birdclass.cloud_backup.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_backup.CosS3Client", lambda config: fake)
+
+    report = upload_plan(plan, secret_id="id", secret_key="key")
+
+    assert report.used_remote_index
+    assert report.skipped == len(indexed)
+    assert fake.uploaded == [plan.manifest_key]

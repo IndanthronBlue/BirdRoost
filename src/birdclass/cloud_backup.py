@@ -55,6 +55,8 @@ class UploadReport:
     failed: int = 0
     bytes_uploaded: int = 0
     cancelled: bool = False
+    snapshot_path: str = ""
+    used_remote_index: bool = False
     errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -64,6 +66,8 @@ class UploadReport:
             "failed": self.failed,
             "bytes_uploaded": self.bytes_uploaded,
             "cancelled": self.cancelled,
+            "snapshot_path": self.snapshot_path,
+            "used_remote_index": self.used_remote_index,
             "errors": list(self.errors),
         }
 
@@ -203,6 +207,54 @@ def _remote_revision(client: CosS3Client, bucket: str, key: str) -> int | None:
         return None
 
 
+def _remote_object_index(client: CosS3Client, bucket: str, prefix: str) -> dict[str, int] | None:
+    if not hasattr(client, "list_objects"):
+        return None
+    result: dict[str, int] = {}
+    marker = ""
+    try:
+        while True:
+            response = client.list_objects(
+                Bucket=bucket, Prefix=prefix, Marker=marker, MaxKeys=1000,
+            )
+            contents = response.get("Contents", []) or []
+            for item in contents:
+                try:
+                    result[str(item["Key"])] = int(item.get("Size", -1))
+                except (KeyError, TypeError, ValueError):
+                    continue
+            if str(response.get("IsTruncated", "")).lower() != "true":
+                break
+            marker = str(response.get("NextMarker", "") or "")
+            if not marker and contents:
+                marker = str(contents[-1].get("Key", ""))
+            if not marker:
+                break
+        return result
+    except Exception:
+        return None
+
+
+def save_conflict_snapshot(
+    client: CosS3Client,
+    bucket: str,
+    key: str,
+    archive_root: Path | None,
+    revision: int | None,
+) -> str:
+    if archive_root is None:
+        return ""
+    directory = archive_root / ".birdroost" / "cloud_conflicts"
+    directory.mkdir(parents=True, exist_ok=True)
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    path = directory / f"manifest-r{revision if revision is not None else 'unknown'}-{stamp}.json"
+    try:
+        client.download_file(Bucket=bucket, Key=key, DestFilePath=str(path))
+        return str(path)
+    except Exception:
+        return ""
+
+
 def upload_plan(
     plan: UploadPlan,
     *,
@@ -243,11 +295,17 @@ def upload_plan(
         and remote_revision > plan.base_revision
     ):
         report.failed += 1
+        report.snapshot_path = save_conflict_snapshot(
+            client, plan.bucket, plan.manifest_key, plan.archive_root, remote_revision
+        )
+        snapshot = f"；云端快照：{report.snapshot_path}" if report.snapshot_path else ""
         report.errors.append(
             f"云端 manifest revision={remote_revision} 高于本地基线={plan.base_revision}；"
-            "请先拉取云端最新内容或确认冲突后再上传"
+            f"请先拉取云端最新内容或确认冲突后再上传{snapshot}"
         )
         return report
+    remote_index = _remote_object_index(client, plan.bucket, f"users/{plan.prefix}/")
+    report.used_remote_index = remote_index is not None
     total = len(plan.items)
     done = 0
     uploaded_bytes = 0
@@ -264,6 +322,16 @@ def upload_plan(
             report.failed += 1
             report.errors.append(f"文件不存在：{item.local_path}")
             done += 1
+            continue
+        if (
+            item.kind != "manifest"
+            and remote_index is not None
+            and remote_index.get(item.key) == item.size
+        ):
+            report.skipped += 1
+            done += 1
+            if progress:
+                progress(done, total, item.key)
             continue
         if _head_matches(client, plan.bucket, item.key, item.size, item.sha256):
             report.skipped += 1

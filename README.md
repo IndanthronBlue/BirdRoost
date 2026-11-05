@@ -35,6 +35,9 @@
 - **错误落盘**：复制、配置和网络错误写入 `failed`，保留识别/归档快照，下次优先续拷而不是重复上传。
 - **统一配置**：顶部“配置…”集中管理懂鸟 API Key 和 COS 桶/地域/Endpoint/用户前缀/Secret，Secret 可选存 macOS 钥匙串。
 - **tombstone 清理**：扫描超过保留期且不再被 manifest 引用的云端对象，预览确认后删除。
+- **冲突快照**：覆盖前保存远端 manifest 到 `.birdroost/cloud_conflicts/`，冲突窗口展示本地/云端差异。
+- **云端索引优化**：上传前一次 `list_objects` 建立云端对象索引，减少逐对象 HEAD。
+- **定时清理**：可选每 7 天自动清理过期 tombstone 对象。
 - **云端冲突处理**：revision 冲突时停止上传，可确认后强制用本地 manifest 覆盖云端。
 - **云端自动同步**：纠错、删除、修改观测信息后，2.5 秒防抖自动更新云端 manifest（仅 manifest，不重复上传原图）。
 - **云端恢复**：新电脑可从 COS 下载 manifest 和全部原图，校验 SHA-256 后重建本地 `.birdroost`。

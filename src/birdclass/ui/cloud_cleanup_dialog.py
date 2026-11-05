@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPlainTextEdit,
+    QCheckBox,
     QProgressBar,
     QPushButton,
     QSpinBox,
@@ -45,7 +46,8 @@ class CloudCleanupDialog(QDialog):
         row.addWidget(QLabel("保留天数"))
         self.retention = QSpinBox()
         self.retention.setRange(0, 3650)
-        self.retention.setValue(30)
+        self.retention.setValue(int(settings.value("cloud_cleanup_retention_days", 30) or 30))
+        self.retention.valueChanged.connect(self._save_settings)
         row.addWidget(self.retention)
         self.scan_button = QPushButton("扫描可清理对象")
         self.scan_button.clicked.connect(self.scan)
@@ -54,6 +56,11 @@ class CloudCleanupDialog(QDialog):
         self.delete_button.setEnabled(False)
         self.delete_button.clicked.connect(self.delete)
         row.addWidget(self.delete_button)
+        self.auto_cleanup = QCheckBox("每 7 天自动清理")
+        self.auto_cleanup.setToolTip("仅删除超过保留期、且不再被当前 manifest 引用的对象")
+        self.auto_cleanup.setChecked(settings.value("cloud_cleanup_auto", False) in (True, "true"))
+        self.auto_cleanup.toggled.connect(self._save_settings)
+        row.addWidget(self.auto_cleanup)
         row.addStretch(1)
         close = QPushButton("关闭")
         close.clicked.connect(self.close)
@@ -66,6 +73,11 @@ class CloudCleanupDialog(QDialog):
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
         layout.addWidget(self.log, 1)
+
+    def _save_settings(self, *_args) -> None:
+        self.settings.setValue("cloud_cleanup_retention_days", self.retention.value())
+        self.settings.setValue("cloud_cleanup_auto", self.auto_cleanup.isChecked())
+        self.settings.sync()
 
     def _append(self, text: str) -> None:
         self.log.appendPlainText(text)
