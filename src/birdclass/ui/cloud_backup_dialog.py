@@ -336,7 +336,8 @@ class CloudBackupDialog(QDialog):
         self._set_busy(False)
 
     def _credentials(self) -> tuple[str, str]:
-        secret_id, secret_key = self._credentials()
+        secret_id = self.secret_id.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_ID", "") or os.environ.get("COS_SECRET_ID", "")
+        secret_key = self.secret_key.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_KEY", "") or os.environ.get("COS_SECRET_KEY", "")
         return secret_id, secret_key
 
     def test_connection(self) -> None:

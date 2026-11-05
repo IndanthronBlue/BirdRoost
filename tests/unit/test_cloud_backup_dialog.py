@@ -69,3 +69,15 @@ def test_cos_config_can_be_saved_and_restored(qtbot, tmp_path, monkeypatch):
     second._save()
     assert deleted
     assert settings.value("cloud_bucket") is None
+
+
+def test_cloud_dialog_reads_credentials_from_fields(qtbot, tmp_path: Path):
+    output = tmp_path / "鸟"
+    output.mkdir()
+    settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    dialog = CloudBackupDialog(output, output, settings)
+    qtbot.addWidget(dialog)
+    dialog.secret_id.setText("secret-id")
+    dialog.secret_key.setText("secret-key")
+
+    assert dialog._credentials() == ("secret-id", "secret-key")
