@@ -211,6 +211,7 @@ def upload_plan(
     token: str = "",
     progress: ProgressCallback | None = None,
     cancelled: Callable[[], bool] | None = None,
+    force: bool = False,
 ) -> UploadReport:
     report = UploadReport()
     if plan.errors:
@@ -237,7 +238,8 @@ def upload_plan(
     client = CosS3Client(config)
     remote_revision = _remote_revision(client, plan.bucket, plan.manifest_key)
     if (
-        remote_revision is not None
+        not force
+        and remote_revision is not None
         and remote_revision > plan.base_revision
     ):
         report.failed += 1

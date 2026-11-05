@@ -41,6 +41,7 @@ class CloudBackupDialog(QDialog):
         self._auto_generate = auto_generate
         self._auto_upload = auto_upload
         self._worker: QThread | None = None
+        self._force_upload_pending = False
         self.setWindowTitle("羽栖 BirdRoost · 云备份")
         self.resize(720, 620)
         layout = QVBoxLayout(self)
@@ -200,7 +201,7 @@ class CloudBackupDialog(QDialog):
         self._worker = None
         self._set_busy(False)
 
-    def start_upload(self) -> None:
+    def start_upload(self, force: bool = False) -> None:
         if self._worker_blocked():
             return
         export = Path(self.export_dir.text().strip()).expanduser()
@@ -226,7 +227,7 @@ class CloudBackupDialog(QDialog):
         self._append(
             f"准备上传 {len(plan.items)} 个对象到 {bucket} / users/{plan.prefix}/"
         )
-        worker = UploadWorker(plan, secret_id, secret_key, self)
+        worker = UploadWorker(plan, secret_id, secret_key, self, force=force)
         self._worker = worker
         self._set_busy(True, cancellable=True)
         worker.progressed.connect(self._progress)
@@ -256,14 +257,22 @@ class CloudBackupDialog(QDialog):
             self._append(f"  {error}")
         if report.failed:
             if any("revision" in error for error in report.errors):
-                QMessageBox.warning(
-                    self, "羽栖 BirdRoost",
-                    "云端 manifest 已被其他设备更新，上传已停止；请先确认冲突。",
+                answer = QMessageBox.question(
+                    self, "云端 revision 冲突",
+                    "云端 manifest 已被其他设备更新。\n\n"
+                    "是否用本地 manifest 强制覆盖云端？\n"
+                    "原图不会删除，但其他设备本次 manifest 变更会被覆盖。",
                 )
+                if answer == QMessageBox.StandardButton.Yes:
+                    self._force_upload_pending = True
+                    self._append("已确认强制覆盖云端 manifest，准备重试…")
             else:
                 QMessageBox.warning(self, "羽栖 BirdRoost", "部分对象上传失败，详见日志")
         self._worker = None
         self._set_busy(False)
+        if self._force_upload_pending:
+            self._force_upload_pending = False
+            QTimer.singleShot(0, lambda: self.start_upload(force=True))
 
     def _upload_failed(self, message: str) -> None:
         self._append(f"上传失败：{message}")
@@ -275,16 +284,19 @@ class CloudBackupDialog(QDialog):
         if self._worker is worker:
             self._worker = None
             self._set_busy(False)
+            if self._force_upload_pending:
+                self._force_upload_pending = False
+                QTimer.singleShot(0, lambda: self.start_upload(force=True))
 
     def cancel(self) -> None:
-        if isinstance(self._worker, _UploadWorker):
+        if isinstance(self._worker, UploadWorker):
             self._worker.cancel()
             self.cancel_button.setEnabled(False)
             self._append("正在取消上传…")
 
     def closeEvent(self, event) -> None:
         if self._worker is not None:
-            if isinstance(self._worker, _UploadWorker):
+            if isinstance(self._worker, UploadWorker):
                 self._worker.cancel()
             QMessageBox.information(self, "羽栖 BirdRoost", "请等待当前任务结束")
             event.ignore()

@@ -86,3 +86,19 @@ def test_manifest_sync_blocks_on_remote_conflict(tmp_path: Path, monkeypatch):
     assert not report.uploaded
     assert "revision" in report.error
     assert fake.uploaded == []
+
+
+def test_manifest_sync_can_force_override_remote(tmp_path: Path, monkeypatch):
+    output, export = make_library(tmp_path)
+    fake = FakeClient(remote_revision=99)
+    monkeypatch.setattr("birdclass.cloud_sync.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_sync.CosS3Client", lambda config: fake)
+
+    report = sync_manifest(
+        output, export,
+        bucket="bucket-1250000000", region="ap-shanghai", endpoint="",
+        secret_id="id", secret_key="key", prefix="zjq", force=True,
+    )
+
+    assert report.uploaded
+    assert fake.uploaded

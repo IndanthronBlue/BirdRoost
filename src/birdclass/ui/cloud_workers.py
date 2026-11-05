@@ -30,11 +30,12 @@ class UploadWorker(QThread):
     done = Signal(object)
     failed = Signal(str)
 
-    def __init__(self, plan, secret_id: str, secret_key: str, parent=None) -> None:
+    def __init__(self, plan, secret_id: str, secret_key: str, parent=None, *, force: bool = False) -> None:
         super().__init__(parent)
         self.plan = plan
         self.secret_id = secret_id
         self.secret_key = secret_key
+        self.force = force
         self.cancel_event = threading.Event()
 
     def run(self) -> None:
@@ -45,6 +46,7 @@ class UploadWorker(QThread):
                 secret_key=self.secret_key,
                 progress=lambda done, total, key: self.progressed.emit(done, total, key),
                 cancelled=self.cancel_event.is_set,
+                force=self.force,
             )
             self.done.emit(report)
         except Exception as exc:
@@ -73,16 +75,20 @@ class SyncWorker(QThread):
     done = Signal(object)
     failed = Signal(str)
 
-    def __init__(self, archive_root: Path, export_root: Path, kwargs, parent=None) -> None:
+    def __init__(self, archive_root: Path, export_root: Path, kwargs, parent=None, *, force: bool = False) -> None:
         super().__init__(parent)
         self.archive_root = archive_root
         self.export_root = export_root
         self.kwargs = kwargs
+        self.force = force
 
     def run(self) -> None:
         try:
             from ..cloud_sync import sync_manifest
 
-            self.done.emit(sync_manifest(self.archive_root, self.export_root, **self.kwargs))
+            self.done.emit(sync_manifest(
+                self.archive_root, self.export_root,
+                force=self.force, **self.kwargs,
+            ))
         except Exception as exc:
             self.failed.emit(f"{exc.__class__.__name__}: {exc}")

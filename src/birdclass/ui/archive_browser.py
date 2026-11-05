@@ -167,6 +167,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._thumbnail_timer.timeout.connect(self._schedule_visible_thumbnails)
         self._cloud_sync_worker: SyncWorker | None = None
         self._cloud_sync_pending = False
+        self._cloud_sync_force_next = False
         placeholder = QPixmap(160, 120)
         placeholder.fill(QColor("#2a332d"))
         painter = QPainter(placeholder)
@@ -1670,7 +1671,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._cloud_sync_timer.stop()
         self._start_cloud_sync()
 
-    def _start_cloud_sync(self) -> None:
+    def _start_cloud_sync(self, force: bool = False) -> None:
         if self._closed:
             return
         if self._cloud_sync_worker is not None:
@@ -1695,6 +1696,7 @@ class ArchiveBrowserWindow(QMainWindow):
                 "prefix": config.prefix,
             },
             self,
+            force=force,
         )
         self._cloud_sync_worker = worker
         self.sync_button.setEnabled(False)
@@ -1709,6 +1711,17 @@ class ArchiveBrowserWindow(QMainWindow):
         if report.error:
             self._update_cloud_status("云端同步失败")
             self.status_label.setText(f"云端同步失败：{report.error}")
+            if "revision" in report.error:
+                answer = QMessageBox.question(
+                    self, "云端 revision 冲突",
+                    "云端 manifest 已被其他设备更新。\n\n"
+                    "是否用本地 manifest 强制覆盖云端？\n"
+                    "原图不会删除，但其他设备的本次 manifest 变更会被覆盖。",
+                )
+                if answer == QMessageBox.StandardButton.Yes:
+                    self._cloud_sync_force_next = True
+                    self._update_cloud_status("等待强制覆盖云端…")
+                    return
             QMessageBox.warning(self, "羽栖 BirdRoost", f"云端同步失败：{report.error}")
         else:
             self._update_cloud_status(f"云端已同步 r{report.revision}")
@@ -1723,7 +1736,10 @@ class ArchiveBrowserWindow(QMainWindow):
         if self._cloud_sync_worker is worker:
             self._cloud_sync_worker = None
             self.sync_button.setEnabled(True)
-        if self._cloud_sync_pending:
+        if self._cloud_sync_force_next:
+            self._cloud_sync_force_next = False
+            QTimer.singleShot(0, lambda: self._start_cloud_sync(force=True))
+        elif self._cloud_sync_pending:
             self._cloud_sync_pending = False
             self._schedule_cloud_sync()
 
