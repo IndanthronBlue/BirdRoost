@@ -3,6 +3,7 @@ from __future__ import annotations
 import getpass
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from PySide6.QtCore import QSettings
 
@@ -68,6 +69,14 @@ def resolve_credentials(config: CosConfig) -> tuple[str, str]:
     secret_id = config.secret_id.strip() or os.environ.get("TENCENTCLOUD_SECRET_ID", "") or os.environ.get("COS_SECRET_ID", "")
     secret_key = config.secret_key.strip() or os.environ.get("TENCENTCLOUD_SECRET_KEY", "") or os.environ.get("COS_SECRET_KEY", "")
     return secret_id, secret_key
+
+
+def resolve_export_root(settings: QSettings, output_root: Path) -> Path:
+    raw = str(settings.value("cloud_export_dir", "") or "").strip()
+    if raw:
+        return Path(raw).expanduser()
+    root = Path(output_root).expanduser()
+    return root.parent / f"{root.name}-cloud-export"
 
 
 def config_summary(config: CosConfig) -> str:

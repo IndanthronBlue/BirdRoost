@@ -48,7 +48,7 @@ from ..correction import CorrectionError, correct_archive_copy
 from ..library import ArchiveLibrary
 from ..library_import import import_csv_to_library
 from ..cloud_state import mark_dirty
-from .cos_config_store import load_cos_config, resolve_credentials
+from .cos_config_store import load_cos_config, resolve_credentials, resolve_export_root
 from ..manual_review import (
     ManualReviewError,
     apply_species_to_all_targets,
@@ -1673,10 +1673,7 @@ class ArchiveBrowserWindow(QMainWindow):
         self._start_cloud_sync()
 
     def _cloud_export_root(self) -> Path:
-        export_root = Path(str(self._settings.value("cloud_export_dir", ""))).expanduser()
-        if not str(export_root):
-            export_root = self.output_root.parent / f"{self.output_root.name}-cloud-export"
-        return export_root
+        return resolve_export_root(self._settings, self.output_root)
 
     def _start_cloud_sync(self, force: bool = False) -> None:
         if self._closed:

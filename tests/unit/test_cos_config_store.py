@@ -54,3 +54,15 @@ def test_resolve_credentials_prefers_config_and_supports_env(tmp_path, monkeypat
     assert resolve_credentials(CosConfig(secret_id="field-id", secret_key="field-key")) == (
         "field-id", "field-key"
     )
+
+
+def test_resolve_export_root_handles_empty_setting(tmp_path):
+    from birdclass.ui.cos_config_store import resolve_export_root
+
+    settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    library = tmp_path / "鸟"
+
+    assert resolve_export_root(settings, library) == tmp_path / "鸟-cloud-export"
+
+    settings.setValue("cloud_export_dir", str(tmp_path / "custom"))
+    assert resolve_export_root(settings, library) == tmp_path / "custom"

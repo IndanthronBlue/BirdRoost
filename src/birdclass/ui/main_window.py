@@ -31,6 +31,7 @@ from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
 from .cloud_backup_dialog import CloudBackupDialog
 from .cloud_cleanup_scheduler import CloudCleanupScheduler
+from .cos_config_store import resolve_export_root
 from .cloud_pull_dialog import CloudPullDialog
 from .cloud_pull_scheduler import CloudPullScheduler
 from .cloud_restore_dialog import CloudRestoreDialog
@@ -652,10 +653,7 @@ class MainWindow(QMainWindow):
         root = Path(value).expanduser()
         if not (root / ".birdroost").is_dir():
             return
-        export = Path(str(self._settings.value("cloud_export_dir", ""))).expanduser()
-        if not str(export):
-            export = root.parent / f"{root.name}-cloud-export"
-        self._cleanup_scheduler.maybe_run(root, export)
+        self._cleanup_scheduler.maybe_run(root, resolve_export_root(self._settings, root))
 
     def _auto_cleanup_finished(self, report) -> None:
         if report.deleted:
