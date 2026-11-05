@@ -15,6 +15,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -70,6 +73,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -344,6 +348,7 @@ private fun LibraryScreen(state: UiState, vm: MainViewModel, onReload: () -> Uni
 
 private data class SearchOption(val label: String, val type: String, val value: String)
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SearchField(
     query: String,
@@ -352,7 +357,12 @@ private fun SearchField(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var focused by remember { mutableStateOf(false) }
+    val imeVisible = WindowInsets.isImeVisible
     val focusManager = LocalFocusManager.current
+    LaunchedEffect(imeVisible) {
+        if (imeVisible) expanded = true
+    }
     val matches = remember(query, options) {
         if (query.isBlank()) options.take(10)
         else options.filter { it.label.contains(query, ignoreCase = true) }
@@ -369,7 +379,8 @@ private fun SearchField(
             label = { Text("搜索物种、地点、时间") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().onFocusChanged {
-                if (it.isFocused) expanded = true
+                focused = it.isFocused
+                expanded = it.isFocused
             },
             trailingIcon = {
                 if (query.isNotEmpty()) {
@@ -380,7 +391,7 @@ private fun SearchField(
                 }
             },
         )
-        if (expanded && matches.isNotEmpty()) {
+        if (expanded && focused && imeVisible && matches.isNotEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
                 shape = RoundedCornerShape(12.dp),
