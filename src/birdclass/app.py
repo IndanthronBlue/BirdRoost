@@ -4,11 +4,14 @@ import sys
 
 from PySide6.QtWidgets import QApplication, QStyleFactory
 
-from .ui.main_window import MainWindow
-from .ui.theme import install_system_theme
+from .tls import configure_ca_bundle
 
 
 def main() -> int:
+    configure_ca_bundle()
+    from .ui.main_window import MainWindow
+    from .ui.theme import install_system_theme
+
     app = QApplication.instance() or QApplication(sys.argv)
     if sys.platform == "darwin" and "macOS" in QStyleFactory.keys():
         app.setStyle("macOS")
