@@ -355,6 +355,7 @@ def test_remember_api_key_saves_to_keychain_and_restores(qtbot, tmp_path, monkey
 
     assert restored.remember_api_key.isChecked()
     assert restored.api_key.text() == "secret-key"
+    assert not deleted
     restored.remember_api_key.setChecked(False)
     assert deleted
     restored.close()

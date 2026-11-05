@@ -480,7 +480,9 @@ class MainWindow(QMainWindow):
         self.output_dir.setText(str(self._settings.value("output_dir", "")))
         remember = self._settings.value("remember_api_key", False)
         remember = remember if isinstance(remember, bool) else str(remember).lower() == "true"
+        self.remember_api_key.blockSignals(True)
         self.remember_api_key.setChecked(remember)
+        self.remember_api_key.blockSignals(False)
         if remember:
             saved_key = load_api_key()
             if saved_key:
@@ -509,11 +511,8 @@ class MainWindow(QMainWindow):
         self._settings.setValue("remember_api_key", self.remember_api_key.isChecked())
         if self.remember_api_key.isChecked():
             key = self.api_key.text().strip()
-            if key:
-                if not save_api_key(key):
-                    self._append_log(f"API Key 未能保存到钥匙串：{last_error()}")
-            else:
-                delete_api_key()
+            if key and not save_api_key(key):
+                self._append_log(f"API Key 未能保存到钥匙串：{last_error()}")
         else:
             delete_api_key()
         self._settings.sync()
@@ -550,8 +549,7 @@ class MainWindow(QMainWindow):
                 )
             else:
                 self.api_key_status.setText("已保存到 macOS 钥匙串")
-        else:
-            delete_api_key()
+        # 勾选但输入框为空时不要删除钥匙串，避免启动恢复前误删。
 
     def _on_remember_api_key(self, checked: bool) -> None:
         if checked:
