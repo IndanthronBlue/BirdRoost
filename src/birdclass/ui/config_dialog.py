@@ -68,8 +68,13 @@ class ConfigDialog(QDialog):
         layout = QVBoxLayout(page)
         note = QLabel(
             "这些配置用于云备份和云端图库。\n"
-            "SecretId/SecretKey 可选保存到 macOS 钥匙串，不写入 QSettings 或日志。"
+            "SecretId/SecretKey 可选保存到 macOS 钥匙串，不写入 QSettings 或日志。\n"
+            '<a href="https://console.cloud.tencent.com/cam/capi">获取 SecretId / SecretKey</a>'
+            ' · <a href="https://console.cloud.tencent.com/cam">访问管理 CAM</a>'
+            ' · <a href="https://console.cloud.tencent.com/cos/bucket">COS 桶列表</a>'
         )
+        note.setTextFormat(Qt.TextFormat.RichText)
+        note.setOpenExternalLinks(True)
         note.setWordWrap(True)
         layout.addWidget(note)
         form = QFormLayout()

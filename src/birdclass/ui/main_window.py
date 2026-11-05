@@ -98,6 +98,13 @@ class MainWindow(QMainWindow):
         api_form.addRow("", key_row)
         self.remember_api_key.toggled.connect(self._on_remember_api_key)
         self.api_key.editingFinished.connect(self._save_api_key_if_remembered)
+        api_help = QLabel(
+            '<a href="https://ai.open.hhodata.com/">前往懂鸟开放平台申请 API Key</a>'
+            ' · <a href="https://ai.open.hhodata.com/doc/">查看 API 文档</a>'
+        )
+        api_help.setOpenExternalLinks(True)
+        api_help.setWordWrap(True)
+        api_form.addRow("", api_help)
         quota_row = QHBoxLayout()
         self.query_quota_button = QPushButton("查询剩余次数")
         self.query_quota_button.clicked.connect(self.query_quota)
