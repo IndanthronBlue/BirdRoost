@@ -47,6 +47,7 @@ class UploadReport:
     skipped: int = 0
     failed: int = 0
     bytes_uploaded: int = 0
+    cancelled: bool = False
     errors: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -55,6 +56,7 @@ class UploadReport:
             "skipped": self.skipped,
             "failed": self.failed,
             "bytes_uploaded": self.bytes_uploaded,
+            "cancelled": self.cancelled,
             "errors": list(self.errors),
         }
 
@@ -200,7 +202,8 @@ def upload_plan(
     uploaded_bytes = 0
     for item in plan.items:
         if cancelled is not None and cancelled():
-            report.errors.append("用户取消上传")
+            report.cancelled = True
+            report.errors.append("用户取消上传；下次会跳过已上传对象继续")
             break
         if item.kind == "manifest" and report.failed:
             report.errors.append("存在失败项，未上传 manifest")

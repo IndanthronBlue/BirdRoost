@@ -149,3 +149,33 @@ def test_connection_reports_read_only_key(tmp_path: Path, monkeypatch):
 
     assert report.ok is False
     assert "写入" in report.error
+
+
+def test_cancel_then_resume_skips_completed_objects(tmp_path: Path, monkeypatch):
+    export_root = make_export(tmp_path)
+    plan = build_upload_plan(export_root, bucket="bucket-1250000000", region="ap-shanghai", prefix="zjq")
+    fake = FakeClient()
+    monkeypatch.setattr("birdclass.cloud_backup.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_backup.CosS3Client", lambda config: fake)
+    cancel = {"value": False}
+
+    def progress(done, total, key):
+        if done == 1:
+            cancel["value"] = True
+
+    first = upload_plan(
+        plan, secret_id="id", secret_key="key",
+        progress=progress, cancelled=lambda: cancel["value"],
+    )
+
+    assert first.cancelled is True
+    assert first.uploaded == 1
+    assert first.uploaded < len(plan.items)
+    assert "下次" in first.errors[0]
+
+    second = upload_plan(plan, secret_id="id", secret_key="key")
+
+    assert second.cancelled is False
+    assert second.failed == 0
+    assert second.skipped >= 1
+    assert second.uploaded + second.skipped == len(plan.items)

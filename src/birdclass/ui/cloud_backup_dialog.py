@@ -430,9 +430,15 @@ class CloudBackupDialog(QDialog):
         self.progress.setFormat(f"{done}/{total}")
 
     def _upload_done(self, report) -> None:
-        self._append(
-            f"上传完成：上传 {report.uploaded}，跳过 {report.skipped}，失败 {report.failed}"
-        )
+        if report.cancelled:
+            self._append(
+                f"上传已取消：已上传 {report.uploaded}，跳过 {report.skipped}，失败 {report.failed}"
+            )
+            self._append("已上传对象会保留；下次点“开始上传”会自动跳过并继续")
+        else:
+            self._append(
+                f"上传完成：上传 {report.uploaded}，跳过 {report.skipped}，失败 {report.failed}"
+            )
         for error in report.errors[:20]:
             self._append(f"  {error}")
         if report.failed:
