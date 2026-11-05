@@ -55,8 +55,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -353,7 +352,6 @@ private fun SearchField(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var focused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val matches = remember(query, options) {
         if (query.isBlank()) options.take(10)
@@ -361,7 +359,7 @@ private fun SearchField(
             .sortedBy { if (it.label.startsWith(query, ignoreCase = true)) 0 else 1 }
             .take(12)
     }
-    Box(modifier) {
+    Column(modifier) {
         OutlinedTextField(
             value = query,
             onValueChange = {
@@ -371,7 +369,6 @@ private fun SearchField(
             label = { Text("搜索物种、地点、时间") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth().onFocusChanged {
-                focused = it.isFocused
                 if (it.isFocused) expanded = true
             },
             trailingIcon = {
@@ -383,29 +380,40 @@ private fun SearchField(
                 }
             },
         )
-        DropdownMenu(
-            expanded = expanded && focused && matches.isNotEmpty(),
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth(0.94f).heightIn(max = 360.dp),
-        ) {
-            matches.forEach { option ->
-                DropdownMenuItem(
-                    text = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(option.label, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (expanded && matches.isNotEmpty()) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
+                shape = RoundedCornerShape(12.dp),
+                tonalElevation = 3.dp,
+                shadowElevation = 4.dp,
+            ) {
+                LazyColumn {
+                    items(matches, key = { "${it.type}:${it.value}" }) { option ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .clickable {
+                                    onQueryChange(option.value)
+                                    expanded = false
+                                    focusManager.clearFocus()
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                option.label,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                             Text(
                                 option.type,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                    },
-                    onClick = {
-                        onQueryChange(option.value)
-                        expanded = false
-                        focusManager.clearFocus()
-                    },
-                )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
+                    }
+                }
             }
         }
     }
