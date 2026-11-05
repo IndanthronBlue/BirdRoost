@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -138,6 +139,9 @@ private fun BirdRoostTheme(content: @Composable () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ConfigScreen(state: UiState, onSave: (CosSettings) -> Unit, onCancel: () -> Unit) {
+    if (state.config != null) {
+        BackHandler(onBack = onCancel)
+    }
     var bucket by remember { mutableStateOf(state.config?.bucket.orEmpty()) }
     var region by remember { mutableStateOf(state.config?.region ?: "ap-shanghai") }
     var prefix by remember { mutableStateOf(state.config?.prefix ?: "zjq") }
