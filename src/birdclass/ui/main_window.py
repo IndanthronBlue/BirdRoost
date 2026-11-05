@@ -80,6 +80,7 @@ class MainWindow(QMainWindow):
 
         api_group = QGroupBox("懂鸟 API")
         api_form = QFormLayout(api_group)
+        api_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.api_key = QLineEdit()
         self.api_key.setEchoMode(QLineEdit.EchoMode.Password)
         self.api_key.setPlaceholderText("请输入 API Key；勾选后保存到 macOS 钥匙串")

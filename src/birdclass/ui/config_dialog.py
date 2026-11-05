@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, QThread, Signal
+from PySide6.QtCore import QSettings, Qt, QThread, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -73,6 +73,8 @@ class ConfigDialog(QDialog):
         note.setWordWrap(True)
         layout.addWidget(note)
         form = QFormLayout()
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.setFormAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.export_dir = QLineEdit()
         self.export_dir.setPlaceholderText("导出目录（可留空，上传时再选择）")
         form.addRow("导出目录", self.export_dir)

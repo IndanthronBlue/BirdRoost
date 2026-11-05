@@ -123,6 +123,8 @@ class CloudBackupDialog(QDialog):
 
         form_group = QGroupBox("腾讯云 COS")
         form = QFormLayout(form_group)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.setFormAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self.export_dir = QLineEdit()
         self.export_dir.setPlaceholderText("导出目录，例如：鸟-cloud-export")
         export_row = QHBoxLayout()
