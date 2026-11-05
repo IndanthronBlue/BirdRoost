@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..library import ArchiveLibrary
-from ..secret_store import delete_api_key, load_api_key, save_api_key
+from ..secret_store import delete_api_key, last_error, load_api_key, save_api_key
 from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
@@ -499,7 +499,8 @@ class MainWindow(QMainWindow):
         if self.remember_api_key.isChecked():
             key = self.api_key.text().strip()
             if key:
-                save_api_key(key)
+                if not save_api_key(key):
+                    self._append_log(f"API Key 未能保存到钥匙串：{last_error()}")
             else:
                 delete_api_key()
         else:
@@ -511,7 +512,13 @@ class MainWindow(QMainWindow):
             return
         key = self.api_key.text().strip()
         if key:
-            save_api_key(key)
+            if not save_api_key(key):
+                self.status_label.setText("API Key 保存失败")
+                self._append_log(f"API Key 未能保存到钥匙串：{last_error()}")
+                QMessageBox.warning(
+                    self, "羽栖 BirdRoost",
+                    f"API Key 无法保存到 macOS 钥匙串：{last_error()}",
+                )
         else:
             delete_api_key()
 
