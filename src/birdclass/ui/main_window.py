@@ -31,6 +31,8 @@ from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
 from .cloud_backup_dialog import CloudBackupDialog
 from .cloud_cleanup_scheduler import CloudCleanupScheduler
+from .cloud_pull_dialog import CloudPullDialog
+from .cloud_pull_scheduler import CloudPullScheduler
 from .cloud_restore_dialog import CloudRestoreDialog
 from .config_dialog import ConfigDialog
 from .geo_fields import CHINA_REGIONS, COUNTRIES, configure_geo_combo, is_china
@@ -55,6 +57,9 @@ class MainWindow(QMainWindow):
         self._cloud_prompt_batch_id = ""
         self._build_ui()
         self._restore_settings()
+        self._pull_scheduler = CloudPullScheduler(self._settings, self)
+        self._pull_scheduler.pulled.connect(self._auto_pull_finished)
+        self._pull_scheduler.failed.connect(lambda message: self._append_log(f"自动拉取：{message}"))
         self._cleanup_scheduler = CloudCleanupScheduler(self._settings, self)
         self._cleanup_scheduler.finished.connect(self._auto_cleanup_finished)
         self._cleanup_scheduler.failed.connect(lambda message: self._append_log(f"自动清理失败：{message}"))
@@ -62,6 +67,7 @@ class MainWindow(QMainWindow):
         self._cleanup_timer.setInterval(6 * 60 * 60 * 1000)
         self._cleanup_timer.timeout.connect(self._maybe_auto_cleanup)
         self._cleanup_timer.start()
+        QTimer.singleShot(9000, self._maybe_auto_pull)
         QTimer.singleShot(10000, self._maybe_auto_cleanup)
 
     def _build_ui(self) -> None:
@@ -81,6 +87,10 @@ class MainWindow(QMainWindow):
         self.cloud_backup_button.setToolTip("生成导出清单/缩略图，并上传到腾讯云 COS")
         self.cloud_backup_button.clicked.connect(self.open_cloud_backup)
         top_bar.addWidget(self.cloud_backup_button)
+        self.pull_button = QPushButton("从云端同步…")
+        self.pull_button.setToolTip("本地干净时从云端 fast-forward 拉取")
+        self.pull_button.clicked.connect(self.open_cloud_pull)
+        top_bar.addWidget(self.pull_button)
         self.restore_button = QPushButton("云端恢复…")
         self.restore_button.setToolTip("从 COS 下载 manifest 和原图，重建本地图库")
         self.restore_button.clicked.connect(self.open_cloud_restore)
@@ -432,6 +442,21 @@ class MainWindow(QMainWindow):
         else:
             self._append_log(f"保留待复核：{context.relative_path}")
 
+    def open_cloud_pull(self) -> None:
+        value = self.output_dir.text().strip()
+        if not value:
+            QMessageBox.warning(self, self.windowTitle(), "请先选择图库目录")
+            return
+        dialog = CloudPullDialog(Path(value).expanduser(), self._settings, self)
+        dialog.pulled.connect(self._on_cloud_pulled)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self._cloud_pull_dialog = dialog
+        dialog.show()
+
+    def _on_cloud_pulled(self, root: str) -> None:
+        self._save_settings()
+        self.open_archive_browser()
+
     def open_cloud_restore(self) -> None:
         dialog = CloudRestoreDialog(self._settings, self)
         dialog.restored.connect(self._on_cloud_restored)
@@ -603,6 +628,23 @@ class MainWindow(QMainWindow):
         self.stop_button.setEnabled(running)
         self.progress.setVisible(running)
 
+    def _maybe_auto_pull(self) -> None:
+        value = self.output_dir.text().strip()
+        if not value:
+            return
+        root = Path(value).expanduser()
+        if not (root / ".birdroost").is_dir():
+            return
+        self._pull_scheduler.maybe_run(root)
+
+    def _auto_pull_finished(self, report) -> None:
+        self._append_log(
+            f"自动拉取完成：revision {report.local_revision} → {report.remote_revision}，"
+            f"下载 {report.downloaded} 张原图"
+        )
+        if self._archive_windows:
+            self.open_archive_browser()
+
     def _maybe_auto_cleanup(self) -> None:
         value = self.output_dir.text().strip()
         if not value:
@@ -729,6 +771,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._save_settings()
+        self._pull_scheduler.wait(5000)
         self._cleanup_scheduler.wait(5000)
         if self._closing:
             event.ignore()

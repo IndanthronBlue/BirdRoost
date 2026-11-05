@@ -115,3 +115,33 @@ class CleanupWorker(QThread):
             ))
         except Exception as exc:
             self.failed.emit(f"{exc.__class__.__name__}: {exc}")
+
+
+class PullWorker(QThread):
+    progressed = Signal(int, int, str)
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, archive_root: Path, kwargs, *, force: bool = False, parent=None) -> None:
+        super().__init__(parent)
+        self.archive_root = archive_root
+        self.kwargs = kwargs
+        self.force = force
+        self.cancel_event = threading.Event()
+
+    def run(self) -> None:
+        try:
+            from ..cloud_pull import pull_from_cos
+
+            self.done.emit(pull_from_cos(
+                self.archive_root,
+                force=self.force,
+                progress=lambda done, total, key: self.progressed.emit(done, total, key),
+                cancelled=self.cancel_event.is_set,
+                **self.kwargs,
+            ))
+        except Exception as exc:
+            self.failed.emit(f"{exc.__class__.__name__}: {exc}")
+
+    def cancel(self) -> None:
+        self.cancel_event.set()
