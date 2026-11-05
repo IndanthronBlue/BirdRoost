@@ -283,8 +283,18 @@ class CloudBackupDialog(QDialog):
     def _append(self, text: str) -> None:
         self.log.appendPlainText(text)
 
+    def _worker_blocked(self) -> bool:
+        if self._worker is None:
+            return False
+        if not self._worker.isRunning():
+            self._worker = None
+            self._set_busy(False)
+            return False
+        self._append("后台任务仍在运行，请稍候…")
+        return True
+
     def generate_export(self) -> None:
-        if self._worker is not None:
+        if self._worker_blocked():
             return
         export = self.export_dir.text().strip()
         if not export:
@@ -296,7 +306,7 @@ class CloudBackupDialog(QDialog):
         self._set_busy(True)
         worker.done.connect(self._export_done)
         worker.failed.connect(self._export_failed)
-        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(lambda worker=worker: self._worker_finished(worker))
         worker.finished.connect(worker.deleteLater)
         worker.start()
 
@@ -316,17 +326,21 @@ class CloudBackupDialog(QDialog):
                 QTimer.singleShot(0, self.start_upload)
             else:
                 self._append("导出已生成；请填写 SecretId/SecretKey 后点“开始上传”")
+        self._worker = None
+        self._set_busy(False)
 
     def _export_failed(self, message: str) -> None:
         self._append(f"导出失败：{message}")
         QMessageBox.warning(self, "羽栖 BirdRoost", f"导出失败：{message}")
+        self._worker = None
+        self._set_busy(False)
 
     def _credentials(self) -> tuple[str, str]:
         secret_id, secret_key = self._credentials()
         return secret_id, secret_key
 
     def test_connection(self) -> None:
-        if self._worker is not None:
+        if self._worker_blocked():
             return
         bucket = self.bucket.text().strip()
         region = self.region.currentText().strip()
@@ -352,7 +366,7 @@ class CloudBackupDialog(QDialog):
         self._set_busy(True)
         worker.done.connect(self._connection_done)
         worker.failed.connect(self._connection_failed)
-        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(lambda worker=worker: self._worker_finished(worker))
         worker.finished.connect(worker.deleteLater)
         worker.start()
 
@@ -364,13 +378,17 @@ class CloudBackupDialog(QDialog):
         else:
             self._append(f"连接测试失败：{report.error or '未知错误'}")
             QMessageBox.warning(self, "羽栖 BirdRoost", report.error or "连接测试失败")
+        self._worker = None
+        self._set_busy(False)
 
     def _connection_failed(self, message: str) -> None:
         self._append(f"连接测试失败：{message}")
         QMessageBox.warning(self, "羽栖 BirdRoost", message)
+        self._worker = None
+        self._set_busy(False)
 
     def start_upload(self) -> None:
-        if self._worker is not None:
+        if self._worker_blocked():
             return
         export = Path(self.export_dir.text().strip()).expanduser()
         bucket = self.bucket.text().strip()
@@ -400,7 +418,7 @@ class CloudBackupDialog(QDialog):
         worker.progressed.connect(self._progress)
         worker.done.connect(self._upload_done)
         worker.failed.connect(self._upload_failed)
-        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(lambda worker=worker: self._worker_finished(worker))
         worker.finished.connect(worker.deleteLater)
         worker.start()
 
@@ -418,14 +436,19 @@ class CloudBackupDialog(QDialog):
             self._append(f"  {error}")
         if report.failed:
             QMessageBox.warning(self, "羽栖 BirdRoost", "部分对象上传失败，详见日志")
+        self._worker = None
+        self._set_busy(False)
 
     def _upload_failed(self, message: str) -> None:
         self._append(f"上传失败：{message}")
         QMessageBox.warning(self, "羽栖 BirdRoost", f"上传失败：{message}")
-
-    def _worker_finished(self) -> None:
         self._worker = None
         self._set_busy(False)
+
+    def _worker_finished(self, worker) -> None:
+        if self._worker is worker:
+            self._worker = None
+            self._set_busy(False)
 
     def cancel(self) -> None:
         if isinstance(self._worker, _UploadWorker):
