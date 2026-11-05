@@ -23,10 +23,62 @@ def _security() -> str | None:
     return shutil.which("security")
 
 
+def _windows_keyring():
+    if sys.platform != "win32":
+        return None
+    try:
+        import keyring
+        return keyring
+    except Exception as exc:
+        global _LAST_ERROR
+        _LAST_ERROR = f"Windows 凭据存储不可用：{exc}"
+        return None
+
+
+def _keyring_set(service: str, account: str, value: str) -> bool:
+    backend = _windows_keyring()
+    if backend is None or not value:
+        return False
+    global _LAST_ERROR
+    _LAST_ERROR = ""
+    try:
+        backend.set_password(service, account, value)
+        return True
+    except Exception as exc:
+        _LAST_ERROR = str(exc)
+        return False
+
+
+def _keyring_get(service: str, account: str) -> str:
+    backend = _windows_keyring()
+    if backend is None:
+        return ""
+    global _LAST_ERROR
+    _LAST_ERROR = ""
+    try:
+        return backend.get_password(service, account) or ""
+    except Exception as exc:
+        _LAST_ERROR = str(exc)
+        return ""
+
+
+def _keyring_delete(service: str, account: str) -> bool:
+    backend = _windows_keyring()
+    if backend is None:
+        return False
+    try:
+        backend.delete_password(service, account)
+        return True
+    except Exception:
+        return True
+
+
 def save_api_key(key: str) -> bool:
     """Store the API key in the macOS login keychain."""
-    executable = _security()
     key = key.strip()
+    if sys.platform == "win32":
+        return _keyring_set(SERVICE, ACCOUNT, key)
+    executable = _security()
     if executable is None or not key:
         return False
     global _LAST_ERROR
@@ -53,6 +105,8 @@ def save_api_key(key: str) -> bool:
 def load_api_key() -> str:
     global _LAST_ERROR
     _LAST_ERROR = ""
+    if sys.platform == "win32":
+        return _keyring_get(SERVICE, ACCOUNT)
     executable = _security()
     if executable is None:
         _LAST_ERROR = "找不到 macOS security 命令"
@@ -79,6 +133,8 @@ def load_api_key() -> str:
 
 
 def delete_api_key() -> bool:
+    if sys.platform == "win32":
+        return _keyring_delete(SERVICE, ACCOUNT)
     executable = _security()
     if executable is None:
         return False
@@ -153,6 +209,8 @@ def _run_security(args: list[str]) -> subprocess.CompletedProcess[str] | None:
 def _save_generic(service: str, account: str, value: str) -> bool:
     global _LAST_ERROR
     _LAST_ERROR = ""
+    if sys.platform == "win32":
+        return _keyring_set(service, account, value)
     result = _run_security([
         "add-generic-password",
         "-a", account, "-s", service, "-w", value, "-U",
@@ -168,6 +226,8 @@ def _save_generic(service: str, account: str, value: str) -> bool:
 def _load_generic(service: str, account: str) -> str:
     global _LAST_ERROR
     _LAST_ERROR = ""
+    if sys.platform == "win32":
+        return _keyring_get(service, account)
     result = _run_security([
         "find-generic-password", "-a", account, "-s", service, "-w",
     ])
@@ -184,6 +244,8 @@ def _load_generic(service: str, account: str) -> str:
 def _delete_generic(service: str, account: str) -> bool:
     global _LAST_ERROR
     _LAST_ERROR = ""
+    if sys.platform == "win32":
+        return _keyring_delete(service, account)
     result = _run_security([
         "delete-generic-password", "-a", account, "-s", service,
     ])
