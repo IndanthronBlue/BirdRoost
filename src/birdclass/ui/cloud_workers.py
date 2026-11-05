@@ -67,3 +67,22 @@ class ConnectionWorker(QThread):
             self.done.emit(test_connection(**self.kwargs))
         except Exception as exc:
             self.failed.emit(f"{exc.__class__.__name__}: {exc}")
+
+
+class SyncWorker(QThread):
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, archive_root: Path, export_root: Path, kwargs, parent=None) -> None:
+        super().__init__(parent)
+        self.archive_root = archive_root
+        self.export_root = export_root
+        self.kwargs = kwargs
+
+    def run(self) -> None:
+        try:
+            from ..cloud_sync import sync_manifest
+
+            self.done.emit(sync_manifest(self.archive_root, self.export_root, **self.kwargs))
+        except Exception as exc:
+            self.failed.emit(f"{exc.__class__.__name__}: {exc}")

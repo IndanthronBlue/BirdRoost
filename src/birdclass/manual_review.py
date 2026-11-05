@@ -229,6 +229,7 @@ def resolve_manual(
         group["error_code"] = ""
         group["error_message"] = ""
         library.write_group(group)
+        mark_dirty(library.output_root)
         library.append_correction({
             "corrected_at": now_iso(),
             "group_id": entry.group_id,
@@ -272,6 +273,7 @@ def resolve_manual(
     group["error_code"] = ""
     group["error_message"] = ""
     library.write_group(group)
+    mark_dirty(library.output_root)
     library.append_correction({
         "corrected_at": now_iso(),
         "group_id": entry.group_id,
@@ -342,6 +344,7 @@ def mark_already_classified(library: ArchiveLibrary, entry: ArchiveEntry) -> Non
     group["error_code"] = ""
     group["error_message"] = ""
     library.write_group(group)
+    mark_dirty(library.output_root)
     library.append_correction({
         "corrected_at": now_iso(),
         "group_id": entry.group_id,
@@ -390,6 +393,7 @@ def apply_species_to_all_targets(library: ArchiveLibrary, entry: ArchiveEntry) -
     group["error_code"] = ""
     group["error_message"] = ""
     library.write_group(group)
+    mark_dirty(library.output_root)
     library.append_correction({
         "corrected_at": now_iso(),
         "group_id": entry.group_id,

@@ -48,6 +48,7 @@ from ..correction import CorrectionError, correct_archive_copy
 from ..library import ArchiveLibrary
 from ..library_import import import_csv_to_library
 from ..cloud_state import mark_dirty
+from .cos_config_store import load_cos_config, resolve_credentials
 from ..manual_review import (
     ManualReviewError,
     apply_species_to_all_targets,
@@ -58,6 +59,7 @@ from ..manual_review import (
 from .alias_dialog import AliasDialog
 from .batch_issues import BatchIssuesDialog
 from ..filename_alignment import align_group_copies
+from .cloud_workers import SyncWorker
 from .compare_dialog import CompareDialog
 from .location_filter import LocationFilterButton
 from .observation_dialog import ObservationDialog
@@ -163,6 +165,8 @@ class ArchiveBrowserWindow(QMainWindow):
         self._thumbnail_timer.setSingleShot(True)
         self._thumbnail_timer.setInterval(60)
         self._thumbnail_timer.timeout.connect(self._schedule_visible_thumbnails)
+        self._cloud_sync_worker: SyncWorker | None = None
+        self._cloud_sync_pending = False
         placeholder = QPixmap(160, 120)
         placeholder.fill(QColor("#2a332d"))
         painter = QPainter(placeholder)
@@ -179,6 +183,10 @@ class ArchiveBrowserWindow(QMainWindow):
         self._refresh_timer.timeout.connect(self.refresh)
         self._watcher.directoryChanged.connect(self._on_watched_change)
         self._build_ui()
+        self._cloud_sync_timer = QTimer(self)
+        self._cloud_sync_timer.setSingleShot(True)
+        self._cloud_sync_timer.setInterval(2500)
+        self._cloud_sync_timer.timeout.connect(self._start_cloud_sync)
         self._setup_watcher()
         if self._defer_load:
             self._set_loading(True, "正在读取归档…")
@@ -297,6 +305,19 @@ class ArchiveBrowserWindow(QMainWindow):
         self.sort_combo.currentIndexChanged.connect(self._on_sort_changed)
         filter_row.addWidget(self.sort_combo)
         filter_row.addStretch(1)
+        self.auto_sync_checkbox = QCheckBox("自动同步云端")
+        self.auto_sync_checkbox.setToolTip("纠错、删除、观测信息修改后自动更新云端 manifest")
+        self.auto_sync_checkbox.setChecked(self._settings.value("cloud_auto_sync", True) in (True, "true"))
+        self.auto_sync_checkbox.toggled.connect(self._on_auto_sync_toggled)
+        filter_row.addWidget(self.auto_sync_checkbox)
+        self.sync_button = QPushButton("同步云端")
+        self.sync_button.setToolTip("立即把当前本地 manifest 同步到 COS")
+        self.sync_button.clicked.connect(self.sync_cloud_now)
+        filter_row.addWidget(self.sync_button)
+        self.cloud_status_label = QLabel("")
+        self.cloud_status_label.setMinimumWidth(150)
+        filter_row.addWidget(self.cloud_status_label)
+        self._update_cloud_status()
         self.issues_button = QPushButton("失败/待复核")
         self.issues_button.clicked.connect(self.open_batch_issues)
         self.issues_button.setVisible(False)
@@ -1439,6 +1460,7 @@ class ArchiveBrowserWindow(QMainWindow):
             QMessageBox.warning(self, "羽栖 BirdRoost", str(exc))
             return
         self.status_label.setText(f"已将 {count} 个目标标为 {entry.species_cn}")
+        self._schedule_cloud_sync()
         self.refresh()
         self._restore_pending_view(successor, row)
 
@@ -1469,6 +1491,7 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self._selected_entry_path = new_relative
         self.status_label.setText(f"已人工归档：{name}")
+        self._schedule_cloud_sync()
         self.refresh()
         self._restore_pending_view(successor, row, prefer=current_path)
 
@@ -1489,6 +1512,7 @@ class ArchiveBrowserWindow(QMainWindow):
                 return
             self._selected_entry_path = ""
             self.status_label.setText("已从待复核移除（可在已删除中找回）")
+            self._schedule_cloud_sync()
             self.refresh()
             self._restore_pending_view(successor, row)
             return
@@ -1519,6 +1543,7 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self._selected_entry_path = ""
         self.status_label.setText(f"已移到{labels.get(action, action)}")
+        self._schedule_cloud_sync()
         self.refresh()
         self._restore_pending_view(successor, row)
 
@@ -1546,6 +1571,7 @@ class ArchiveBrowserWindow(QMainWindow):
             return
         self._selected_entry_path = ""
         self.status_label.setText(f"已移入已删除：{new_relative}")
+        self._schedule_cloud_sync()
         self.refresh()
         self._restore_pending_view(successor, row)
 
@@ -1605,6 +1631,101 @@ class ArchiveBrowserWindow(QMainWindow):
         dialog.destroyed.connect(lambda _obj=None: setattr(self, "_compare", None))
         self._compare = dialog
         dialog.showMaximized()
+
+    def _on_auto_sync_toggled(self, checked: bool) -> None:
+        self._settings.setValue("cloud_auto_sync", checked)
+        self._settings.sync()
+        if checked:
+            self._schedule_cloud_sync()
+
+    def _update_cloud_status(self, text: str = "") -> None:
+        if text:
+            self.cloud_status_label.setText(text)
+            return
+        config = load_cos_config(self._settings)
+        if not config.bucket:
+            self.cloud_status_label.setText("云端未配置")
+        else:
+            self.cloud_status_label.setText("云端已就绪")
+
+    def _cloud_config(self):
+        config = load_cos_config(self._settings)
+        secret_id, secret_key = resolve_credentials(config)
+        return config, secret_id, secret_key
+
+    def _schedule_cloud_sync(self) -> None:
+        if self._closed or not hasattr(self, "auto_sync_checkbox"):
+            return
+        if not self.auto_sync_checkbox.isChecked():
+            self._update_cloud_status("云端有变更，未自动同步")
+            return
+        config, secret_id, secret_key = self._cloud_config()
+        if not config.bucket or not secret_id or not secret_key:
+            self._update_cloud_status("云端未配置，仅本地保存")
+            return
+        self._update_cloud_status("云端有变更，等待同步…")
+        self._cloud_sync_timer.start()
+
+    def sync_cloud_now(self) -> None:
+        self._cloud_sync_timer.stop()
+        self._start_cloud_sync()
+
+    def _start_cloud_sync(self) -> None:
+        if self._closed:
+            return
+        if self._cloud_sync_worker is not None:
+            self._cloud_sync_pending = True
+            return
+        config, secret_id, secret_key = self._cloud_config()
+        if not config.bucket or not secret_id or not secret_key:
+            self._update_cloud_status("云端未配置，仅本地保存")
+            return
+        export_root = Path(str(self._settings.value("cloud_export_dir", ""))).expanduser()
+        if not str(export_root):
+            export_root = self.output_root.parent / f"{self.output_root.name}-cloud-export"
+        worker = SyncWorker(
+            self.output_root,
+            export_root,
+            {
+                "bucket": config.bucket,
+                "region": config.region,
+                "endpoint": config.endpoint,
+                "secret_id": secret_id,
+                "secret_key": secret_key,
+                "prefix": config.prefix,
+            },
+            self,
+        )
+        self._cloud_sync_worker = worker
+        self.sync_button.setEnabled(False)
+        self._update_cloud_status("正在同步云端…")
+        worker.done.connect(self._cloud_sync_done)
+        worker.failed.connect(self._cloud_sync_failed)
+        worker.finished.connect(lambda worker=worker: self._cloud_sync_finished(worker))
+        worker.finished.connect(worker.deleteLater)
+        worker.start()
+
+    def _cloud_sync_done(self, report) -> None:
+        if report.error:
+            self._update_cloud_status("云端同步失败")
+            self.status_label.setText(f"云端同步失败：{report.error}")
+            QMessageBox.warning(self, "羽栖 BirdRoost", f"云端同步失败：{report.error}")
+        else:
+            self._update_cloud_status(f"云端已同步 r{report.revision}")
+            self.status_label.setText(f"云端 manifest 已更新：revision {report.revision}")
+
+    def _cloud_sync_failed(self, message: str) -> None:
+        self._update_cloud_status("云端同步失败")
+        self.status_label.setText(f"云端同步失败：{message}")
+        QMessageBox.warning(self, "羽栖 BirdRoost", f"云端同步失败：{message}")
+
+    def _cloud_sync_finished(self, worker) -> None:
+        if self._cloud_sync_worker is worker:
+            self._cloud_sync_worker = None
+            self.sync_button.setEnabled(True)
+        if self._cloud_sync_pending:
+            self._cloud_sync_pending = False
+            self._schedule_cloud_sync()
 
     def edit_observation(self) -> None:
         entry = next(
@@ -1667,6 +1788,7 @@ class ArchiveBrowserWindow(QMainWindow):
             QMessageBox.warning(self, "羽栖 BirdRoost", f"文件重命名失败：{exc}")
             return
         self.status_label.setText("已修改观测信息")
+        self._schedule_cloud_sync()
         self.refresh()
         if selected_tree and selected_tree in self._tree_items:
             self.tree.blockSignals(True)
@@ -1780,6 +1902,7 @@ class ArchiveBrowserWindow(QMainWindow):
             if not outcome.split else
             f"已改为 {taxon.display_name}；共享副本已拆分"
         )
+        self._schedule_cloud_sync()
         self.refresh()
 
     def import_old_csv(self) -> None:
@@ -1940,6 +2063,9 @@ class ArchiveBrowserWindow(QMainWindow):
             pass
         self._refresh_timer.stop()
         self._thumbnail_timer.stop()
+        self._cloud_sync_timer.stop()
+        if self._cloud_sync_worker is not None:
+            self._cloud_sync_worker.wait(5000)
         try:
             self._thumbnail_pool.clear()
         except RuntimeError:
