@@ -247,3 +247,96 @@ def upload_plan(
             progress(done, total, item.key)
     report.bytes_uploaded = uploaded_bytes
     return report
+
+
+@dataclass
+class ConnectionReport:
+    ok: bool = False
+    bucket_reachable: bool = False
+    manifest_exists: bool = False
+    write_ok: bool = False
+    messages: list[str] = field(default_factory=list)
+    error: str = ""
+
+    def to_dict(self) -> dict:
+        return {
+            "ok": self.ok,
+            "bucket_reachable": self.bucket_reachable,
+            "manifest_exists": self.manifest_exists,
+            "write_ok": self.write_ok,
+            "messages": list(self.messages),
+            "error": self.error,
+        }
+
+
+def test_connection(
+    *,
+    bucket: str,
+    region: str,
+    secret_id: str,
+    secret_key: str,
+    prefix: str = "",
+    endpoint: str = "",
+    write_test: bool = True,
+) -> ConnectionReport:
+    """Check credentials and optional write permission without leaving an object."""
+    report = ConnectionReport()
+    bucket = bucket.strip()
+    region = region.strip()
+    if not bucket or not region:
+        report.error = "bucket 和 region 不能为空"
+        return report
+    if not secret_id or not secret_key:
+        report.error = "缺少 SecretId / SecretKey"
+        return report
+    try:
+        config = CosConfig(
+            Region=region,
+            SecretId=secret_id,
+            SecretKey=secret_key,
+            Scheme="https",
+            Endpoint=endpoint.strip() or None,
+        )
+        client = CosS3Client(config)
+    except Exception as exc:
+        report.error = f"初始化 COS 客户端失败：{exc}"
+        return report
+
+    try:
+        client.head_bucket(Bucket=bucket)
+        report.bucket_reachable = True
+        report.messages.append("桶可访问")
+    except Exception as exc:
+        report.messages.append(f"HeadBucket 检查未通过：{exc}")
+
+    manifest_key = f"users/{normalize_prefix(prefix)}/manifest.json"
+    try:
+        client.head_object(Bucket=bucket, Key=manifest_key)
+        report.manifest_exists = True
+        report.messages.append("已找到云端 manifest")
+    except Exception as exc:
+        code = str(getattr(exc, "get_error_code", lambda: "")())
+        if code in {"NoSuchKey", "404"}:
+            report.messages.append("桶可访问；云端尚无 manifest（首次上传时会创建）")
+        else:
+            report.messages.append(f"manifest 读取检查未通过：{exc}")
+
+    if write_test:
+        probe = f"users/{normalize_prefix(prefix)}/.birdroost-connection-test"
+        try:
+            client.put_object(Bucket=bucket, Key=probe, Body=b"birdroost-connection-test")
+            report.write_ok = True
+            report.messages.append("写入测试成功")
+        except Exception as exc:
+            report.error = f"写入测试失败：{exc}"
+            report.messages.append(report.error)
+        finally:
+            try:
+                client.delete_object(Bucket=bucket, Key=probe)
+            except Exception:
+                pass
+
+    report.ok = (report.bucket_reachable or report.manifest_exists) and (report.write_ok or not write_test)
+    if not report.ok and not report.error:
+        report.error = "连接检查未通过，请确认桶名、地域、Endpoint 和子账号权限"
+    return report

@@ -97,3 +97,55 @@ def test_upload_requires_credentials(tmp_path: Path):
 
     assert report.failed == 1
     assert "SecretId" in report.errors[0]
+
+
+class FakeConnectionClient:
+    def __init__(self, *, write=True):
+        self.write = write
+        self.deleted = []
+
+    def head_bucket(self, Bucket):
+        return {}
+
+    def head_object(self, Bucket, Key):
+        raise RuntimeError("NoSuchKey")
+
+    def put_object(self, Bucket, Key, Body):
+        if not self.write:
+            raise RuntimeError("AccessDenied")
+        return {}
+
+    def delete_object(self, Bucket, Key):
+        self.deleted.append(Key)
+        return {}
+
+
+def test_connection_checks_write_and_cleans_probe(tmp_path: Path, monkeypatch):
+    fake = FakeConnectionClient()
+    monkeypatch.setattr("birdclass.cloud_backup.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_backup.CosS3Client", lambda config: fake)
+
+    from birdclass.cloud_backup import test_connection
+    report = test_connection(
+        bucket="bucket-1250000000", region="ap-shanghai",
+        secret_id="id", secret_key="key", prefix="zjq",
+    )
+
+    assert report.ok is True
+    assert report.write_ok is True
+    assert fake.deleted
+
+
+def test_connection_reports_read_only_key(tmp_path: Path, monkeypatch):
+    fake = FakeConnectionClient(write=False)
+    monkeypatch.setattr("birdclass.cloud_backup.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_backup.CosS3Client", lambda config: fake)
+
+    from birdclass.cloud_backup import test_connection
+    report = test_connection(
+        bucket="bucket-1250000000", region="ap-shanghai",
+        secret_id="id", secret_key="key", prefix="zjq",
+    )
+
+    assert report.ok is False
+    assert "写入" in report.error

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QSettings, QThread, QTimer, Signal, Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QFileDialog,
@@ -22,7 +23,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from ..cloud_backup import build_upload_plan, normalize_prefix, upload_plan
+from ..cloud_backup import build_upload_plan, normalize_prefix, test_connection, upload_plan
 from ..cloud_export import export_archive
 
 
@@ -69,6 +70,21 @@ class _UploadWorker(QThread):
 
     def cancel(self) -> None:
         self.cancel_event.set()
+
+
+class _ConnectionWorker(QThread):
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, kwargs, parent=None) -> None:
+        super().__init__(parent)
+        self.kwargs = kwargs
+
+    def run(self) -> None:
+        try:
+            self.done.emit(test_connection(**self.kwargs))
+        except Exception as exc:
+            self.failed.emit(f"{exc.__class__.__name__}: {exc}")
 
 
 class CloudBackupDialog(QDialog):
@@ -136,6 +152,13 @@ class CloudBackupDialog(QDialog):
         self.export_button = QPushButton("生成清单和缩略图")
         self.export_button.clicked.connect(self.generate_export)
         buttons.addWidget(self.export_button)
+        self.test_button = QPushButton("测试连接")
+        self.test_button.clicked.connect(self.test_connection)
+        buttons.addWidget(self.test_button)
+        self.write_test = QCheckBox("包含写入测试")
+        self.write_test.setChecked(True)
+        self.write_test.setToolTip("会写入并立即删除一个临时对象，用于验证上传权限")
+        buttons.addWidget(self.write_test)
         self.upload_button = QPushButton("开始上传")
         self.upload_button.clicked.connect(self.start_upload)
         buttons.addWidget(self.upload_button)
@@ -197,6 +220,7 @@ class CloudBackupDialog(QDialog):
 
     def _set_busy(self, busy: bool, *, cancellable: bool = False) -> None:
         self.export_button.setEnabled(not busy)
+        self.test_button.setEnabled(not busy)
         self.upload_button.setEnabled(not busy)
         self.cancel_button.setEnabled(busy and cancellable)
         self.progress.setVisible(busy)
@@ -244,6 +268,54 @@ class CloudBackupDialog(QDialog):
         self._append(f"导出失败：{message}")
         QMessageBox.warning(self, "羽栖 BirdRoost", f"导出失败：{message}")
 
+    def _credentials(self) -> tuple[str, str]:
+        secret_id, secret_key = self._credentials()
+        return secret_id, secret_key
+
+    def test_connection(self) -> None:
+        if self._worker is not None:
+            return
+        bucket = self.bucket.text().strip()
+        region = self.region.currentText().strip()
+        secret_id, secret_key = self._credentials()
+        if not bucket or not region:
+            QMessageBox.warning(self, "羽栖 BirdRoost", "请填写桶名和地域")
+            return
+        if not secret_id or not secret_key:
+            QMessageBox.warning(self, "羽栖 BirdRoost", "请填写 SecretId / SecretKey，或设置环境变量")
+            return
+        self._save()
+        self._append("正在测试 COS 连接…")
+        worker = _ConnectionWorker({
+            "bucket": bucket,
+            "region": region,
+            "secret_id": secret_id,
+            "secret_key": secret_key,
+            "prefix": self.prefix.text().strip(),
+            "endpoint": self.endpoint.text().strip(),
+            "write_test": self.write_test.isChecked(),
+        }, self)
+        self._worker = worker
+        self._set_busy(True)
+        worker.done.connect(self._connection_done)
+        worker.failed.connect(self._connection_failed)
+        worker.finished.connect(self._worker_finished)
+        worker.finished.connect(worker.deleteLater)
+        worker.start()
+
+    def _connection_done(self, report) -> None:
+        for message in report.messages:
+            self._append(f"  {message}")
+        if report.ok:
+            self._append("连接测试通过")
+        else:
+            self._append(f"连接测试失败：{report.error or '未知错误'}")
+            QMessageBox.warning(self, "羽栖 BirdRoost", report.error or "连接测试失败")
+
+    def _connection_failed(self, message: str) -> None:
+        self._append(f"连接测试失败：{message}")
+        QMessageBox.warning(self, "羽栖 BirdRoost", message)
+
     def start_upload(self) -> None:
         if self._worker is not None:
             return
@@ -251,8 +323,7 @@ class CloudBackupDialog(QDialog):
         bucket = self.bucket.text().strip()
         region = self.region.currentText().strip()
         prefix = self.prefix.text().strip()
-        secret_id = self.secret_id.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_ID", "") or os.environ.get("COS_SECRET_ID", "")
-        secret_key = self.secret_key.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_KEY", "") or os.environ.get("COS_SECRET_KEY", "")
+        secret_id, secret_key = self._credentials()
         if not bucket or not region:
             QMessageBox.warning(self, "羽栖 BirdRoost", "请填写桶名和地域")
             return
