@@ -30,3 +30,6 @@ live_api_smoke.py
 ui-smoke.png
 validation/
 docs/superpowers/
+
+# PyInstaller generated spec
+*.spec

@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-import getpass
-import os
-import threading
 from pathlib import Path
 
-from PySide6.QtCore import QSettings, QThread, QTimer, Signal, Qt
+from PySide6.QtCore import QSettings, QThread, QTimer, Qt
 from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QDialog,
     QFileDialog,
     QFormLayout,
@@ -23,74 +18,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from ..cloud_backup import build_upload_plan, normalize_prefix, test_connection, upload_plan
-from ..secret_store import (
-    delete_cos_credentials,
-    last_error,
-    load_cos_credentials,
-    save_cos_credentials,
-)
-from ..cloud_export import export_archive
-
-
-class _ExportWorker(QThread):
-    done = Signal(object)
-    failed = Signal(str)
-
-    def __init__(self, archive_root: Path, export_root: Path, parent=None) -> None:
-        super().__init__(parent)
-        self.archive_root = archive_root
-        self.export_root = export_root
-
-    def run(self) -> None:
-        try:
-            self.done.emit(export_archive(self.archive_root, self.export_root))
-        except Exception as exc:
-            self.failed.emit(f"{exc.__class__.__name__}: {exc}")
-
-
-class _UploadWorker(QThread):
-    progressed = Signal(int, int, str)
-    done = Signal(object)
-    failed = Signal(str)
-
-    def __init__(self, plan, secret_id: str, secret_key: str, parent=None) -> None:
-        super().__init__(parent)
-        self.plan = plan
-        self.secret_id = secret_id
-        self.secret_key = secret_key
-        self.cancel_event = threading.Event()
-
-    def run(self) -> None:
-        try:
-            report = upload_plan(
-                self.plan,
-                secret_id=self.secret_id,
-                secret_key=self.secret_key,
-                progress=lambda done, total, key: self.progressed.emit(done, total, key),
-                cancelled=self.cancel_event.is_set,
-            )
-            self.done.emit(report)
-        except Exception as exc:
-            self.failed.emit(f"{exc.__class__.__name__}: {exc}")
-
-    def cancel(self) -> None:
-        self.cancel_event.set()
-
-
-class _ConnectionWorker(QThread):
-    done = Signal(object)
-    failed = Signal(str)
-
-    def __init__(self, kwargs, parent=None) -> None:
-        super().__init__(parent)
-        self.kwargs = kwargs
-
-    def run(self) -> None:
-        try:
-            self.done.emit(test_connection(**self.kwargs))
-        except Exception as exc:
-            self.failed.emit(f"{exc.__class__.__name__}: {exc}")
+from ..cloud_backup import build_upload_plan
+from .cloud_workers import ExportWorker, UploadWorker
+from .cos_config_store import config_summary, load_cos_config, resolve_credentials
 
 
 class CloudBackupDialog(QDialog):
@@ -121,7 +51,7 @@ class CloudBackupDialog(QDialog):
         info.setWordWrap(True)
         layout.addWidget(info)
 
-        form_group = QGroupBox("腾讯云 COS")
+        form_group = QGroupBox("导出与云端配置")
         form = QFormLayout(form_group)
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         form.setFormAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
@@ -133,47 +63,21 @@ class CloudBackupDialog(QDialog):
         browse.clicked.connect(self._browse_export)
         export_row.addWidget(browse)
         form.addRow("导出目录", export_row)
-        self.bucket = QLineEdit()
-        self.bucket.setPlaceholderText("例如：birdroost-1250000000（含 APPID）")
-        form.addRow("桶名（含 APPID）", self.bucket)
-        self.region = QComboBox()
-        self.region.setEditable(True)
-        for region in ("ap-shanghai", "ap-guangzhou", "ap-beijing", "ap-hongkong", "ap-singapore"):
-            self.region.addItem(region)
-        form.addRow("地域", self.region)
-        self.prefix = QLineEdit()
-        self.prefix.setPlaceholderText("用户前缀，例如：zjq")
-        form.addRow("用户前缀", self.prefix)
-        self.endpoint = QLineEdit()
-        self.endpoint.setPlaceholderText("可选：cos.ap-shanghai.myqcloud.com")
-        form.addRow("Endpoint（可选）", self.endpoint)
-        self.secret_id = QLineEdit()
-        self.secret_id.setPlaceholderText("留空则读 TENCENTCLOUD_SECRET_ID")
-        form.addRow("SecretId", self.secret_id)
-        self.secret_key = QLineEdit()
-        self.secret_key.setEchoMode(QLineEdit.EchoMode.Password)
-        self.secret_key.setPlaceholderText("留空则读 TENCENTCLOUD_SECRET_KEY")
-        form.addRow("SecretKey", self.secret_key)
-        self.save_config = QCheckBox("保存 COS 配置（Secret 存 macOS 钥匙串）")
-        self.save_config.setToolTip("桶名、地域、Endpoint、前缀写入设置；SecretId/SecretKey 写入钥匙串")
-        form.addRow("", self.save_config)
-        self.save_config.toggled.connect(self._on_save_config_toggled)
-        self.config_status = QLabel("")
-        self.config_status.setWordWrap(True)
-        form.addRow("", self.config_status)
+        self.config_label = QLabel()
+        self.config_label.setWordWrap(True)
+        form.addRow("COS 配置", self.config_label)
+        config_row = QHBoxLayout()
+        self.config_button = QPushButton("打开配置…")
+        self.config_button.clicked.connect(self._open_config)
+        config_row.addWidget(self.config_button)
+        config_row.addStretch(1)
+        form.addRow("", config_row)
         layout.addWidget(form_group)
 
         buttons = QHBoxLayout()
         self.export_button = QPushButton("生成清单和缩略图")
         self.export_button.clicked.connect(self.generate_export)
         buttons.addWidget(self.export_button)
-        self.test_button = QPushButton("测试连接")
-        self.test_button.clicked.connect(self.test_connection)
-        buttons.addWidget(self.test_button)
-        self.write_test = QCheckBox("包含写入测试")
-        self.write_test.setChecked(True)
-        self.write_test.setToolTip("会写入并立即删除一个临时对象，用于验证上传权限")
-        buttons.addWidget(self.write_test)
         self.upload_button = QPushButton("开始上传")
         self.upload_button.clicked.connect(self.start_upload)
         buttons.addWidget(self.upload_button)
@@ -206,24 +110,7 @@ class CloudBackupDialog(QDialog):
 
     def _restore(self) -> None:
         self.export_dir.setText(str(self.settings.value("cloud_export_dir", "")))
-        self.bucket.setText(str(self.settings.value("cloud_bucket", "")))
-        region = str(self.settings.value("cloud_region", "ap-shanghai"))
-        self.region.setCurrentText(region)
-        self.prefix.setText(str(self.settings.value("cloud_prefix", normalize_prefix(getpass.getuser()))))
-        self.endpoint.setText(str(self.settings.value("cloud_endpoint", "")))
-        saved = self.settings.value("cloud_save_config", False)
-        saved = saved if isinstance(saved, bool) else str(saved).lower() == "true"
-        self.save_config.blockSignals(True)
-        self.save_config.setChecked(saved)
-        self.save_config.blockSignals(False)
-        if saved:
-            secret_id, secret_key = load_cos_credentials()
-            if secret_id and secret_key:
-                self.secret_id.setText(secret_id)
-                self.secret_key.setText(secret_key)
-                self.config_status.setText("已从 macOS 钥匙串读取 COS 配置")
-            else:
-                self.config_status.setText("未在钥匙串中找到 COS 配置")
+        self.config_label.setText(config_summary(self._cos_config()))
 
     def _refresh_export_default(self) -> None:
         if self.export_dir.text().strip():
@@ -238,42 +125,21 @@ class CloudBackupDialog(QDialog):
         if selected:
             self.export_dir.setText(selected)
 
+    def _cos_config(self):
+        return load_cos_config(self.settings)
+
     def _save(self) -> None:
-        save = self.save_config.isChecked()
-        self.settings.setValue("cloud_save_config", save)
-        if not save:
-            for key in (
-                "cloud_export_dir", "cloud_bucket", "cloud_region",
-                "cloud_prefix", "cloud_endpoint",
-            ):
-                self.settings.remove(key)
-            delete_cos_credentials()
-            self.settings.sync()
-            return
         self.settings.setValue("cloud_export_dir", self.export_dir.text().strip())
-        self.settings.setValue("cloud_bucket", self.bucket.text().strip())
-        self.settings.setValue("cloud_region", self.region.currentText().strip())
-        self.settings.setValue("cloud_prefix", self.prefix.text().strip())
-        self.settings.setValue("cloud_endpoint", self.endpoint.text().strip())
-        secret_id = self.secret_id.text().strip()
-        secret_key = self.secret_key.text().strip()
-        if secret_id and secret_key:
-            if save_cos_credentials(secret_id, secret_key):
-                self.config_status.setText("COS 配置已保存到 macOS 钥匙串")
-            else:
-                self.config_status.setText(f"COS 配置保存失败：{last_error()}")
         self.settings.sync()
 
-    def _on_save_config_toggled(self, checked: bool) -> None:
-        if not checked:
-            delete_cos_credentials()
-            self.config_status.setText("已取消保存 COS 配置")
-            return
-        self._save()
+    def _open_config(self) -> None:
+        parent = self.parent()
+        if parent is not None and hasattr(parent, "open_config"):
+            parent.open_config()
+            self.config_label.setText(config_summary(self._cos_config()))
 
     def _set_busy(self, busy: bool, *, cancellable: bool = False) -> None:
         self.export_button.setEnabled(not busy)
-        self.test_button.setEnabled(not busy)
         self.upload_button.setEnabled(not busy)
         self.cancel_button.setEnabled(busy and cancellable)
         self.progress.setVisible(busy)
@@ -301,7 +167,7 @@ class CloudBackupDialog(QDialog):
             QMessageBox.warning(self, "羽栖 BirdRoost", "请填写导出目录")
             return
         self._save()
-        worker = _ExportWorker(self.archive_root, Path(export).expanduser(), self)
+        worker = ExportWorker(self.archive_root, Path(export).expanduser(), self)
         self._worker = worker
         self._set_busy(True)
         worker.done.connect(self._export_done)
@@ -320,12 +186,11 @@ class CloudBackupDialog(QDialog):
                 self._append(f"  {error}")
         if self._auto_upload:
             self._auto_upload = False
-            secret_id = self.secret_id.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_ID", "") or os.environ.get("COS_SECRET_ID", "")
-            secret_key = self.secret_key.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_KEY", "") or os.environ.get("COS_SECRET_KEY", "")
+            secret_id, secret_key = resolve_credentials(self._cos_config())
             if secret_id and secret_key and not report.errors:
                 QTimer.singleShot(0, self.start_upload)
             else:
-                self._append("导出已生成；请填写 SecretId/SecretKey 后点“开始上传”")
+                self._append("导出已生成；尚未配置 COS，请点“打开配置…”填写桶名和 Secret")
         self._worker = None
         self._set_busy(False)
 
@@ -335,76 +200,24 @@ class CloudBackupDialog(QDialog):
         self._worker = None
         self._set_busy(False)
 
-    def _credentials(self) -> tuple[str, str]:
-        secret_id = self.secret_id.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_ID", "") or os.environ.get("COS_SECRET_ID", "")
-        secret_key = self.secret_key.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_KEY", "") or os.environ.get("COS_SECRET_KEY", "")
-        return secret_id, secret_key
-
-    def test_connection(self) -> None:
-        if self._worker_blocked():
-            return
-        bucket = self.bucket.text().strip()
-        region = self.region.currentText().strip()
-        secret_id, secret_key = self._credentials()
-        if not bucket or not region:
-            QMessageBox.warning(self, "羽栖 BirdRoost", "请填写桶名和地域")
-            return
-        if not secret_id or not secret_key:
-            QMessageBox.warning(self, "羽栖 BirdRoost", "请填写 SecretId / SecretKey，或设置环境变量")
-            return
-        self._save()
-        self._append("正在测试 COS 连接…")
-        worker = _ConnectionWorker({
-            "bucket": bucket,
-            "region": region,
-            "secret_id": secret_id,
-            "secret_key": secret_key,
-            "prefix": self.prefix.text().strip(),
-            "endpoint": self.endpoint.text().strip(),
-            "write_test": self.write_test.isChecked(),
-        }, self)
-        self._worker = worker
-        self._set_busy(True)
-        worker.done.connect(self._connection_done)
-        worker.failed.connect(self._connection_failed)
-        worker.finished.connect(lambda worker=worker: self._worker_finished(worker))
-        worker.finished.connect(worker.deleteLater)
-        worker.start()
-
-    def _connection_done(self, report) -> None:
-        for message in report.messages:
-            self._append(f"  {message}")
-        if report.ok:
-            self._append("连接测试通过")
-        else:
-            self._append(f"连接测试失败：{report.error or '未知错误'}")
-            QMessageBox.warning(self, "羽栖 BirdRoost", report.error or "连接测试失败")
-        self._worker = None
-        self._set_busy(False)
-
-    def _connection_failed(self, message: str) -> None:
-        self._append(f"连接测试失败：{message}")
-        QMessageBox.warning(self, "羽栖 BirdRoost", message)
-        self._worker = None
-        self._set_busy(False)
-
     def start_upload(self) -> None:
         if self._worker_blocked():
             return
         export = Path(self.export_dir.text().strip()).expanduser()
-        bucket = self.bucket.text().strip()
-        region = self.region.currentText().strip()
-        prefix = self.prefix.text().strip()
-        secret_id, secret_key = self._credentials()
+        config = self._cos_config()
+        bucket = config.bucket.strip()
+        region = config.region.strip()
+        prefix = config.prefix.strip()
+        secret_id, secret_key = resolve_credentials(config)
         if not bucket or not region:
-            QMessageBox.warning(self, "羽栖 BirdRoost", "请填写桶名和地域")
+            QMessageBox.warning(self, "羽栖 BirdRoost", "请先在“配置…”中填写桶名和地域")
             return
         if not secret_id or not secret_key:
-            QMessageBox.warning(self, "羽栖 BirdRoost", "请填写 SecretId / SecretKey，或设置环境变量")
+            QMessageBox.warning(self, "羽栖 BirdRoost", "请先在“配置…”中填写 SecretId / SecretKey，或设置环境变量")
             return
         plan = build_upload_plan(
             export, bucket=bucket, region=region, prefix=prefix,
-            endpoint=self.endpoint.text().strip(),
+            endpoint=config.endpoint.strip(),
         )
         if plan.errors:
             QMessageBox.warning(self, "羽栖 BirdRoost", "\n".join(plan.errors[:10]))
@@ -413,7 +226,7 @@ class CloudBackupDialog(QDialog):
         self._append(
             f"准备上传 {len(plan.items)} 个对象到 {bucket} / users/{plan.prefix}/"
         )
-        worker = _UploadWorker(plan, secret_id, secret_key, self)
+        worker = UploadWorker(plan, secret_id, secret_key, self)
         self._worker = worker
         self._set_busy(True, cancellable=True)
         worker.progressed.connect(self._progress)

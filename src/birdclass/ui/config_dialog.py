@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
-from PySide6.QtCore import QSettings, Qt, QThread, Signal
+from PySide6.QtCore import QSettings, Qt, QThread
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -19,30 +16,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..cloud_backup import normalize_prefix, test_connection
-from ..secret_store import (
-    delete_cos_credentials,
-    last_error,
-    load_cos_credentials,
-    save_cos_credentials,
+from .cloud_workers import ConnectionWorker
+from .cos_config_store import (
+    CosConfig,
+    load_cos_config,
+    resolve_credentials,
+    save_cos_config,
 )
-from .geo_fields import COUNTRIES, configure_geo_combo
-
-
-class _ConnectionWorker(QThread):
-    done = Signal(object)
-    failed = Signal(str)
-
-    def __init__(self, kwargs, parent=None) -> None:
-        super().__init__(parent)
-        self.kwargs = kwargs
-
-    def run(self) -> None:
-        try:
-            self.done.emit(test_connection(**self.kwargs))
-        except Exception as exc:
-            self.failed.emit(f"{exc.__class__.__name__}: {exc}")
-
 
 class ConfigDialog(QDialog):
     """Unified API key + COS configuration."""
@@ -80,9 +60,6 @@ class ConfigDialog(QDialog):
         form = QFormLayout()
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         form.setFormAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        self.export_dir = QLineEdit()
-        self.export_dir.setPlaceholderText("导出目录（可留空，上传时再选择）")
-        form.addRow("导出目录", self.export_dir)
         self.bucket = QLineEdit()
         self.bucket.setPlaceholderText("例如：birdroost-1250000000（含 APPID）")
         form.addRow("桶名（含 APPID）", self.bucket)
@@ -124,59 +101,44 @@ class ConfigDialog(QDialog):
         self.save_config.toggled.connect(self._on_save_toggled)
         return page
 
+    def _config(self) -> CosConfig:
+        return CosConfig(
+            bucket=self.bucket.text().strip(),
+            region=self.region.currentText().strip(),
+            endpoint=self.endpoint.text().strip(),
+            prefix=self.prefix.text().strip(),
+            secret_id=self.secret_id.text().strip(),
+            secret_key=self.secret_key.text().strip(),
+            save_config=self.save_config.isChecked(),
+        )
+
     def _restore_cos(self) -> None:
-        self.export_dir.setText(str(self.settings.value("cloud_export_dir", "")))
-        self.bucket.setText(str(self.settings.value("cloud_bucket", "")))
-        self.region.setCurrentText(str(self.settings.value("cloud_region", "ap-shanghai")))
-        self.endpoint.setText(str(self.settings.value("cloud_endpoint", "")))
-        self.prefix.setText(str(self.settings.value("cloud_prefix", normalize_prefix(os.environ.get("USER", "default")))))
-        saved = self.settings.value("cloud_save_config", False)
-        saved = saved if isinstance(saved, bool) else str(saved).lower() == "true"
+        config = load_cos_config(self.settings)
+        self.bucket.setText(config.bucket)
+        self.region.setCurrentText(config.region)
+        self.endpoint.setText(config.endpoint)
+        self.prefix.setText(config.prefix)
         self.save_config.blockSignals(True)
-        self.save_config.setChecked(saved)
+        self.save_config.setChecked(config.save_config)
         self.save_config.blockSignals(False)
-        if saved:
-            secret_id, secret_key = load_cos_credentials()
-            if secret_id and secret_key:
-                self.secret_id.setText(secret_id)
-                self.secret_key.setText(secret_key)
-                self.status.setText("已从 macOS 钥匙串读取 COS 配置")
-            else:
-                self.status.setText("未在钥匙串中找到 COS 配置")
+        if config.secret_id and config.secret_key:
+            self.secret_id.setText(config.secret_id)
+            self.secret_key.setText(config.secret_key)
+            self.status.setText("已从 macOS 钥匙串读取 COS 配置")
+        elif config.save_config:
+            self.status.setText("未在钥匙串中找到 COS 配置")
 
     def _save_cos(self) -> None:
-        save = self.save_config.isChecked()
-        self.settings.setValue("cloud_save_config", save)
-        if not save:
-            for key in ("cloud_export_dir", "cloud_bucket", "cloud_region", "cloud_prefix", "cloud_endpoint"):
-                self.settings.remove(key)
-            delete_cos_credentials()
-            self.settings.sync()
-            return
-        self.settings.setValue("cloud_export_dir", self.export_dir.text().strip())
-        self.settings.setValue("cloud_bucket", self.bucket.text().strip())
-        self.settings.setValue("cloud_region", self.region.currentText().strip())
-        self.settings.setValue("cloud_endpoint", self.endpoint.text().strip())
-        self.settings.setValue("cloud_prefix", self.prefix.text().strip())
-        if self.secret_id.text().strip() and self.secret_key.text().strip():
-            if save_cos_credentials(self.secret_id.text().strip(), self.secret_key.text().strip()):
-                self.status.setText("COS 配置已保存到 macOS 钥匙串")
-            else:
-                self.status.setText(f"COS 配置保存失败：{last_error()}")
-        self.settings.sync()
+        ok, message = save_cos_config(self.settings, self._config())
+        self.status.setText(message if ok else message)
 
     def _on_save_toggled(self, checked: bool) -> None:
-        if not checked:
-            delete_cos_credentials()
-            self.status.setText("已取消保存 COS 配置")
-        else:
-            self._save_cos()
+        self._save_cos()
 
     def _test_connection(self) -> None:
         if self._worker is not None:
             return
-        secret_id = self.secret_id.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_ID", "") or os.environ.get("COS_SECRET_ID", "")
-        secret_key = self.secret_key.text().strip() or os.environ.get("TENCENTCLOUD_SECRET_KEY", "") or os.environ.get("COS_SECRET_KEY", "")
+        secret_id, secret_key = resolve_credentials(self._config())
         if not self.bucket.text().strip() or not self.region.currentText().strip():
             QMessageBox.warning(self, "羽栖 BirdRoost", "请填写桶名和地域")
             return
@@ -184,13 +146,14 @@ class ConfigDialog(QDialog):
             QMessageBox.warning(self, "羽栖 BirdRoost", "请填写 SecretId / SecretKey，或设置环境变量")
             return
         self._save_cos()
-        worker = _ConnectionWorker({
-            "bucket": self.bucket.text().strip(),
-            "region": self.region.currentText().strip(),
+        config = self._config()
+        worker = ConnectionWorker({
+            "bucket": config.bucket,
+            "region": config.region,
             "secret_id": secret_id,
             "secret_key": secret_key,
-            "prefix": self.prefix.text().strip(),
-            "endpoint": self.endpoint.text().strip(),
+            "prefix": config.prefix,
+            "endpoint": config.endpoint,
             "write_test": self.write_test.isChecked(),
         }, self)
         self._worker = worker
