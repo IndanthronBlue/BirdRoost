@@ -92,3 +92,34 @@ def test_second_export_skips_existing_thumbnails(tmp_path: Path):
     assert first.thumbnails == 1
     assert second.thumbnails == 0
     assert second.thumbnails_skipped == 1
+
+
+def test_manifest_v2_has_revision_and_tombstones(tmp_path: Path):
+    source = tmp_path / "source.jpg"
+    Image.new("RGB", (20, 20), "green").save(source)
+    output = tmp_path / "output"
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = add_group(library, "三趾滨鹬/a.jpg", "三趾滨鹬", "Calidris alba", source)
+    from birdclass.cloud_state import add_tombstone
+
+    add_tombstone(
+        output,
+        group_id=group["group_id"],
+        species_cn="三趾滨鹬",
+        target_indices=(0,),
+        local_relative_path="三趾滨鹬/a.jpg",
+    )
+    export = tmp_path / "export"
+    first = export_archive(output, export)
+    manifest = json.loads(first.manifest_path.read_text(encoding="utf-8"))
+
+    assert manifest["schema_version"] == 2
+    assert manifest["library_id"]
+    assert manifest["device_id"]
+    assert manifest["revision"] >= 1
+    assert manifest["tombstones"]
+
+    second = export_archive(output, export)
+    new_manifest = json.loads(second.manifest_path.read_text(encoding="utf-8"))
+    assert new_manifest["revision"] > manifest["revision"]

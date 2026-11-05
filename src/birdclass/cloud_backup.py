@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -11,6 +12,7 @@ from typing import Callable, Iterable
 from qcloud_cos import CosConfig, CosS3Client
 
 from .cloud_export import SCHEMA_VERSION
+from .cloud_state import mark_uploaded
 
 PREFIX_PATTERN = re.compile(r"[^\w.-]+")
 ProgressCallback = Callable[[int, int, str], None]
@@ -31,6 +33,11 @@ class UploadPlan:
     region: str
     prefix: str
     endpoint: str = ""
+    library_id: str = ""
+    device_id: str = ""
+    revision: int = 0
+    base_revision: int = 0
+    archive_root: Path | None = None
     items: list[UploadItem] = field(default_factory=list)
     manifest_path: Path | None = None
     manifest_key: str = ""
@@ -100,6 +107,11 @@ def build_upload_plan(
         return plan
 
     source_root = Path(str(manifest.get("source_root", ""))).expanduser().resolve()
+    plan.archive_root = source_root
+    plan.library_id = str(manifest.get("library_id", ""))
+    plan.device_id = str(manifest.get("device_id", ""))
+    plan.revision = int(manifest.get("revision", 0) or 0)
+    plan.base_revision = int(manifest.get("base_revision", 0) or 0)
     copies = manifest.get("copies", [])
     source_by_photo: dict[str, Path] = {}
     for copy in copies:
@@ -138,31 +150,57 @@ def build_upload_plan(
                     sha256=str(photo.get("sha256", photo_id)),
                     kind=str(variant.get("kind", "thumbnail")),
                 ))
+    from .archiver import sha256_file
+
     plan.items.append(UploadItem(
         key=plan.manifest_key,
         local_path=manifest_path,
         size=manifest_path.stat().st_size,
-        sha256="",
+        sha256=sha256_file(manifest_path),
         kind="manifest",
     ))
     return plan
 
 
-def _head_size(client: CosS3Client, bucket: str, key: str) -> int | None:
+def _head_matches(client: CosS3Client, bucket: str, key: str, size: int, sha256: str = "") -> bool:
     try:
         response = client.head_object(Bucket=bucket, Key=key)
     except Exception:
-        return None
+        return False
     try:
-        return int(response.get("Content-Length", -1))
+        if int(response.get("Content-Length", -1)) != size:
+            return False
     except (TypeError, ValueError):
-        return -1
+        return False
+    if sha256:
+        metadata = response.get("Metadata") or {}
+        remote_sha = response.get("x-cos-meta-sha256") or metadata.get("x-cos-meta-sha256")
+        if remote_sha and str(remote_sha) != sha256:
+            return False
+    return True
 
 
 def _is_not_found(exc: Exception) -> bool:
     code = getattr(exc, "get_status_code", lambda: None)()
     error_code = str(getattr(exc, "get_error_code", lambda: "")())
     return code == 404 or error_code in {"NoSuchKey", "NoSuchBucket"}
+
+
+def _remote_revision(client: CosS3Client, bucket: str, key: str) -> int | None:
+    if not hasattr(client, "download_file"):
+        return None
+    try:
+        with tempfile.TemporaryDirectory(prefix="birdroost-manifest-") as directory:
+            target = Path(directory) / "manifest.json"
+            client.download_file(Bucket=bucket, Key=key, DestFilePath=str(target))
+            if not target.is_file():
+                return None
+            data = json.loads(target.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                return None
+            return int(data.get("revision", 0) or 0)
+    except Exception:
+        return None
 
 
 def upload_plan(
@@ -197,6 +235,17 @@ def upload_plan(
         Endpoint=plan.endpoint or None,
     )
     client = CosS3Client(config)
+    remote_revision = _remote_revision(client, plan.bucket, plan.manifest_key)
+    if (
+        remote_revision is not None
+        and remote_revision > plan.base_revision
+    ):
+        report.failed += 1
+        report.errors.append(
+            f"云端 manifest revision={remote_revision} 高于本地基线={plan.base_revision}；"
+            "请先拉取云端最新内容或确认冲突后再上传"
+        )
+        return report
     total = len(plan.items)
     done = 0
     uploaded_bytes = 0
@@ -214,8 +263,7 @@ def upload_plan(
             report.errors.append(f"文件不存在：{item.local_path}")
             done += 1
             continue
-        existing = _head_size(client, plan.bucket, item.key)
-        if existing is not None and existing == item.size:
+        if _head_matches(client, plan.bucket, item.key, item.size, item.sha256):
             report.skipped += 1
             done += 1
             if progress:
@@ -249,6 +297,13 @@ def upload_plan(
         if progress:
             progress(done, total, item.key)
     report.bytes_uploaded = uploaded_bytes
+    if (
+        plan.archive_root is not None
+        and plan.revision
+        and report.failed == 0
+        and not report.cancelled
+    ):
+        mark_uploaded(plan.archive_root, plan.revision)
     return report
 
 

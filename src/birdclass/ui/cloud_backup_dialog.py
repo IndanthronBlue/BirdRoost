@@ -255,7 +255,13 @@ class CloudBackupDialog(QDialog):
         for error in report.errors[:20]:
             self._append(f"  {error}")
         if report.failed:
-            QMessageBox.warning(self, "羽栖 BirdRoost", "部分对象上传失败，详见日志")
+            if any("revision" in error for error in report.errors):
+                QMessageBox.warning(
+                    self, "羽栖 BirdRoost",
+                    "云端 manifest 已被其他设备更新，上传已停止；请先确认冲突。",
+                )
+            else:
+                QMessageBox.warning(self, "羽栖 BirdRoost", "部分对象上传失败，详见日志")
         self._worker = None
         self._set_busy(False)
 

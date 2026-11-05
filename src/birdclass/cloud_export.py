@@ -12,8 +12,10 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from .archive_index import ArchiveIndex, ArchiveEntry, SPECIAL_DIRS
 from .archiver import sha256_file
+from .cloud_state import CloudState, prepare_export_state
+from .taxonomy import TAXONOMY_VERSION
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 COPY_NAMESPACE = uuid.UUID("8f3b7f9e-3a6e-4f2e-9c1b-4f2c7d6e1a02")
 
 
@@ -98,6 +100,7 @@ def export_archive(
     (export_root / "originals").mkdir(exist_ok=True)
     (export_root / "thumbs").mkdir(exist_ok=True)
     manifest_path = export_root / "manifest.json"
+    cloud_state = prepare_export_state(archive_root)
 
     index = ArchiveIndex(archive_root)
     index.refresh()
@@ -209,7 +212,13 @@ def export_archive(
 
     manifest = {
         "schema_version": SCHEMA_VERSION,
+        "library_id": cloud_state.library_id,
+        "device_id": cloud_state.device_id,
+        "revision": cloud_state.revision,
+        "base_revision": cloud_state.base_revision,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "taxonomy_version": TAXONOMY_VERSION,
         "source_root": str(archive_root),
         "thumbnail_sizes": list(thumbnail_sizes),
         "counts": {
@@ -223,6 +232,7 @@ def export_archive(
         "photos": sorted(photos.values(), key=lambda value: value["photo_id"]),
         "groups": groups,
         "copies": copies,
+        "tombstones": cloud_state.tombstones,
         "errors": errors,
     }
     manifest_path.write_text(

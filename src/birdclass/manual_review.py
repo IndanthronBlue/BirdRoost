@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .archive_index import ArchiveEntry
 from .archiver import sanitize_species_directory
+from .cloud_state import add_tombstone, mark_dirty
 from .library import ArchiveLibrary, ImageGeometry, new_group_id, now_iso
 from .metadata import write_species_metadata
 from .taxonomy import load_taxonomy
@@ -303,6 +304,14 @@ def delete_archive_photo(library: ArchiveLibrary, entry: ArchiveEntry) -> str:
         if not copies:
             group["status"] = "deleted"
         library.write_group(group)
+    add_tombstone(
+        library.output_root,
+        group_id=entry.group_id,
+        species_cn=entry.species_cn,
+        target_indices=entry.target_indices,
+        local_relative_path=entry.relative_path,
+    )
+    mark_dirty(library.output_root)
     library.append_correction({
         "corrected_at": now_iso(),
         "group_id": entry.group_id,

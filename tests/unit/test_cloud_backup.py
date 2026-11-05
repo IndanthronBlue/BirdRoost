@@ -179,3 +179,25 @@ def test_cancel_then_resume_skips_completed_objects(tmp_path: Path, monkeypatch)
     assert second.failed == 0
     assert second.skipped >= 1
     assert second.uploaded + second.skipped == len(plan.items)
+
+
+def test_upload_blocks_when_remote_revision_is_ahead(tmp_path: Path, monkeypatch):
+    export_root = make_export(tmp_path)
+    plan = build_upload_plan(export_root, bucket="bucket-1250000000", region="ap-shanghai", prefix="zjq")
+    plan.base_revision = 1
+    remote = tmp_path / "remote.json"
+    remote.write_text(json.dumps({"schema_version": 2, "revision": 5, "device_id": "other"}), encoding="utf-8")
+
+    class ConflictClient(FakeClient):
+        def download_file(self, Bucket, Key, DestFilePath, **kwargs):
+            Path(DestFilePath).write_bytes(remote.read_bytes())
+
+    fake = ConflictClient()
+    monkeypatch.setattr("birdclass.cloud_backup.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_backup.CosS3Client", lambda config: fake)
+
+    report = upload_plan(plan, secret_id="id", secret_key="key")
+
+    assert report.failed == 1
+    assert "revision" in report.errors[0]
+    assert fake.uploaded == []

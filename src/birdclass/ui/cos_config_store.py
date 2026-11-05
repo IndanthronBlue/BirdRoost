@@ -36,7 +36,7 @@ def load_cos_config(settings: QSettings) -> CosConfig:
         bucket=str(settings.value("cloud_bucket", "")),
         region=str(settings.value("cloud_region", "ap-shanghai")),
         endpoint=str(settings.value("cloud_endpoint", "")),
-        prefix=str(settings.value("cloud_prefix", normalize_prefix(getpass.getuser()))),
+        prefix=normalize_prefix(str(settings.value("cloud_prefix", getpass.getuser()))),
         secret_id=secret_id,
         secret_key=secret_key,
         save_config=save,
@@ -55,7 +55,7 @@ def save_cos_config(settings: QSettings, config: CosConfig) -> tuple[bool, str]:
     settings.setValue("cloud_bucket", config.bucket.strip())
     settings.setValue("cloud_region", config.region.strip())
     settings.setValue("cloud_endpoint", config.endpoint.strip())
-    settings.setValue("cloud_prefix", config.prefix.strip())
+    settings.setValue("cloud_prefix", normalize_prefix(config.prefix))
     settings.sync()
     if config.secret_id.strip() and config.secret_key.strip():
         if not save_cos_credentials(config.secret_id, config.secret_key):

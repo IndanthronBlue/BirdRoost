@@ -30,6 +30,7 @@ from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
 from .cloud_backup_dialog import CloudBackupDialog
+from .cloud_restore_dialog import CloudRestoreDialog
 from .config_dialog import ConfigDialog
 from .geo_fields import CHINA_REGIONS, COUNTRIES, configure_geo_combo, is_china
 from .area_search import configure_area_search, resolve_area_code
@@ -71,6 +72,10 @@ class MainWindow(QMainWindow):
         self.cloud_backup_button.setToolTip("生成导出清单/缩略图，并上传到腾讯云 COS")
         self.cloud_backup_button.clicked.connect(self.open_cloud_backup)
         top_bar.addWidget(self.cloud_backup_button)
+        self.restore_button = QPushButton("云端恢复…")
+        self.restore_button.setToolTip("从 COS 下载 manifest 和原图，重建本地图库")
+        self.restore_button.clicked.connect(self.open_cloud_restore)
+        top_bar.addWidget(self.restore_button)
         self.config_button = QPushButton("配置…")
         self.config_button.setToolTip("统一配置懂鸟 API Key、COS 凭证和用户前缀")
         self.config_button.clicked.connect(self.open_config)
@@ -417,6 +422,18 @@ class MainWindow(QMainWindow):
             )
         else:
             self._append_log(f"保留待复核：{context.relative_path}")
+
+    def open_cloud_restore(self) -> None:
+        dialog = CloudRestoreDialog(self._settings, self)
+        dialog.restored.connect(self._on_cloud_restored)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self._cloud_restore_dialog = dialog
+        dialog.show()
+
+    def _on_cloud_restored(self, root: str) -> None:
+        self.output_dir.setText(root)
+        self._save_settings()
+        self.open_archive_browser()
 
     def open_config(self) -> None:
         dialog = getattr(self, "_config_dialog", None)
