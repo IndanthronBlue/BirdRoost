@@ -29,6 +29,7 @@ from ..secret_store import delete_api_key, last_error, load_api_key, save_api_ke
 from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
+from .cloud_backup_dialog import CloudBackupDialog
 from .geo_fields import CHINA_REGIONS, COUNTRIES, configure_geo_combo, is_china
 from .area_search import configure_area_search, resolve_area_code
 from .review_dialog import ReviewDialog
@@ -135,6 +136,10 @@ class MainWindow(QMainWindow):
         self.open_archive_button.clicked.connect(lambda: self.open_archive_browser())
         self.open_archive_button.setToolTip("打开分类后目录，按分类树浏览和纠错")
         archive_row.addWidget(self.open_archive_button)
+        self.cloud_backup_button = QPushButton("云备份…")
+        self.cloud_backup_button.setToolTip("生成导出清单/缩略图，并上传到腾讯云 COS")
+        self.cloud_backup_button.clicked.connect(self.open_cloud_backup)
+        archive_row.addWidget(self.cloud_backup_button)
         self.auto_open_archive = QCheckBox("批次完成后打开结果页")
         self.auto_open_archive.setChecked(True)
         archive_row.addWidget(self.auto_open_archive)
@@ -177,6 +182,7 @@ class MainWindow(QMainWindow):
             self.api_key, self.query_quota_button, self.animal_class, self.area,
             self.observation_country, self.observation_region,
             self.observation_location, self.observation_time,
+            self.cloud_backup_button,
             self.low_threshold, self.delta_threshold, self.result_wait_seconds,
             self.source_dir, self.output_dir,
         ]
@@ -375,6 +381,21 @@ class MainWindow(QMainWindow):
             )
         else:
             self._append_log(f"保留待复核：{context.relative_path}")
+
+    def open_cloud_backup(self) -> None:
+        output = self.output_dir.text().strip()
+        if not output:
+            self._show_error("请先选择分类后目录")
+            return
+        dialog = CloudBackupDialog(
+            self.output_dir.text().strip() and Path(output).expanduser(),
+            Path(output).expanduser(),
+            self._settings,
+            self,
+        )
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self._cloud_backup_dialog = dialog
+        dialog.show()
 
     def open_archive_browser(self, batch_id: str | None = None) -> None:
         output = self.output_dir.text().strip()
