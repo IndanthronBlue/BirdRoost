@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 data class UiState(
     val config: CosSettings? = null,
     val manifest: LibraryManifest? = null,
+    val tree: List<TaxonNode> = emptyList(),
     val loading: Boolean = false,
     val error: String? = null,
     val editingConfig: Boolean = false,
@@ -20,6 +21,7 @@ data class UiState(
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val store = ConfigStore(application)
+    private var taxonomy: Taxonomy? = null
     private val _state = MutableStateFlow(UiState(config = store.load()))
     val state: StateFlow<UiState> = _state.asStateFlow()
 
@@ -64,7 +66,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     CosClient(config).getText(CosClient(config).manifestKey())
                 }
                 val manifest = withContext(Dispatchers.Default) { parseManifest(text) }
-                _state.value = _state.value.copy(manifest = manifest, loading = false)
+                val taxonomy = taxonomy ?: withContext(Dispatchers.IO) { Taxonomy.load(getApplication()) }
+                    .also { taxonomy = it }
+                val tree = withContext(Dispatchers.Default) { buildTaxonomyTree(manifest.photos, taxonomy) }
+                _state.value = _state.value.copy(manifest = manifest, tree = tree, loading = false)
             } catch (exc: Exception) {
                 _state.value = _state.value.copy(
                     loading = false,

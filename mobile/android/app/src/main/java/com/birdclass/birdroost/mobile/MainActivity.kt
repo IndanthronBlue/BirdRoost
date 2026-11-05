@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -38,6 +39,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -49,7 +53,10 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -57,6 +64,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -77,6 +85,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
@@ -172,21 +181,72 @@ private fun LibraryScreen(state: UiState, vm: MainViewModel, onReload: () -> Uni
     val items = state.manifest?.photos.orEmpty()
     var query by remember { mutableStateOf("") }
     var species by remember { mutableStateOf("全部") }
+    var treeFilter by remember { mutableStateOf<TaxonNode?>(null) }
     var selected by remember { mutableStateOf<PhotoItem?>(null) }
     val speciesCounts = remember(items) {
         items.groupingBy { it.speciesCn }.eachCount().toList().sortedByDescending { it.second }
     }
-    val filtered = remember(items, query, species) {
+    val filtered = remember(items, query, species, treeFilter) {
         items.filter { item ->
-            (species == "全部" || item.speciesCn == species) &&
+            (treeFilter == null || treeFilter!!.species.contains(item.speciesCn)) &&
+                (species == "全部" || item.speciesCn == species) &&
                 (query.isBlank() || listOf(item.speciesCn, item.speciesLatin, item.location, item.time, item.country)
                     .any { it.contains(query, ignoreCase = true) })
         }
     }
+    var expandedIds by remember(state.tree) {
+        mutableStateOf(state.tree.map { it.id }.toSet())
+    }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Text("分类树", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(20.dp))
+                LazyColumn(Modifier.fillMaxSize()) {
+                    item {
+                        TreeRow(
+                            label = "全部图库",
+                            count = items.size,
+                            depth = 0,
+                            expanded = false,
+                            hasChildren = false,
+                            onToggle = {},
+                            onSelect = {
+                                treeFilter = null
+                                scope.launch { drawerState.close() }
+                            },
+                        )
+                    }
+                    items(state.tree, key = { it.id }) { node ->
+                        TreeNode(
+                            node = node,
+                            depth = 0,
+                            expandedIds = expandedIds,
+                            onToggle = { id ->
+                                expandedIds = if (id in expandedIds) expandedIds - id else expandedIds + id
+                            },
+                            onSelect = {
+                                treeFilter = it
+                                species = "全部"
+                                scope.launch { drawerState.close() }
+                            },
+                        )
+                    }
+                }
+            }
+        },
+    ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("羽栖 BirdRoost") },
+                navigationIcon = {
+                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                        Icon(Icons.Default.Menu, contentDescription = "分类树")
+                    }
+                },
                 actions = {
                     IconButton(onClick = onReload) { Icon(Icons.Default.Refresh, contentDescription = "刷新") }
                     IconButton(onClick = { vm.editConfig() }) { Icon(Icons.Default.Settings, contentDescription = "配置") }
@@ -208,10 +268,24 @@ private fun LibraryScreen(state: UiState, vm: MainViewModel, onReload: () -> Uni
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item {
-                    FilterChip(selected = species == "全部", onClick = { species = "全部" }, label = { Text("全部 ${items.size}") })
+                    FilterChip(selected = species == "全部" && treeFilter == null, onClick = { species = "全部"; treeFilter = null }, label = { Text("全部 ${items.size}") })
                 }
                 items(speciesCounts.take(30)) { (name, count) ->
-                    FilterChip(selected = species == name, onClick = { species = name }, label = { Text("$name $count") })
+                    FilterChip(selected = species == name, onClick = { species = name; treeFilter = null }, label = { Text("$name $count") })
+                }
+            }
+            treeFilter?.let { active ->
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "分类：${active.label}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = { treeFilter = null }) { Text("清除") }
                 }
             }
             Text(
@@ -239,8 +313,73 @@ private fun LibraryScreen(state: UiState, vm: MainViewModel, onReload: () -> Uni
             }
         }
     }
+    }
     selected?.let { item ->
         PhotoDialog(item, vm.originalUrl(item), onClose = { selected = null })
+    }
+}
+
+@Composable
+private fun TreeNode(
+    node: TaxonNode,
+    depth: Int,
+    expandedIds: Set<String>,
+    onToggle: (String) -> Unit,
+    onSelect: (TaxonNode) -> Unit,
+) {
+    val expanded = node.id in expandedIds
+    TreeRow(
+        label = node.label,
+        count = node.count,
+        depth = depth,
+        expanded = expanded,
+        hasChildren = node.children.isNotEmpty(),
+        onToggle = { onToggle(node.id) },
+        onSelect = { onSelect(node) },
+    )
+    if (expanded) {
+        node.children.forEach { child ->
+            TreeNode(child, depth + 1, expandedIds, onToggle, onSelect)
+        }
+    }
+}
+
+@Composable
+private fun TreeRow(
+    label: String,
+    count: Int,
+    depth: Int,
+    expanded: Boolean,
+    hasChildren: Boolean,
+    onToggle: () -> Unit,
+    onSelect: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = (10 + depth * 14).dp, end = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (hasChildren) {
+            IconButton(onClick = onToggle, modifier = Modifier.size(34.dp)) {
+                Icon(
+                    if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                    contentDescription = if (expanded) "收起" else "展开",
+                )
+            }
+        } else {
+            Spacer(Modifier.width(34.dp))
+        }
+        Text(
+            label,
+            modifier = Modifier.weight(1f).clickable(onClick = onSelect).padding(vertical = 11.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            "$count",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

@@ -7,7 +7,8 @@
 - 输入只读 COS 配置：Bucket、Region、Prefix、SecretId、SecretKey
 - SecretId/SecretKey 使用 Android Keystore + AES/GCM 加密保存
 - 读取 `users/<prefix>/manifest.json`
-- 按物种筛选、按物种/地点/时间搜索
+- 分类树抽屉：界/门/纲/目/科/属/种层级
+- 按分类节点筛选、按物种/地点/时间搜索
 - 网格浏览 256 WebP 缩略图
 - 点开大图查看原图
 - 下载原图到系统相册 `Pictures/BirdRoost/`
