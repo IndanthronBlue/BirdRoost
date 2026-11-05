@@ -5,60 +5,42 @@ from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QApplication
 
 
-def application_stylesheet(palette: QPalette) -> str:
-    """Build application chrome colors from the active system palette."""
-    def color(role: QPalette.ColorRole) -> str:
-        return palette.color(role).name()
+def application_stylesheet(_palette: QPalette) -> str:
+    """Use native palette colors and only add light structural styling.
 
-    window = color(QPalette.ColorRole.Window)
-    window_text = color(QPalette.ColorRole.WindowText)
-    text = color(QPalette.ColorRole.Text)
-    base = color(QPalette.ColorRole.Base)
-    alternate = color(QPalette.ColorRole.AlternateBase)
-    mid = color(QPalette.ColorRole.Mid)
-    highlight = color(QPalette.ColorRole.Highlight)
-    highlighted = color(QPalette.ColorRole.HighlightedText)
-
-    return f"""
-        QMainWindow, QDialog {{ background: {window}; color: {window_text}; }}
-        QGroupBox {{
+    Do not paint window/input backgrounds here: macOS dark mode and Qt's
+    native styles already provide correct foreground/background pairs. Mixing
+    a fixed palette color with a native widget color is what caused white text
+    on light fields in dark mode.
+    """
+    return """
+        QGroupBox {
             font-weight: 600;
-            border: 1px solid {mid};
+            border: 1px solid palette(mid);
             border-radius: 8px;
             margin-top: 12px;
             padding: 14px 10px 10px;
-            background: {window};
-            color: {window_text};
-        }}
-        QGroupBox::title {{ subcontrol-origin: margin; left: 12px; padding: 0 4px; }}
-        QLineEdit, QComboBox, QDoubleSpinBox, QSpinBox {{
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 12px;
+            padding: 0 4px;
+        }
+        QLineEdit, QComboBox, QDoubleSpinBox, QSpinBox {
             min-height: 28px;
-            background: {base};
-            color: {text};
-            selection-background-color: {highlight};
-            selection-color: {highlighted};
-        }}
-        QComboBox QAbstractItemView, QListWidget {{
-            background: {base};
-            color: {text};
-            alternate-background-color: {alternate};
-            selection-background-color: {highlight};
-            selection-color: {highlighted};
-        }}
-        QPushButton {{ padding: 6px 14px; }}
-        QPlainTextEdit {{
-            background: {base};
-            color: {text};
-            border: 1px solid {mid};
+        }
+        QPushButton {
+            padding: 6px 14px;
+        }
+        QPlainTextEdit {
+            border: 1px solid palette(mid);
             border-radius: 6px;
-            selection-background-color: {highlight};
-            selection-color: {highlighted};
-        }}
+        }
     """
 
 
 class SystemThemeController(QObject):
-    """Keep custom Qt styles aligned with the current system appearance."""
+    """Keep structural Qt styling in sync with the system appearance."""
 
     def __init__(self, app: QApplication) -> None:
         super().__init__(app)
