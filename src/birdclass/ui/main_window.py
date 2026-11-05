@@ -30,6 +30,7 @@ from ..models import AppConfig, BatchSummary, Quota, ReviewResult
 from ..resource_loader import load_areas
 from .archive_browser import ArchiveBrowserWindow
 from .cloud_backup_dialog import CloudBackupDialog
+from .config_dialog import ConfigDialog
 from .geo_fields import CHINA_REGIONS, COUNTRIES, configure_geo_combo, is_china
 from .area_search import configure_area_search, resolve_area_code
 from .review_dialog import ReviewDialog
@@ -40,7 +41,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("羽栖 BirdRoost · 鸟图整理")
-        self.resize(860, 760)
+        self.resize(980, 900)
         self._settings = QSettings("BirdClass", "BirdClass")
         self._worker: ClassificationWorker | None = None
         self._quota_worker: QuotaWorker | None = None
@@ -57,6 +58,25 @@ class MainWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         root = QGridLayout(central)
+        root.setContentsMargins(10, 8, 10, 8)
+        root.setVerticalSpacing(8)
+
+        top_bar = QHBoxLayout()
+        top_bar.addWidget(QLabel("羽栖 BirdRoost"))
+        self.open_archive_button = QPushButton("浏览归档")
+        self.open_archive_button.clicked.connect(lambda: self.open_archive_browser())
+        self.open_archive_button.setToolTip("打开分类后目录，按分类树浏览和纠错")
+        top_bar.addWidget(self.open_archive_button)
+        self.cloud_backup_button = QPushButton("云备份…")
+        self.cloud_backup_button.setToolTip("生成导出清单/缩略图，并上传到腾讯云 COS")
+        self.cloud_backup_button.clicked.connect(self.open_cloud_backup)
+        top_bar.addWidget(self.cloud_backup_button)
+        self.config_button = QPushButton("配置…")
+        self.config_button.setToolTip("统一配置懂鸟 API Key、COS 凭证和用户前缀")
+        self.config_button.clicked.connect(self.open_config)
+        top_bar.addWidget(self.config_button)
+        top_bar.addStretch(1)
+        root.addLayout(top_bar, 0, 0)
 
         api_group = QGroupBox("懂鸟 API")
         api_form = QFormLayout(api_group)
@@ -85,20 +105,28 @@ class MainWindow(QMainWindow):
         quota_row.addWidget(self.query_quota_button)
         quota_row.addWidget(self.quota_label, 1)
         api_form.addRow("图像额度", quota_row)
-        root.addWidget(api_group, 0, 0)
+        self.api_group = api_group
 
-        filter_group = QGroupBox("识别范围、观测信息与人工复核")
-        filter_form = QFormLayout(filter_group)
+        filter_group = QGroupBox("识别范围与观测信息")
+        filter_form = QHBoxLayout(filter_group)
+        left_form = QFormLayout()
+        right_form = QFormLayout()
+        left_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        right_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        left_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        right_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        filter_form.addLayout(left_form, 3)
+        filter_form.addLayout(right_form, 2)
         self.animal_class = QComboBox()
         for code, label in (("B", "鸟类"), ("M", "哺乳类"), ("A", "两栖类"), ("R", "爬行类")):
             self.animal_class.addItem(f"{label} [{code}]", code)
-        filter_form.addRow("识别种类", self.animal_class)
+        left_form.addRow("识别种类", self.animal_class)
         self.area = QComboBox()
         for code, label in load_areas():
             self.area.addItem(label, code)
         configure_area_search(self.area)
         self.area.setCurrentIndex(0)
-        filter_form.addRow("国家 / 地区", self.area)
+        left_form.addRow("国家 / 地区", self.area)
         self.observation_country = QComboBox()
         configure_geo_combo(self.observation_country, COUNTRIES, "输入或选择国家")
         self.observation_region = QComboBox()
@@ -107,23 +135,23 @@ class MainWindow(QMainWindow):
         self.observation_location.setPlaceholderText("例如：南汇、多尼亚那")
         self.observation_time = QLineEdit()
         self.observation_time.setPlaceholderText("例如：2026-05")
-        filter_form.addRow("观测国家", self.observation_country)
-        filter_form.addRow("省份/地区", self.observation_region)
-        filter_form.addRow("观测地点", self.observation_location)
-        filter_form.addRow("观测时间", self.observation_time)
+        left_form.addRow("观测国家", self.observation_country)
+        left_form.addRow("省份/地区", self.observation_region)
+        left_form.addRow("观测地点", self.observation_location)
+        left_form.addRow("观测时间", self.observation_time)
         self.observation_country.currentTextChanged.connect(self._on_country_changed)
-        self.region_row_label = filter_form.labelForField(self.observation_region)
+        self.region_row_label = left_form.labelForField(self.observation_region)
         self._on_country_changed(self.observation_country.currentText())
         self.low_threshold = self._threshold(80)
         self.delta_threshold = self._threshold(10)
-        filter_form.addRow("低置信度阈值", self.low_threshold)
-        filter_form.addRow("近似并列差值", self.delta_threshold)
+        right_form.addRow("低置信度阈值", self.low_threshold)
+        right_form.addRow("近似并列差值", self.delta_threshold)
         self.result_wait_seconds = QSpinBox()
         self.result_wait_seconds.setRange(1, 600)
         self.result_wait_seconds.setValue(60)
         self.result_wait_seconds.setSuffix(" 秒")
         self.result_wait_seconds.setToolTip("上传后等待识别结果的总时长，包含网络请求时间")
-        filter_form.addRow("结果等待时长", self.result_wait_seconds)
+        right_form.addRow("结果等待时长", self.result_wait_seconds)
         root.addWidget(filter_group, 1, 0)
 
         path_group = QGroupBox("图片目录")
@@ -136,14 +164,6 @@ class MainWindow(QMainWindow):
         csv_hint.setWordWrap(True)
         path_form.addRow("", csv_hint)
         archive_row = QHBoxLayout()
-        self.open_archive_button = QPushButton("浏览归档")
-        self.open_archive_button.clicked.connect(lambda: self.open_archive_browser())
-        self.open_archive_button.setToolTip("打开分类后目录，按分类树浏览和纠错")
-        archive_row.addWidget(self.open_archive_button)
-        self.cloud_backup_button = QPushButton("云备份…")
-        self.cloud_backup_button.setToolTip("生成导出清单/缩略图，并上传到腾讯云 COS")
-        self.cloud_backup_button.clicked.connect(self.open_cloud_backup)
-        archive_row.addWidget(self.cloud_backup_button)
         self.auto_open_archive = QCheckBox("批次完成后打开结果页")
         self.auto_open_archive.setChecked(True)
         archive_row.addWidget(self.auto_open_archive)
@@ -181,6 +201,7 @@ class MainWindow(QMainWindow):
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
         self.log.setMaximumBlockCount(2000)
+        self.log.setMinimumHeight(220)
         self.log.setPlaceholderText("运行日志（不会输出 API Key）")
         root.addWidget(self.log, 5, 0)
         root.setRowStretch(5, 1)
@@ -388,6 +409,15 @@ class MainWindow(QMainWindow):
             )
         else:
             self._append_log(f"保留待复核：{context.relative_path}")
+
+    def open_config(self) -> None:
+        dialog = getattr(self, "_config_dialog", None)
+        if dialog is None:
+            dialog = ConfigDialog(self.api_group, self._settings, self)
+            self._config_dialog = dialog
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
 
     def open_cloud_backup(self, *, auto_generate: bool = False, auto_upload: bool = False) -> None:
         output = self.output_dir.text().strip()
