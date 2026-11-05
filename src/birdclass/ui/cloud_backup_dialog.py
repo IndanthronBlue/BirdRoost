@@ -24,6 +24,12 @@ from PySide6.QtWidgets import (
 )
 
 from ..cloud_backup import build_upload_plan, normalize_prefix, test_connection, upload_plan
+from ..secret_store import (
+    delete_cos_credentials,
+    last_error,
+    load_cos_credentials,
+    save_cos_credentials,
+)
 from ..cloud_export import export_archive
 
 
@@ -146,6 +152,13 @@ class CloudBackupDialog(QDialog):
         self.secret_key.setEchoMode(QLineEdit.EchoMode.Password)
         self.secret_key.setPlaceholderText("留空则读 TENCENTCLOUD_SECRET_KEY")
         form.addRow("SecretKey", self.secret_key)
+        self.save_config = QCheckBox("保存 COS 配置（Secret 存 macOS 钥匙串）")
+        self.save_config.setToolTip("桶名、地域、Endpoint、前缀写入设置；SecretId/SecretKey 写入钥匙串")
+        form.addRow("", self.save_config)
+        self.save_config.toggled.connect(self._on_save_config_toggled)
+        self.config_status = QLabel("")
+        self.config_status.setWordWrap(True)
+        form.addRow("", self.config_status)
         layout.addWidget(form_group)
 
         buttons = QHBoxLayout()
@@ -196,6 +209,19 @@ class CloudBackupDialog(QDialog):
         self.region.setCurrentText(region)
         self.prefix.setText(str(self.settings.value("cloud_prefix", normalize_prefix(getpass.getuser()))))
         self.endpoint.setText(str(self.settings.value("cloud_endpoint", "")))
+        saved = self.settings.value("cloud_save_config", False)
+        saved = saved if isinstance(saved, bool) else str(saved).lower() == "true"
+        self.save_config.blockSignals(True)
+        self.save_config.setChecked(saved)
+        self.save_config.blockSignals(False)
+        if saved:
+            secret_id, secret_key = load_cos_credentials()
+            if secret_id and secret_key:
+                self.secret_id.setText(secret_id)
+                self.secret_key.setText(secret_key)
+                self.config_status.setText("已从 macOS 钥匙串读取 COS 配置")
+            else:
+                self.config_status.setText("未在钥匙串中找到 COS 配置")
 
     def _refresh_export_default(self) -> None:
         if self.export_dir.text().strip():
@@ -211,12 +237,37 @@ class CloudBackupDialog(QDialog):
             self.export_dir.setText(selected)
 
     def _save(self) -> None:
+        save = self.save_config.isChecked()
+        self.settings.setValue("cloud_save_config", save)
+        if not save:
+            for key in (
+                "cloud_export_dir", "cloud_bucket", "cloud_region",
+                "cloud_prefix", "cloud_endpoint",
+            ):
+                self.settings.remove(key)
+            delete_cos_credentials()
+            self.settings.sync()
+            return
         self.settings.setValue("cloud_export_dir", self.export_dir.text().strip())
         self.settings.setValue("cloud_bucket", self.bucket.text().strip())
         self.settings.setValue("cloud_region", self.region.currentText().strip())
         self.settings.setValue("cloud_prefix", self.prefix.text().strip())
         self.settings.setValue("cloud_endpoint", self.endpoint.text().strip())
+        secret_id = self.secret_id.text().strip()
+        secret_key = self.secret_key.text().strip()
+        if secret_id and secret_key:
+            if save_cos_credentials(secret_id, secret_key):
+                self.config_status.setText("COS 配置已保存到 macOS 钥匙串")
+            else:
+                self.config_status.setText(f"COS 配置保存失败：{last_error()}")
         self.settings.sync()
+
+    def _on_save_config_toggled(self, checked: bool) -> None:
+        if not checked:
+            delete_cos_credentials()
+            self.config_status.setText("已取消保存 COS 配置")
+            return
+        self._save()
 
     def _set_busy(self, busy: bool, *, cancellable: bool = False) -> None:
         self.export_button.setEnabled(not busy)

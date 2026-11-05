@@ -20,8 +20,8 @@ rm -rf build "dist/${APP_NAME}.app" "dist/${APP_NAME}.dmg" "dist/${APP_NAME}-mac
   --collect-submodules qcloud_cos \
   --exclude-module tkinter \
   packaging/launcher.py
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.2.2" "dist/${APP_NAME}.app/Contents/Info.plist" 2>/dev/null || \
-  /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string 0.2.2" "dist/${APP_NAME}.app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 0.2.3" "dist/${APP_NAME}.app/Contents/Info.plist" 2>/dev/null || \
+  /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string 0.2.3" "dist/${APP_NAME}.app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 1" "dist/${APP_NAME}.app/Contents/Info.plist" 2>/dev/null || \
   /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string 1" "dist/${APP_NAME}.app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ${APP_NAME}" "dist/${APP_NAME}.app/Contents/Info.plist" 2>/dev/null || true
