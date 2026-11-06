@@ -379,3 +379,38 @@ def test_explicit_save_key_button_reports_success(qtbot, tmp_path, monkeypatch):
     assert saved == ["explicit-key"]
     assert window.remember_api_key.isChecked()
     assert "已保存" in window.api_key_status.text()
+
+
+def test_batch_review_completed_prompts_cloud(qtbot, tmp_path, monkeypatch):
+    from birdclass.library import ArchiveLibrary, new_batch_id
+    from birdclass.models import BatchSummary
+
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    fill_required_fields(window, tmp_path)
+    library = ArchiveLibrary(tmp_path / "output")
+    library.ensure()
+    batch_id = new_batch_id()
+    library.write_batch({
+        "schema_version": 1,
+        "batch_id": batch_id,
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "finished_at": "2026-01-01T00:01:00+00:00",
+        "groups": [],
+        "summary": {"total": 0, "completed": 0, "failed": 0, "deferred": 0},
+    })
+    calls = []
+    monkeypatch.setattr(window, "_prompt_cloud_upload", lambda value: calls.append(value))
+
+    window._classification_succeeded(BatchSummary(total=0))
+    qtbot.wait(20)
+    assert calls == []
+
+    browser = window._archive_windows[0]
+    browser.confirm_and_close()
+    qtbot.wait(20)
+
+    assert calls == [batch_id]
+    for archive_window in list(window._archive_windows):
+        archive_window.close()

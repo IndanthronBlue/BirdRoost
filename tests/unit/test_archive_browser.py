@@ -1021,3 +1021,20 @@ def test_edit_observation_selects_next_image(qtbot, tmp_path: Path):
         monkeypatch.undo()
 
     assert browser.grid.currentRow() == 1
+
+
+def test_batch_confirm_emits_review_completed(qtbot, tmp_path: Path):
+    output = tmp_path / "output"
+    make_image(output / "三趾滨鹬" / "a.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    batch = new_batch_id()
+    add_group(library, "三趾滨鹬/a.jpg", batch_id=batch,
+              species_cn="三趾滨鹬", species_latin="Calidris alba")
+    browser = ArchiveBrowserWindow(output, batch_id=batch)
+    qtbot.addWidget(browser)
+
+    with qtbot.waitSignal(browser.batch_review_completed, timeout=1000) as blocker:
+        browser.confirm_and_close()
+
+    assert blocker.args == [batch]

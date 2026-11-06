@@ -200,7 +200,7 @@ class MainWindow(QMainWindow):
         self.auto_open_archive = QCheckBox("批次完成后打开结果页")
         self.auto_open_archive.setChecked(True)
         archive_row.addWidget(self.auto_open_archive)
-        self.auto_cloud_prompt = QCheckBox("归档后询问云备份")
+        self.auto_cloud_prompt = QCheckBox("矫正完成后询问云备份")
         self.auto_cloud_prompt.setChecked(True)
         archive_row.addWidget(self.auto_cloud_prompt)
         archive_row.addStretch(1)
@@ -560,6 +560,7 @@ class MainWindow(QMainWindow):
             Path(output), batch_id=batch_id, parent=self, defer_load=True
         )
         window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        window.batch_review_completed.connect(self._on_batch_review_completed)
         window.destroyed.connect(
             lambda _obj=None, browser=window: self._forget_archive_window(browser)
         )
@@ -603,9 +604,12 @@ class MainWindow(QMainWindow):
         batch_id = self._latest_batch_id()
         if self.auto_open_archive.isChecked() and batch_id:
             QTimer.singleShot(0, lambda: self.open_archive_browser(batch_id))
-        if self.auto_cloud_prompt.isChecked() and batch_id:
-            self._cloud_prompt_batch_id = batch_id
-            self._cloud_prompt_timer.start(300)
+
+    def _on_batch_review_completed(self, batch_id: str) -> None:
+        if not self.auto_cloud_prompt.isChecked() or not batch_id:
+            return
+        self._cloud_prompt_batch_id = batch_id
+        self._cloud_prompt_timer.start(0)
 
     def _fire_cloud_prompt(self) -> None:
         batch_id = self._cloud_prompt_batch_id

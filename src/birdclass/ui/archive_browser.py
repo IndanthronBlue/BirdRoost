@@ -126,6 +126,8 @@ class _ThumbnailTask(QRunnable):
 class ArchiveBrowserWindow(QMainWindow):
     """Read-only archive browser; correction is added by the correction module."""
 
+    batch_review_completed = Signal(str)
+
     def __init__(
         self,
         output_root: Path,
@@ -513,7 +515,7 @@ class ArchiveBrowserWindow(QMainWindow):
         bottom_row = QHBoxLayout()
         self.status_label = QLabel("就绪")
         bottom_row.addWidget(self.status_label, 1)
-        self.confirm_button = QPushButton("确认结果并关闭")
+        self.confirm_button = QPushButton("矫正完成并关闭")
         self.confirm_button.setMinimumHeight(32)
         self.confirm_button.setVisible(bool(self.batch_id))
         self.confirm_button.clicked.connect(self.confirm_and_close)
@@ -1981,6 +1983,9 @@ class ArchiveBrowserWindow(QMainWindow):
         self.refresh()
 
     def confirm_and_close(self) -> None:
+        batch_id = self.batch_id
+        if batch_id:
+            self.batch_review_completed.emit(batch_id)
         self.close()
 
     def clear_batch_filter(self) -> None:
