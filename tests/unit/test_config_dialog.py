@@ -23,3 +23,24 @@ def test_config_dialog_has_api_and_cos_tabs(qtbot, tmp_path: Path):
     assert tabs.tabText(1) == "云图库 COS"
     assert dialog.secret_key.echoMode() == dialog.secret_key.EchoMode.Password
     window.close()
+
+
+def test_closing_config_without_save_does_not_delete_credentials(qtbot, tmp_path: Path, monkeypatch):
+    from tests.unit.test_main_window import isolated_settings
+
+    isolated_settings(tmp_path)
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.open_config()
+    dialog = window._config_dialog
+    qtbot.addWidget(dialog)
+
+    calls = []
+    monkeypatch.setattr(
+        "birdclass.ui.config_dialog.save_cos_config",
+        lambda *args, **kwargs: calls.append(True) or (True, "ok"),
+    )
+    dialog.close()
+
+    assert calls == []
+    window.close()

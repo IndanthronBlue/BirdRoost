@@ -180,6 +180,8 @@ class ConfigDialog(QDialog):
         self.test_button.setEnabled(True)
 
     def closeEvent(self, event) -> None:
-        if self.save_config is not None:
+        # 只有明确勾选“保存 COS 配置”时才写入；否则关闭配置页不应
+        # 顺手删掉钥匙串里已有的凭证。
+        if self.save_config is not None and self.save_config.isChecked():
             self._save_cos()
         event.accept()

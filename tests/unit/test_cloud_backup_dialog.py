@@ -29,3 +29,18 @@ def test_cloud_dialog_shows_configured_summary(qtbot, tmp_path: Path):
 
     assert "bucket-1250000000" in dialog.config_label.text()
     assert "users/zjq/" in dialog.config_label.text()
+
+
+def test_upload_prepared_shows_checked_and_missing_counts(qtbot, tmp_path: Path):
+    output = tmp_path / "鸟"
+    output.mkdir()
+    settings = QSettings(str(tmp_path / "settings.ini"), QSettings.Format.IniFormat)
+    dialog = CloudBackupDialog(output, output, settings)
+    qtbot.addWidget(dialog)
+
+    dialog._upload_prepared(4042, 10, True)
+    assert "已存在 4032 个，需上传 10 个" in dialog.log.toPlainText()
+
+    dialog.log.clear()
+    dialog._upload_prepared(4042, 4042, False)
+    assert "逐个检查 4042 个对象" in dialog.log.toPlainText()

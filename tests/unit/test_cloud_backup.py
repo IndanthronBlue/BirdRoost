@@ -247,3 +247,60 @@ def test_upload_uses_remote_object_index_to_skip_head(tmp_path: Path, monkeypatc
     assert report.used_remote_index
     assert report.skipped == len(indexed)
     assert fake.uploaded == [plan.manifest_key]
+
+
+def test_upload_reports_missing_count_before_uploading(tmp_path: Path, monkeypatch):
+    export_root = make_export(tmp_path)
+    plan = build_upload_plan(export_root, bucket="bucket-1250000000", region="ap-shanghai", prefix="zjq")
+    indexed = [
+        {"Key": item.key, "Size": item.size}
+        for item in plan.items if item.kind != "manifest"
+    ]
+
+    class IndexClient(FakeClient):
+        def list_objects(self, **kwargs):
+            return {"Contents": indexed, "IsTruncated": "false"}
+
+    fake = IndexClient()
+    monkeypatch.setattr("birdclass.cloud_backup.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_backup.CosS3Client", lambda config: fake)
+    prepared = []
+
+    report = upload_plan(
+        plan, secret_id="id", secret_key="key",
+        prepared=lambda total, missing, indexed: prepared.append((total, missing, indexed)),
+    )
+
+    assert prepared == [(len(plan.items), 1, True)]
+    assert report.uploaded == 1
+    assert report.skipped == len(indexed)
+
+
+class AuthError(Exception):
+    def get_status_code(self):
+        return 403
+
+    def get_error_code(self):
+        return "SignatureDoesNotMatch"
+
+
+def test_upload_stops_before_upload_on_signature_error(tmp_path: Path, monkeypatch):
+    export_root = make_export(tmp_path)
+    plan = build_upload_plan(export_root, bucket="bucket-1250000000", region="ap-shanghai", prefix="zjq")
+
+    class AuthClient(FakeClient):
+        def list_objects(self, **kwargs):
+            raise AuthError("bad signature")
+
+        def head_object(self, Bucket, Key):
+            raise AuthError("bad signature")
+
+    fake = AuthClient()
+    monkeypatch.setattr("birdclass.cloud_backup.CosConfig", lambda **kwargs: object())
+    monkeypatch.setattr("birdclass.cloud_backup.CosS3Client", lambda config: fake)
+
+    report = upload_plan(plan, secret_id="id", secret_key="key")
+
+    assert report.failed == 1
+    assert "凭证校验失败" in report.errors[0]
+    assert fake.uploaded == []

@@ -27,6 +27,7 @@ class ExportWorker(QThread):
 
 class UploadWorker(QThread):
     progressed = Signal(int, int, str)
+    prepared = Signal(int, int, bool)
     done = Signal(object)
     failed = Signal(str)
 
@@ -45,6 +46,7 @@ class UploadWorker(QThread):
                 secret_id=self.secret_id,
                 secret_key=self.secret_key,
                 progress=lambda done, total, key: self.progressed.emit(done, total, key),
+                prepared=lambda total, missing, indexed: self.prepared.emit(total, missing, indexed),
                 cancelled=self.cancel_event.is_set,
                 force=self.force,
             )

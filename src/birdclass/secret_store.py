@@ -158,9 +158,19 @@ COS_SERVICE = "com.birdclass.birdroost.cos-credentials"
 COS_ACCOUNT = "BirdRoost-COS"
 
 
+def _normalize_secret_key(secret_key: str) -> str:
+    """Collapse a secret accidentally pasted twice (64 = 32 + 32)."""
+    value = secret_key.strip()
+    if len(value) >= 64 and len(value) % 2 == 0:
+        half = len(value) // 2
+        if value[:half] == value[half:]:
+            return value[:half]
+    return value
+
+
 def save_cos_credentials(secret_id: str, secret_key: str) -> bool:
     secret_id = secret_id.strip()
-    secret_key = secret_key.strip()
+    secret_key = _normalize_secret_key(secret_key)
     if not secret_id or not secret_key:
         return False
     import json
@@ -183,7 +193,10 @@ def load_cos_credentials() -> tuple[str, str]:
         return "", ""
     if not isinstance(data, dict):
         return "", ""
-    return str(data.get("secret_id", "")), str(data.get("secret_key", ""))
+    return (
+        str(data.get("secret_id", "")),
+        _normalize_secret_key(str(data.get("secret_key", ""))),
+    )
 
 
 def delete_cos_credentials() -> bool:

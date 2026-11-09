@@ -241,18 +241,32 @@ class CloudBackupDialog(QDialog):
             QMessageBox.warning(self, "羽栖 BirdRoost", "\n".join(plan.errors[:10]))
             return
         self._save()
+        originals = sum(1 for item in plan.items if item.kind == "original")
+        thumbs = sum(1 for item in plan.items if item.kind.startswith("thumb"))
         self._append(
-            f"准备上传 {len(plan.items)} 个对象到 {bucket} / users/{plan.prefix}/"
+            f"已生成清单：{originals} 张原图 / {thumbs} 张缩略图 / 1 个 manifest；"
+            "开始检查云端已存在对象，已有对象会自动跳过"
         )
         worker = UploadWorker(plan, secret_id, secret_key, self, force=force)
         self._worker = worker
         self._set_busy(True, cancellable=True)
+        worker.prepared.connect(self._upload_prepared)
         worker.progressed.connect(self._progress)
         worker.done.connect(self._upload_done)
         worker.failed.connect(self._upload_failed)
         worker.finished.connect(lambda worker=worker: self._worker_finished(worker))
         worker.finished.connect(worker.deleteLater)
         worker.start()
+
+    def _upload_prepared(self, total: int, missing: int, indexed: bool) -> None:
+        if indexed:
+            self._append(
+                f"云端检查完成：已存在 {total - missing} 个，需上传 {missing} 个"
+            )
+        else:
+            self._append(
+                f"云端对象列表不可用，改为逐个检查 {total} 个对象；已存在的会跳过"
+            )
 
     def _progress(self, done: int, total: int, key: str) -> None:
         if total:
@@ -282,6 +296,12 @@ class CloudBackupDialog(QDialog):
                 if dialog.exec() == QDialog.DialogCode.Accepted:
                     self._force_upload_pending = True
                     self._append("已确认保留本地 manifest 并覆盖云端，准备重试…")
+            elif any("凭证校验失败" in error for error in report.errors):
+                QMessageBox.warning(
+                    self,
+                    "羽栖 BirdRoost",
+                    "COS 凭证校验失败，未上传任何对象。请重新填写 SecretId / SecretKey。",
+                )
             else:
                 QMessageBox.warning(self, "羽栖 BirdRoost", "部分对象上传失败，详见日志")
         self._worker = None

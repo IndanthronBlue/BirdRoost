@@ -16,6 +16,13 @@ from .cloud_state import mark_uploaded
 
 PREFIX_PATTERN = re.compile(r"[^\w.-]+")
 ProgressCallback = Callable[[int, int, str], None]
+PreparedCallback = Callable[[int, int, bool], None]
+AUTH_ERROR_CODES = {
+    "SignatureDoesNotMatch",
+    "InvalidAccessKeyId",
+    "InvalidSecretId",
+    "RequestTimeTooSkewed",
+}
 
 
 @dataclass
@@ -190,6 +197,22 @@ def _is_not_found(exc: Exception) -> bool:
     return code == 404 or error_code in {"NoSuchKey", "NoSuchBucket"}
 
 
+def _access_auth_error(client: CosS3Client, bucket: str, key: str) -> str:
+    """Return a readable error only for credential/signature failures.
+
+    A missing manifest is normal on the first upload. Other errors (for
+    example a subaccount without ListBucket) should not block the upload;
+    the per-object HEAD/upload path can still succeed.
+    """
+    try:
+        client.head_object(Bucket=bucket, Key=key)
+    except Exception as exc:
+        error_code = str(getattr(exc, "get_error_code", lambda: "")())
+        if error_code in AUTH_ERROR_CODES:
+            return f"{error_code}：{exc}"
+    return ""
+
+
 def _remote_revision(client: CosS3Client, bucket: str, key: str) -> int | None:
     if not hasattr(client, "download_file"):
         return None
@@ -262,6 +285,7 @@ def upload_plan(
     secret_key: str,
     token: str = "",
     progress: ProgressCallback | None = None,
+    prepared: PreparedCallback | None = None,
     cancelled: Callable[[], bool] | None = None,
     force: bool = False,
 ) -> UploadReport:
@@ -307,6 +331,21 @@ def upload_plan(
     remote_index = _remote_object_index(client, plan.bucket, f"users/{plan.prefix}/")
     report.used_remote_index = remote_index is not None
     total = len(plan.items)
+    if remote_index is None:
+        auth_error = _access_auth_error(client, plan.bucket, plan.manifest_key)
+        if auth_error:
+            report.failed += 1
+            report.errors.append(
+                "COS 凭证校验失败，未上传任何对象。"
+                "请在“配置…”中重新填写 SecretId / SecretKey。"
+                f"（{auth_error}）"
+            )
+            return report
+    if prepared is not None:
+        missing = total if remote_index is None else sum(
+            1 for item in plan.items if remote_index.get(item.key) != item.size
+        )
+        prepared(total, missing, remote_index is not None)
     done = 0
     uploaded_bytes = 0
     for item in plan.items:
