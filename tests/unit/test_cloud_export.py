@@ -123,3 +123,30 @@ def test_manifest_v2_has_revision_and_tombstones(tmp_path: Path):
     second = export_archive(output, export)
     new_manifest = json.loads(second.manifest_path.read_text(encoding="utf-8"))
     assert new_manifest["revision"] > manifest["revision"]
+
+
+def test_export_skips_review_annotation_copies(tmp_path: Path):
+    source = tmp_path / "source.jpg"
+    Image.new("RGB", (40, 30), "green").save(source)
+    output = tmp_path / "output"
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = add_group(library, "待复核/bird.jpg", "", "", source)
+    annotation = output / "待复核" / "bird_待确认框.jpg"
+    Image.new("RGB", (40, 30), "orange").save(annotation)
+    group["copies"].append({
+        "relative_path": "待复核/bird_待确认框.jpg",
+        "species_cn": "",
+        "species_latin": "",
+        "target_indices": [0],
+        "pending": True,
+    })
+    library.write_group(group)
+
+    report = export_archive(output, tmp_path / "export", thumbnail_sizes=(64,))
+
+    assert report.copies == 1
+    assert report.photos == 1
+    manifest = json.loads(report.manifest_path.read_text(encoding="utf-8"))
+    assert [copy["local_relative_path"] for copy in manifest["copies"]] == ["待复核/bird.jpg"]
+    assert not list((tmp_path / "export" / "originals").glob("*_待确认框*"))

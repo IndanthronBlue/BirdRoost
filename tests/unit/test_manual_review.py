@@ -187,3 +187,52 @@ def test_non_bird_animal_accepts_note_and_folders_by_note(tmp_path: Path):
     updated = library.read_group(group["group_id"])
     assert updated["label"] == "蜥蜴"
     assert updated["status"] == "non_bird_animal"
+
+
+def test_special_resolution_drops_review_annotation_and_flattens_path(tmp_path: Path):
+    output = tmp_path / "output"
+    pending = output / "待复核"
+    pending.mkdir(parents=True)
+    Image.new("RGB", (40, 30), "green").save(pending / "bird.jpg")
+    Image.new("RGB", (40, 30), "orange").save(pending / "bird_待确认框.jpg")
+    library = ArchiveLibrary(output)
+    library.ensure()
+    group = {
+        "schema_version": 1,
+        "group_id": new_group_id(),
+        "batch_id": new_batch_id(),
+        "status": "review_pending",
+        "source_relative_path": "bird.jpg",
+        "targets": [],
+        "copies": [
+            {
+                "relative_path": "待复核/bird.jpg",
+                "species_cn": "",
+                "species_latin": "",
+                "target_indices": [0],
+                "pending": True,
+            },
+            {
+                "relative_path": "待复核/bird_待确认框.jpg",
+                "species_cn": "",
+                "species_latin": "",
+                "target_indices": [0],
+                "pending": True,
+            },
+        ],
+    }
+    library.write_group(group)
+    entries = ArchiveIndex(output).refresh()
+    assert [entry.relative_path for entry in entries] == ["待复核/bird.jpg"]
+
+    resolve_manual(library, entries[0], action="scenery")
+
+    moved = list((output / "风景").rglob("bird.jpg"))
+    assert len(moved) == 1
+    assert moved[0].parent.name != "待复核"
+    assert not list((output / "风景").rglob("*_待确认框*"))
+    updated = library.read_group(group["group_id"])
+    assert updated["status"] == "scenery"
+    assert len(updated["copies"]) == 1
+    assert updated["copies"][0]["relative_path"].startswith("风景/")
+    assert "/待复核/" not in updated["copies"][0]["relative_path"]

@@ -12,6 +12,11 @@ IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
 SPECIAL_DIRS = ("待复核", "已纠正", "无鸟", "非鸟动物", "风景", "已删除")
 
 
+def is_review_annotation(relative_path: str) -> bool:
+    """Return True for the generated box-preview copy, never a real photo."""
+    return "_待确认框" in Path(relative_path).name
+
+
 @dataclass
 class ArchiveEntry:
     relative_path: str
@@ -96,6 +101,9 @@ class ArchiveIndex:
                 if not path.is_file() or path.suffix.casefold() not in IMAGE_SUFFIXES:
                     continue
                 relative = path.relative_to(self.output_root).as_posix()
+                if is_review_annotation(relative):
+                    # The annotated copy is a review helper, not a library photo.
+                    continue
                 group, copy = self._copy_to_group.get(relative, ({}, {}))
                 species_cn = str(copy.get("species_cn", "") or folder.name)
                 species_latin = str(copy.get("species_latin", "") or "")

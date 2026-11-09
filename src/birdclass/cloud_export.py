@@ -10,7 +10,7 @@ from typing import Iterable
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from .archive_index import ArchiveIndex, ArchiveEntry, SPECIAL_DIRS
+from .archive_index import ArchiveIndex, ArchiveEntry, SPECIAL_DIRS, is_review_annotation
 from .archiver import sha256_file
 from .cloud_state import CloudState, prepare_export_state
 from .taxonomy import TAXONOMY_VERSION
@@ -134,6 +134,9 @@ def export_archive(
         for copy_index, copy in enumerate(group.get("copies", [])):
             relative = str(copy.get("relative_path", "") or "").replace("\\", "/")
             if not relative:
+                skipped += 1
+                continue
+            if is_review_annotation(relative):
                 skipped += 1
                 continue
             source = (archive_root / relative).resolve()

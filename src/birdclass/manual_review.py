@@ -4,7 +4,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from .archive_index import ArchiveEntry
+from .archive_index import ArchiveEntry, is_review_annotation
 from .archiver import sanitize_species_directory, sha256_file
 from .cloud_state import add_tombstone, mark_dirty
 from .library import ArchiveLibrary, ImageGeometry, new_group_id, now_iso
@@ -249,12 +249,23 @@ def resolve_manual(
         special_root = output / folder / sanitize_species_directory(label, "未命名") / stamp
     new_copies = []
     for copy in pending:
-        old = output / str(copy.get("relative_path", ""))
+        relative = str(copy.get("relative_path", ""))
+        old = output / relative
         if not old.is_file():
             continue
-        destination = special_root / str(copy.get("relative_path", ""))
+        if is_review_annotation(relative):
+            # Never archive the generated box-preview copy.
+            old.unlink(missing_ok=True)
+            continue
+        # Keep the original basename, but drop the "待复核/" prefix that
+        # would otherwise be nested under the special-photo group.
+        destination = _unique_path(special_root / Path(relative).name)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(old), str(destination))
+        try:
+            old.parent.rmdir()
+        except OSError:
+            pass
         new_copies.append({
             "relative_path": destination.relative_to(output).as_posix(),
             "species_cn": "",
